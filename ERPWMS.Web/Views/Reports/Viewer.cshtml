@@ -1,0 +1,194 @@
+﻿@{
+    ViewData["Title"] = ViewBag.ReportName ?? "Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var reportCode = (ViewBag.ReportCode ?? "").ToString().ToUpper();
+    var isAttendanceSummary = reportCode == "ATTENDANCESUMMARY";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<style>
+    body { overflow-x: hidden; }
+    .viewer-hero{background:linear-gradient(135deg,#0A1628 0%,#1a2f4a 100%);border-radius:12px;padding:16px 22px;margin:0 16px 14px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:14px;box-shadow:0 6px 20px rgba(10,22,40,.15)}
+    .viewer-hero-left{display:flex;align-items:center;gap:14px}
+    .viewer-hero-icon{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#F5A623,#E0951A);display:flex;align-items:center;justify-content:center;font-size:19px;color:#0A1628;box-shadow:0 4px 12px rgba(245,166,35,.4);flex-shrink:0}
+    .viewer-hero h3{margin:0;color:#fff;font-size:16px;font-weight:800;letter-spacing:.3px;white-space:nowrap}
+    .viewer-hero small{color:#94A3B8;font-size:11px;display:block;margin-top:2px}
+    .viewer-hero-right{display:flex;gap:6px;align-items:center;flex-shrink:0}
+    .btn-rpt{font-size:10px;padding:6px 12px;border-radius:6px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;text-decoration:none;transition:all .2s}
+    .btn-rpt i{font-size:11px}
+    .btn-excel{background:#159A89;color:#fff}.btn-excel:hover{background:#118B7B;color:#fff}
+    .btn-csv{background:#0EA5E9;color:#fff}.btn-csv:hover{background:#0284C7;color:#fff}
+    .btn-print{background:#F5A623;color:#0A1628}.btn-print:hover{background:#E39A19;color:#0A1628}
+    .btn-back{background:rgba(255,255,255,.1);color:#94A3B8;border:1px solid rgba(255,255,255,.15)}.btn-back:hover{background:rgba(255,255,255,.15);color:#fff}
+
+    .filter-bar{background:#fff;margin:0 16px 14px;padding:14px 20px;border-radius:12px;border:1px solid #edf0f4;display:flex;gap:12px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .filter-bar label{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin:0;margin-right:2px}
+    .filter-bar select{padding:8px 14px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:12.5px;font-family:inherit;min-width:130px;background:#fff;cursor:pointer}
+    .filter-bar select:focus{outline:none;border-color:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.1)}
+    .filter-bar button{padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#0A1628;color:#fff;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+    .filter-bar button:hover{background:#1a2f4a}
+
+    .report-container{margin:0 16px 16px 16px;background:#fff;border:1px solid #edf0f4;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+
+    @@media print{.viewer-hero,.no-print,.filter-bar{display:none!important}.report-container{border:none;box-shadow:none;margin:0}}
+</style>
+
+<div class="container-fluid pt-3 pb-3" style="padding-left:0!important;padding-right:0!important;overflow-x:hidden;">
+    <div class="viewer-hero">
+        <div class="viewer-hero-left">
+            <div class="viewer-hero-icon"><i class="bi bi-file-earmark-bar-graph"></i></div>
+            <div>
+                <h3>@ViewBag.ReportName</h3>
+                <small>Reports / @ViewBag.ReportCode</small>
+            </div>
+        </div>
+        <div class="viewer-hero-right no-print">
+            <button class="btn-rpt btn-excel" onclick="exportRpt('Excel')"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn-rpt btn-csv" onclick="exportRpt('Csv')"><i class="bi bi-file-earmark-text"></i> CSV</button>
+            <button class="btn-rpt btn-print" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            <a href="/Reports" class="btn-rpt btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+    </div>
+
+    @if (isAttendanceSummary)
+    {
+        <div class="filter-bar no-print">
+            <label>Month:</label>
+            <select id="filterMonth">
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+            <label>Year:</label>
+            <select id="filterYear"></select>
+            <button onclick="loadFilteredReport()"><i class="bi bi-search"></i> Generate Report</button>
+        </div>
+    }
+
+    <div class="report-container" id="reportContainer">
+        <div class="text-center py-5 text-muted">
+            <div class="spinner-border text-primary" style="width:22px;height:22px;"></div>
+            <p class="mt-2" style="font-size:11px;">Loading report...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+var REPORT_CODE = "@ViewBag.ReportCode";
+var IS_ATTENDANCE_SUMMARY = @(isAttendanceSummary ? "true" : "false");
+
+function generateRpt(){
+    var fd = new FormData();
+    fd.append("code", REPORT_CODE);
+    var e = document.querySelector("input[name=__RequestVerificationToken]");
+    if(e) fd.append("__RequestVerificationToken", e.value);
+    document.getElementById("reportContainer").innerHTML = "<div class='text-center py-5'><div class='spinner-border text-primary'></div><p class='mt-2' style='font-size:11px;'>Generating...</p></div>";
+    fetch("/Reports/Generate", {method:"POST", body:fd})
+        .then(function(r){ return r.text(); })
+        .then(function(h){ document.getElementById("reportContainer").innerHTML = h; })
+        .catch(function(err){ document.getElementById("reportContainer").innerHTML = "<div class='alert alert-danger m-3'>Error: " + err + "</div>"; });
+}
+
+function exportRpt(type){
+    window.location.href = "/Reports/Export" + type + "?code=" + REPORT_CODE;
+}
+
+function getMonthName(m){
+    var months = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    return months[m];
+}
+
+function loadFilteredReport(){
+    var m = document.getElementById('filterMonth').value;
+    var y = document.getElementById('filterYear').value;
+
+    document.getElementById("reportContainer").innerHTML = "<div class='text-center py-5'><div class='spinner-border text-primary'></div><p class='mt-2' style='font-size:11px;'>Generating for " + getMonthName(parseInt(m)) + " " + y + "...</p></div>";
+
+    fetch('/Reports/GetAttendanceSummary?year=' + y + '&month=' + m)
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            if(!res.success){
+                document.getElementById("reportContainer").innerHTML = "<div class='alert alert-danger m-3'>" + (res.message || 'Error loading report') + "</div>";
+                return;
+            }
+            renderAttendanceTable(res);
+        })
+        .catch(function(e){
+            document.getElementById("reportContainer").innerHTML = "<div class='alert alert-danger m-3'>Error: " + e.message + "</div>";
+        });
+}
+
+function renderAttendanceTable(res){
+    var h = '';
+    h += '<div style="padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;background:#F8FAFC">';
+    h += '<div><strong style="color:#0A1628;font-size:13px;"><i class="bi bi-list-ul" style="color:#F5A623;margin-right:6px;"></i>Attendance Summary</strong>';
+    h += '<span style="background:#D7F4EE;color:#118B7B;font-size:9px;font-weight:700;padding:2px 8px;border-radius:12px;margin-left:6px;">' + res.data.length + ' rows</span></div>';
+    h += '<span style="font-size:10px;color:#94A3B8;">Period: <b>' + getMonthName(res.month) + ' ' + res.year + '</b></span>';
+    h += '</div>';
+
+    h += '<div style="width:100%;overflow-x:hidden;"><table style="width:100%;border-collapse:collapse;font-size:11.5px;">';
+    h += '<thead><tr style="background:#F8FAFC;">';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">#</th>';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">Code</th>';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">Employee</th>';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">Present</th>';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">Absent</th>';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">Late</th>';
+    h += '<th style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;">OT Hours</th>';
+    h += '</tr></thead><tbody>';
+
+    var i = 1;
+    res.data.forEach(function(r){
+        var otVal = (r.otHours || 0);
+        var otDisplay = otVal % 1 === 0 ? otVal.toFixed(0) : otVal.toFixed(2);
+
+        h += '<tr style="border-bottom:1px solid #F1F5F9;">';
+        h += '<td style="padding:9px 10px;color:#94A3B8;font-weight:600;">' + (i++) + '</td>';
+        h += '<td style="padding:9px 10px;color:#0A1628;font-weight:600;">' + r.code + '</td>';
+        h += '<td style="padding:9px 10px;color:#0A1628;font-weight:600;">' + r.employee + '</td>';
+        h += '<td style="padding:9px 10px;"><span style="background:#D7F4EE;color:#118B7B;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;">' + r.present + '</span></td>';
+        h += '<td style="padding:9px 10px;"><span style="background:' + (r.absent > 0 ? '#FEE2E2' : '#F1F5F9') + ';color:' + (r.absent > 0 ? '#B91C1C' : '#64748B') + ';font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;">' + r.absent + '</span></td>';
+        h += '<td style="padding:9px 10px;"><span style="background:' + (r.late > 0 ? '#FEF3C7' : '#F1F5F9') + ';color:' + (r.late > 0 ? '#B45309' : '#64748B') + ';font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;">' + r.late + '</span></td>';
+        h += '<td style="padding:9px 10px;"><span style="background:' + (otVal > 0 ? '#DBEAFE' : '#F1F5F9') + ';color:' + (otVal > 0 ? '#1E40AF' : '#64748B') + ';font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;">' + otDisplay + '</span></td>';
+        h += '</tr>';
+    });
+
+    h += '</tbody></table></div>';
+    document.getElementById("reportContainer").innerHTML = h;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    document.body.classList.add('viewer-page');
+
+    if (IS_ATTENDANCE_SUMMARY) {
+        var now = new Date();
+        var cy = now.getFullYear();
+        var cm = now.getMonth() + 1;
+
+        document.getElementById('filterMonth').value = cm;
+
+        var ySel = document.getElementById('filterYear');
+        var i, y;
+        for (i = -3; i <= 1; i++) {
+            y = cy + i;
+            var o = document.createElement('option');
+            o.value = y;
+            o.textContent = y;
+            if (y === cy) o.selected = true;
+            ySel.appendChild(o);
+        }
+
+        loadFilteredReport();
+    } else {
+        generateRpt();
+    }
+});
+</script>

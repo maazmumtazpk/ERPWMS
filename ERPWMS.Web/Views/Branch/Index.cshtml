@@ -1,0 +1,187 @@
+﻿@{
+    ViewData["Title"] = "Branch Management";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+    <div class="row g-3">
+        <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Branches</p><h2 class="kpi-number" id="kpiTotal">0</h2></div><div class="kpi-icon blue"><i class="bi bi-diagram-3"></i></div></div></div></div>
+        <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Active</p><h2 class="kpi-number" id="kpiActive">0</h2></div><div class="kpi-icon green"><i class="bi bi-check-circle"></i></div></div></div></div>
+        <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Inactive</p><h2 class="kpi-number" id="kpiInactive">0</h2></div><div class="kpi-icon orange"><i class="bi bi-x-circle"></i></div></div></div></div>
+        <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">This Month</p><h2 class="kpi-number" id="kpiMonth">0</h2></div><div class="kpi-icon purple"><i class="bi bi-calendar-plus"></i></div></div></div></div>
+    </div>
+
+    <div class="table-card">
+        <div class="card-header-custom">
+            <h5><i class="bi bi-diagram-3" style="color:#F5A623;"></i> All Branches <span class="badge-count" id="xCount">0</span></h5>
+            <div style="display:flex;gap:4px;align-items:center;">
+                <input type="text" id="tSearch" class="search-input" placeholder="Search..." onkeyup="filterRows()" />
+                <button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+                <button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table-premium" id="xTable">
+                <thead><tr><th>Branch</th><th>Code</th><th>Company</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+                <tbody id="xBody"><tr><td colspan="5" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+            </table>
+            <div id="emptyState" class="empty-state d-none">
+                <i class="bi bi-diagram-3 empty-icon"></i>
+                <h4>No Branches Yet</h4>
+                <button class="btn-gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i> Register Branch</button>
+            </div>
+        </div>
+        <div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> branches</span></div>
+    </div>
+</div>
+
+<div class="modal fade pm-modal" id="addModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-plus-circle"></i> Register New Branch</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="addModalBody"></div></div></div></div>
+<div class="modal fade pm-modal" id="editModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-pencil-square"></i> Edit Branch</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="editModalBody"></div></div></div></div>
+
+@await Html.PartialAsync("_AdminJs")
+
+<script>
+function tk(){var e=document.querySelector("input[name=__RequestVerificationToken]");return e?e.value:"";}
+
+function openAdd(){
+    var el=document.getElementById("addModal");
+    var b=document.getElementById("addModalBody");
+    b.innerHTML="<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";
+    new bootstrap.Modal(el).show();
+    fetch("/Branch/AddBranchPartial").then(function(r){return r.text();}).then(function(h){
+        b.innerHTML=h;
+        b.querySelectorAll("script").forEach(function(s){
+            var n=document.createElement("script");
+            n.textContent=s.textContent;
+            document.body.appendChild(n);
+        });
+    });
+}
+
+function openEdit(id){
+    var el=document.getElementById("editModal");
+    var b=document.getElementById("editModalBody");
+    b.innerHTML="<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";
+    new bootstrap.Modal(el).show();
+    fetch("/Branch/EditBranchPartial?id="+id).then(function(r){return r.text();}).then(function(h){
+        b.innerHTML=h;
+        b.querySelectorAll("script").forEach(function(s){
+            var n=document.createElement("script");
+            n.textContent=s.textContent;
+            document.body.appendChild(n);
+        });
+    });
+}
+
+function toggleBranch(id){
+    if(!confirm("Toggle this branch status?")) return;
+    var fd=new FormData();
+    fd.append("__RequestVerificationToken", tk());
+    fetch("/Branch/ToggleBranchStatus/"+id,{method:"POST",body:fd})
+        .then(function(r){return r.json();})
+        .then(function(res){
+            if(res && res.success){ showToast(res.message||"Updated","success"); reload_(); }
+            else { showToast((res&&res.message)||"Failed","error"); }
+        })
+        .catch(function(e){ showToast("Error: "+e.message,"error"); });
+}
+
+function deleteBranch(id){
+    if(!confirm("Delete this branch?")) return;
+    var fd=new FormData();
+    fd.append("__RequestVerificationToken", tk());
+    fetch("/Branch/DeleteBranchJson/"+id,{method:"POST",body:fd})
+        .then(function(r){return r.json();})
+        .then(function(res){
+            if(res && res.success){ showToast(res.message||"Deleted","success"); reload_(); }
+            else { showToast((res&&res.message)||"Failed","error"); }
+        })
+        .catch(function(e){ showToast("Error: "+e.message,"error"); });
+}
+
+function toggleBranchMenu(id, e){
+    e.stopPropagation();
+    document.querySelectorAll(".act-menu").forEach(function(m){ if(m.id!=="bmenu-"+id) m.classList.remove("show"); });
+    var el=document.getElementById("bmenu-"+id);
+    if(!el) return;
+    if(el.classList.contains("show")){ el.classList.remove("show"); return; }
+    var btn=e.currentTarget||e.target;
+    var rect=btn.getBoundingClientRect();
+    el.style.top=(rect.bottom+4)+"px";
+    el.style.right=(window.innerWidth-rect.right)+"px";
+    el.style.left="auto";
+    el.classList.add("show");
+}
+
+document.addEventListener("click", function(){
+    document.querySelectorAll(".act-menu").forEach(function(m){ m.classList.remove("show"); });
+});
+
+function filterRows(){
+    var f=document.getElementById("tSearch").value.toLowerCase();
+    var rows=document.querySelectorAll("#xBody tr");
+    var n=0;
+    rows.forEach(function(r){
+        var t=(r.textContent||"").toLowerCase();
+        if(t.indexOf(f)>-1){ r.style.display=""; n++; }
+        else { r.style.display="none"; }
+    });
+    document.getElementById("xCount").textContent=n;
+    document.getElementById("tableCount").textContent=n;
+}
+
+function reload_(){
+    fetch("/Branch/GetStatistics").then(function(r){return r.json();}).then(function(d){
+        document.getElementById("kpiTotal").textContent=d.total||0;
+        document.getElementById("kpiActive").textContent=d.active||0;
+        document.getElementById("kpiInactive").textContent=d.inactive||0;
+        document.getElementById("kpiMonth").textContent=d.addedThisMonth||0;
+    }).catch(function(){});
+
+    fetch("/Branch/GetAllBranches").then(function(r){return r.json();}).then(function(d){
+        var body=document.getElementById("xBody");
+        var table=document.getElementById("xTable");
+        var empty=document.getElementById("emptyState");
+        if(!d || d.length===0){
+            body.innerHTML="";
+            table.style.display="none";
+            empty.classList.remove("d-none");
+            document.getElementById("xCount").textContent="0";
+            document.getElementById("tableCount").textContent="0";
+            return;
+        }
+        table.style.display="";
+        empty.classList.add("d-none");
+        var h="";
+        d.forEach(function(b){
+            var st = (b.isActive===true) ? "active" : "inactive";
+            h += "<tr>";
+            h += "<td><div class='row-name'><span class='avatar'><i class='bi bi-diagram-3'></i></span><div>"+(b.branchName||"-")+"</div></div></td>";
+            h += "<td style='font-size:11px;'><span class='badge-status role' style='font-family:monospace;'>"+(b.branchCode||"-")+"</span></td>";
+            h += "<td style='font-size:11px;'>"+(b.companyName||"-")+"</td>";
+            h += "<td><span class='badge-status "+st+"'>"+(b.isActive?"Active":"Inactive")+"</span></td>";
+            h += "<td style='text-align:right;'><div class='act-wrap'>";
+            h += "<button class='btn-icon' onclick='toggleBranchMenu("+b.branchId+",event)' title='Actions'><i class='bi bi-three-dots-vertical'></i></button>";
+            h += "<div class='act-menu' id='bmenu-"+b.branchId+"'>";
+            h += "<a href='/Branch/Profile/"+b.branchId+"'><i class='bi bi-eye'></i> View Profile</a>";
+            h += "<button onclick='openEdit("+b.branchId+")'><i class='bi bi-pencil'></i> Edit</button>";
+            h += "<button onclick='toggleBranch("+b.branchId+")'><i class='bi bi-power'></i> Toggle Status</button>";
+            h += "<div class='sep'></div>";
+            h += "<button class='danger' onclick='deleteBranch("+b.branchId+")'><i class='bi bi-trash3'></i> Delete</button>";
+            h += "</div></div></td>";
+            h += "</tr>";
+        });
+        body.innerHTML=h;
+        document.getElementById("xCount").textContent=d.length;
+        document.getElementById("tableCount").textContent=d.length;
+    }).catch(function(e){
+        document.getElementById("xBody").innerHTML="<tr><td colspan='6' class='text-center py-3 text-danger'>Failed to load: "+e.message+"</td></tr>";
+    });
+}
+
+document.addEventListener("DOMContentLoaded", reload_);
+</script>
+

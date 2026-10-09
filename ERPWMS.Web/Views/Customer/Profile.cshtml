@@ -1,0 +1,55 @@
+@model ERPWMS.Database.Models.Customer
+@{
+    ViewData["Title"] = "Customer Profile";
+    Layout = "_Layout";
+}
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">Customer Profile</h4>
+            <small class="text-muted" style="font-size:11px;">Home / Customers / Profile</small>
+        </div>
+        <a href="/Customer/Index" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+    </div>
+    <div class="table-card" style="margin-top:0;">
+        <div style="padding:18px 22px;background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;">
+                    @(Model.CustomerName.Length > 0 ? Model.CustomerName.Substring(0, Math.Min(2, Model.CustomerName.Length)).ToUpper() : "CU")
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:18px;font-weight:800;">@Model.CustomerName</h3>
+                    <div style="color:rgba(255,255,255,.7);font-size:11px;margin-top:3px;">
+                        <span style="font-family:monospace;">@(Model.CustomerCode ?? "-")</span>
+                        @if (!string.IsNullOrEmpty(Model.ContactPerson)) { <span> � @Model.ContactPerson</span> }
+                    </div>
+                </div>
+            </div>
+            <div>
+                @if ((Model.IsActive == true)) { <span class="badge-status active" style="padding:5px 12px;font-size:10px;">ACTIVE</span> }
+                else { <span class="badge-status inactive" style="padding:5px 12px;font-size:10px;">INACTIVE</span> }
+            </div>
+        </div>
+    </div>
+    <div class="row g-3" style="margin-top:16px;">
+        <div class="col-md-6"><div class="table-card" style="margin-top:0;"><div class="card-header-custom"><h5><i class="bi bi-person-lines-fill" style="color:#F5A623;"></i> Contact Information</h5></div><div style="padding:14px 20px;">
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Contact Person</span><strong>@(Model.ContactPerson ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Phone</span><strong>@(Model.Phone ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Mobile</span><strong>@(Model.Mobile ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Email</span><strong>@(Model.Email ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Website</span><strong>@(Model.Website ?? "-")</strong></div>
+        </div></div></div>
+        <div class="col-md-6"><div class="table-card" style="margin-top:0;"><div class="card-header-custom"><h5><i class="bi bi-geo-alt-fill" style="color:#F5A623;"></i> Address Details</h5></div><div style="padding:14px 20px;">
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Address</span><strong style="text-align:right;max-width:60%;">@(Model.Address ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">City</span><strong>@(Model.City ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Country</span><strong>@(Model.Country ?? "-")</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Postal Code</span><strong>@(Model.PostalCode ?? "-")</strong></div>
+        </div></div></div>
+        <div class="col-md-12"><div class="table-card" style="margin-top:0;"><div class="card-header-custom"><h5><i class="bi bi-file-earmark-text-fill" style="color:#F5A623;"></i> Tax & Business Details</h5></div><div style="padding:14px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+            <div><div style="font-size:10px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.5px;">Tax ID</div><div style="font-size:13px;font-weight:700;color:#0A1628;margin-top:4px;">@(Model.TaxId ?? "-")</div></div>
+            <div><div style="font-size:10px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.5px;">Payment Terms</div><div style="font-size:13px;font-weight:700;color:#0A1628;margin-top:4px;">@(Model.PaymentTerms ?? "-")</div></div>
+            <div><div style="font-size:10px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.5px;">Credit Limit</div><div style="font-size:13px;font-weight:700;color:#0A1628;margin-top:4px;">@(Model.CreditLimit?.ToString("N2") ?? "-")</div></div>
+        </div></div></div>
+    </div>
+</div>

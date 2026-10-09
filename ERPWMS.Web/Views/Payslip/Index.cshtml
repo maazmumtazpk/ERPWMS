@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Payslips";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-file-earmark-text" style="color:#F5A623;"></i> Payslips</h5>
+        <button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+    <div class="card-body">
+        <table class="table-premium" id="xTable">
+            <thead><tr><th>Payslip No</th><th>Employee</th><th>Period</th><th>Gross</th><th>Deductions</th><th>Net Pay</th><th>Generated</th></tr></thead>
+            <tbody id="xBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty-state d-none"><h4>No payslips</h4><p>Approve a payroll run and generate payslips</p></div>
+    </div>
+</div>
+</div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function fmt(n){return (n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");}
+function reload_(){
+    fetch('/Payslip/GetAll').then(function(r){return r.json();}).then(function(d){
+        var b = document.getElementById('xBody');
+        if(!d||d.length===0){ b.innerHTML=''; document.getElementById('xTable').style.display='none'; document.getElementById('emptyState').classList.remove('d-none'); return; }
+        document.getElementById('xTable').style.display=''; document.getElementById('emptyState').classList.add('d-none');
+        var h='';
+        d.forEach(function(x){
+            h += '<tr><td>' + x.payslipNo + '</td><td>' + x.employeeName + ' (' + x.employeeCode + ')</td>';
+            h += '<td>' + x.year + '-' + x.month + '</td>';
+            h += '<td>' + fmt(x.grossPay) + '</td><td>' + fmt(x.totalDeductions) + '</td><td><b>' + fmt(x.netPay) + '</b></td>';
+            h += '<td>' + (x.generatedDate||'-') + '</td></tr>';
+        });
+        b.innerHTML = h;
+    });
+}
+document.addEventListener('DOMContentLoaded', reload_);
+</script>

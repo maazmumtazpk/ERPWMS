@@ -1,0 +1,48 @@
+@model ERPWMS.Database.Models.EmployeePayroll
+@{ Layout = null; }
+<form id="editPayrollForm" method="post" action="/Payroll/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="payrollId" value="@Model.PayrollId" />
+    <div id="editPayrollAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Employee</label>
+            <input type="text" class="form-control form-control-sm" value="@(Model.Employee != null ? (Model.Employee.FirstName + " " + (Model.Employee.LastName ?? "")).Trim() : "-")" readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;" />
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Month</label>
+            <input type="text" class="form-control form-control-sm" value="@Model.MonthYear.ToString("MMM yyyy")" readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Gross Pay (Rs) *</label>
+            <input type="number" name="grossPay" id="editGross" class="form-control form-control-sm" step="0.01" value="@Model.GrossPay" required readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;font-weight:700;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Deductions (Rs)</label>
+            <input type="number" name="totalDeductions" id="editDed" class="form-control form-control-sm" step="0.01" value="@(Model.TotalDeductions ?? 0)" readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Net Pay (Rs) *</label>
+            <input type="number" name="netPay" id="editNet" class="form-control form-control-sm" step="0.01" value="@Model.NetPay" required readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f0fdf4;font-weight:700;color:#059669;" />
+        </div>
+        <div class="col-md-12">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Status</label>
+            <select name="status" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;">
+                <option value="Pending" selected="@(Model.Status=="Pending")">Pending</option>
+                <option value="Approved" selected="@(Model.Status=="Approved")">Approved</option>
+                <option value="Paid" selected="@(Model.Status=="Paid")">Paid</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="background:#F8FAFC;padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:#64748B;border-left:3px solid #F5A623;">
+        <i class="bi bi-info-circle"></i> Net Pay = Gross Pay - Deductions (auto-calculated)
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:11px;padding:6px 16px;border-radius:6px;">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;font-size:11px;padding:6px 16px;border-radius:6px;border:none;">Update</button>
+    </div>
+</form>
+

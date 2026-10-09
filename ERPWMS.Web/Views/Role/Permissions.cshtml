@@ -1,0 +1,593 @@
+@model IEnumerable<ERPWMS.Database.Models.Module>
+
+@{
+    ViewData["Title"] = "Role Permissions";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+
+var roleId = ViewBag.RoleId;
+    var roleName = ViewBag.RoleName as string ?? "Role";
+
+    var permissions =
+        ViewBag.Permissions as IEnumerable<ERPWMS.Database.Models.ModulePermission>
+        ?? Enumerable.Empty<ERPWMS.Database.Models.ModulePermission>();
+
+
+}
+
+<div class="container-fluid py-4">
+
+    
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-key"></i>
+                Role Permissions
+            </h2>
+
+            <p class="text-muted mb-0">
+                Manage permissions for role:
+                <strong>@roleName</strong>
+            </p>
+        </div>
+
+        <a asp-action="Index"
+               class="btn btn-outline-secondary">
+
+            <i class="bi bi-arrow-left"></i>
+            Back to Roles
+
+        </a>
+
+    </div>
+
+
+    <!-- SUCCESS MESSAGE -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+
+            <i class="bi bi-check-circle"></i>
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    <!-- ERROR MESSAGE -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+
+            <i class="bi bi-exclamation-triangle"></i>
+            @TempData["Error"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    <!-- ROLE INFORMATION -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <small class="text-muted">
+                        Role
+                    </small>
+
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-lock"></i>
+                        @roleName
+                    </h5>
+
+                </div>
+
+                <div class="col-md-6 text-md-end">
+
+                    <small class="text-muted">
+                        Total Modules
+                    </small>
+
+                    <h5 class="mb-0">
+                        @(Model?.Count() ?? 0)
+                    </h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PERMISSIONS -->
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check"></i>
+                    Module Permissions
+                </h5>
+
+                <div>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            onclick="selectAllPermissions()">
+
+                        Select All
+
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            onclick="clearAllPermissions()">
+
+                        Clear All
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            @if (Model == null || !Model.Any())
+            {
+                <div class="text-center py-5">
+
+                    <i class="bi bi-folder-x"
+                           style="font-size:3rem;">
+                    </i>
+
+                    <h5 class="mt-3">
+                        No modules found
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        No active modules are available for permissions.
+                    </p>
+
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>
+                                    Module
+                                </th>
+
+                                <th class="text-center">
+                                    View
+                                </th>
+
+                                <th class="text-center">
+                                    Create
+                                </th>
+
+                                <th class="text-center">
+                                    Edit
+                                </th>
+
+                                <th class="text-center">
+                                    Delete
+                                </th>
+
+                                <th class="text-center">
+                                    Approve
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (var module in Model)
+                            {
+                                var modulePermission =
+                                    permissions.FirstOrDefault(
+                                        p => p.ModuleId == module.ModuleId);
+
+                                var canView =
+                                    modulePermission?.CanView == true;
+
+                                var canCreate =
+                                    modulePermission?.CanCreate == true;
+
+                                var canEdit =
+                                    modulePermission?.CanEdit == true;
+
+                                var canDelete =
+                                    modulePermission?.CanDelete == true;
+
+                                var canApprove =
+                                    modulePermission?.CanApprove == true;
+
+
+                                <tr>
+
+                                    <!-- MODULE -->
+                                    <td>
+
+                                        <strong>
+                                            @module.ModuleName
+                                        </strong>
+
+                                        @if (!string.IsNullOrWhiteSpace(module.ModuleCode))
+                                        {
+                                            <br />
+
+                                            <small class="text-muted">
+                                                @module.ModuleCode
+                                            </small>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- VIEW -->
+                                    <td class="text-center">
+
+                                        <form asp-action="UpdatePermissions"
+                                              method="post"
+                                              class="permission-form">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="RoleId"
+                                                   value="@roleId" />
+
+                                            <input type="hidden"
+                                                   name="ModuleId"
+                                                   value="@module.ModuleId" />
+
+                                            <input type="hidden"
+                                                   name="CanView"
+                                                   value="true" />
+
+                                            <input type="hidden"
+                                                   name="CanCreate"
+                                                   value="@canCreate.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanEdit"
+                                                   value="@canEdit.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanDelete"
+                                                   value="@canDelete.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanApprove"
+                                                   value="@canApprove.ToString().ToLower()" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm @(canView ? "btn-success" : "btn-outline-secondary")">
+
+                                                <i class="bi @(canView ? "bi-check-lg" : "bi-x-lg")"></i>
+
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+
+                                    <!-- CREATE -->
+                                    <td class="text-center">
+
+                                        <form asp-action="UpdatePermissions"
+                                              method="post"
+                                              class="permission-form">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="RoleId"
+                                                   value="@roleId" />
+
+                                            <input type="hidden"
+                                                   name="ModuleId"
+                                                   value="@module.ModuleId" />
+
+                                            <input type="hidden"
+                                                   name="CanView"
+                                                   value="@canView.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanCreate"
+                                                   value="true" />
+
+                                            <input type="hidden"
+                                                   name="CanEdit"
+                                                   value="@canEdit.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanDelete"
+                                                   value="@canDelete.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanApprove"
+                                                   value="@canApprove.ToString().ToLower()" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm @(canCreate ? "btn-success" : "btn-outline-secondary")">
+
+                                                <i class="bi @(canCreate ? "bi-check-lg" : "bi-x-lg")"></i>
+
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+
+                                    <!-- EDIT -->
+                                    <td class="text-center">
+
+                                        <form asp-action="UpdatePermissions"
+                                              method="post"
+                                              class="permission-form">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="RoleId"
+                                                   value="@roleId" />
+
+                                            <input type="hidden"
+                                                   name="ModuleId"
+                                                   value="@module.ModuleId" />
+
+                                            <input type="hidden"
+                                                   name="CanView"
+                                                   value="@canView.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanCreate"
+                                                   value="@canCreate.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanEdit"
+                                                   value="true" />
+
+                                            <input type="hidden"
+                                                   name="CanDelete"
+                                                   value="@canDelete.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanApprove"
+                                                   value="@canApprove.ToString().ToLower()" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm @(canEdit ? "btn-success" : "btn-outline-secondary")">
+
+                                                <i class="bi @(canEdit ? "bi-check-lg" : "bi-x-lg")"></i>
+
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+
+                                    <!-- DELETE -->
+                                    <td class="text-center">
+
+                                        <form asp-action="UpdatePermissions"
+                                              method="post"
+                                              class="permission-form">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="RoleId"
+                                                   value="@roleId" />
+
+                                            <input type="hidden"
+                                                   name="ModuleId"
+                                                   value="@module.ModuleId" />
+
+                                            <input type="hidden"
+                                                   name="CanView"
+                                                   value="@canView.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanCreate"
+                                                   value="@canCreate.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanEdit"
+                                                   value="@canEdit.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanDelete"
+                                                   value="true" />
+
+                                            <input type="hidden"
+                                                   name="CanApprove"
+                                                   value="@canApprove.ToString().ToLower()" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm @(canDelete ? "btn-success" : "btn-outline-secondary")">
+
+                                                <i class="bi @(canDelete ? "bi-check-lg" : "bi-x-lg")"></i>
+
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+
+                                    <!-- APPROVE -->
+                                    <td class="text-center">
+
+                                        <form asp-action="UpdatePermissions"
+                                              method="post"
+                                              class="permission-form">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="RoleId"
+                                                   value="@roleId" />
+
+                                            <input type="hidden"
+                                                   name="ModuleId"
+                                                   value="@module.ModuleId" />
+
+                                            <input type="hidden"
+                                                   name="CanView"
+                                                   value="@canView.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanCreate"
+                                                   value="@canCreate.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanEdit"
+                                                   value="@canEdit.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanDelete"
+                                                   value="@canDelete.ToString().ToLower()" />
+
+                                            <input type="hidden"
+                                                   name="CanApprove"
+                                                   value="true" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm @(canApprove ? "btn-success" : "btn-outline-secondary")">
+
+                                                <i class="bi @(canApprove ? "bi-check-lg" : "bi-x-lg")"></i>
+
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+    ```
+
+</div>
+
+<script>
+
+    function selectAllPermissions() {
+
+        const forms =
+            document.querySelectorAll(
+                '.permission-form'
+            );
+
+        forms.forEach(function (form) {
+
+            const inputs =
+                form.querySelectorAll(
+                    'input[type="hidden"]'
+                );
+
+            inputs.forEach(function (input) {
+
+                if (
+                    input.name === 'CanView' ||
+                    input.name === 'CanCreate' ||
+                    input.name === 'CanEdit' ||
+                    input.name === 'CanDelete' ||
+                    input.name === 'CanApprove'
+                ) {
+                    input.value = 'true';
+                }
+
+            });
+
+        });
+
+        alert('All permissions selected. Click any permission button to save.');
+    }
+
+
+    function clearAllPermissions() {
+
+        const forms =
+            document.querySelectorAll(
+                '.permission-form'
+            );
+
+        forms.forEach(function (form) {
+
+            const inputs =
+                form.querySelectorAll(
+                    'input[type="hidden"]'
+                );
+
+            inputs.forEach(function (input) {
+
+                if (
+                    input.name === 'CanView' ||
+                    input.name === 'CanCreate' ||
+                    input.name === 'CanEdit' ||
+                    input.name === 'CanDelete' ||
+                    input.name === 'CanApprove'
+                ) {
+                    input.value = 'false';
+                }
+
+            });
+
+        });
+
+        alert('All permissions cleared. Click any permission button to save.');
+    }
+
+</script>

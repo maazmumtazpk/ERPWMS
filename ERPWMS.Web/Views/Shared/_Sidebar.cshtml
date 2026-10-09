@@ -1,0 +1,243 @@
+﻿@*
+    WMS Enterprise — Professional Sidebar
+    Include in _Layout.cshtml:  @await Html.PartialAsync("_Sidebar")
+*@
+
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var act = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    Func<string, string> IsOpen = (c) => string.Equals(ctrl, c, System.StringComparison.OrdinalIgnoreCase) ? "open" : "";
+    Func<string, string> IsActive = (c) => string.Equals(ctrl, c, System.StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    Func<string[], string> IsGroupActive = (list) => list.Any(x => string.Equals(ctrl, x, System.StringComparison.OrdinalIgnoreCase)) ? "open has-active" : "";
+}
+
+<aside class="wms-sidebar" id="wmsSidebar">
+    <div class="wms-logo">
+        <div class="wms-logo-box">W</div>
+        <div class="wms-logo-text"><span>WMS</span><small>Enterprise</small></div>
+    </div>
+    <nav class="wms-menu">
+        <a href="/Dashboard" class="wms-item @IsActive("Dashboard")"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
+
+        <!-- Organization -->
+        <div class="wms-group @IsGroupActive(new[]{"Company","Branch","Department","Designation"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-diagram-2-fill"></i><span>Organization</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Company" class="wms-sub @IsActive("Company")"><i class="bi bi-building"></i><span>Companies</span></a>
+                <a href="/Branch" class="wms-sub @IsActive("Branch")"><i class="bi bi-signpost-split"></i><span>Branches</span></a>
+                <a href="/Department" class="wms-sub @IsActive("Department")"><i class="bi bi-diagram-3"></i><span>Departments</span></a>
+                <a href="/Designation" class="wms-sub @IsActive("Designation")"><i class="bi bi-person-badge"></i><span>Designations</span></a>
+            </div>
+        </div>
+
+        <!-- Warehouse Setup -->
+        <div class="wms-group @IsGroupActive(new[]{"Warehouse","Zone","Rack","Bin"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-box-seam-fill"></i><span>Warehouse Setup</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Warehouse" class="wms-sub @IsActive("Warehouse")"><i class="bi bi-building-fill"></i><span>Warehouses</span></a>
+                <a href="/Zone" class="wms-sub @IsActive("Zone")"><i class="bi bi-bounding-box"></i><span>Zones</span></a>
+                <a href="/Rack" class="wms-sub @IsActive("Rack")"><i class="bi bi-stack"></i><span>Racks</span></a>
+                <a href="/Bin" class="wms-sub @IsActive("Bin")"><i class="bi bi-archive"></i><span>Bins</span></a>
+            </div>
+        </div>
+
+        <!-- Trade Partners -->
+        <div class="wms-group @IsGroupActive(new[]{"Customer","Supplier","CustomerComplaint","CustomerFeedback","CustomerInquiry"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-people-fill"></i><span>Trade Partners</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Customer" class="wms-sub @IsActive("Customer")"><i class="bi bi-person-badge-fill"></i><span>Customers</span></a>
+                <a href="/Supplier" class="wms-sub @IsActive("Supplier")"><i class="bi bi-truck"></i><span>Suppliers</span></a>
+                <a href="/CustomerComplaint" class="wms-sub @IsActive("CustomerComplaint")"><i class="bi bi-exclamation-circle"></i><span>Complaints</span></a>
+                <a href="/CustomerFeedback" class="wms-sub @IsActive("CustomerFeedback")"><i class="bi bi-star"></i><span>Feedback</span></a>
+                <a href="/CustomerInquiry" class="wms-sub @IsActive("CustomerInquiry")"><i class="bi bi-question-circle"></i><span>Inquiries</span></a>
+            </div>
+        </div>
+
+        <!-- Product Catalog -->
+        <div class="wms-group @IsGroupActive(new[]{"Category","SubCategory","Product","Brand","Unit"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-boxes"></i><span>Product Catalog</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Category" class="wms-sub @IsActive("Category")"><i class="bi bi-tags-fill"></i><span>Categories</span></a>
+                <a href="/SubCategory" class="wms-sub @IsActive("SubCategory")"><i class="bi bi-tags"></i><span>Sub Categories</span></a>
+                <a href="/Brand" class="wms-sub @IsActive("Brand")"><i class="bi bi-award"></i><span>Brands</span></a>
+                <a href="/Unit" class="wms-sub @IsActive("Unit")"><i class="bi bi-rulers"></i><span>Units</span></a>
+                <a href="/Product" class="wms-sub @IsActive("Product")"><i class="bi bi-box-fill"></i><span>Products</span></a>
+            </div>
+        </div>
+
+        <!-- Procurement -->
+        <div class="wms-group @IsGroupActive(new[]{"Purchase","GRN","PurchaseReturn"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-cart-fill"></i><span>Procurement</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/PurchaseMaster" class="wms-sub @IsActive("Purchase")"><i class="bi bi-file-earmark-text"></i><span>Purchase Orders</span></a>
+                <a href="/GRN" class="wms-sub @IsActive("GRN")"><i class="bi bi-clipboard-check"></i><span>Goods Receipt (GRN)</span></a>
+                <a href="/PurchaseReturn" class="wms-sub @IsActive("PurchaseReturn")"><i class="bi bi-arrow-return-left"></i><span>Purchase Returns</span></a>
+            </div>
+        </div>
+
+        <!-- Sales -->
+        <div class="wms-group @IsGroupActive(new[]{"Sales","Invoice","Dispatch","PickingList","Picking","SalesReturn"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-cash-coin"></i><span>Sales</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Sales" class="wms-sub @IsActive("Sales")"><i class="bi bi-receipt"></i><span>Sales Orders</span></a>
+                <a href="/Invoice" class="wms-sub @IsActive("Invoice")"><i class="bi bi-file-text"></i><span>Invoices</span></a>
+                <a href="/Dispatch" class="wms-sub @IsActive("Dispatch")"><i class="bi bi-truck"></i><span>Dispatch</span></a>
+                <a href="/PickingList" class="wms-sub @IsActive("PickingList")"><i class="bi bi-list-check"></i><span>Picking Lists</span></a>
+                <a href="/Picking" class="wms-sub @IsActive("Picking")"><i class="bi bi-box-seam"></i><span>Picking</span></a>
+                <a href="/SalesReturn" class="wms-sub @IsActive("SalesReturn")"><i class="bi bi-arrow-return-left"></i><span>Sales Returns</span></a>
+            </div>
+        </div>
+
+        <!-- Inventory -->
+        <div class="wms-group @IsGroupActive(new[]{"StockLedger","StockAdjustment","StockTransfer","CycleCount","Adjustment","BatchTracking","SerialNumber","Transfer"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-archive-fill"></i><span>Inventory</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/StockLedger" class="wms-sub @IsActive("StockLedger")"><i class="bi bi-journal-text"></i><span>Stock Ledger</span></a>
+                <a href="/StockAdjustment" class="wms-sub @IsActive("StockAdjustment")"><i class="bi bi-sliders"></i><span>Adjustments</span></a>
+                <a href="/StockTransfer" class="wms-sub @IsActive("StockTransfer")"><i class="bi bi-arrow-left-right"></i><span>Transfers</span></a>
+                <a href="/CycleCount" class="wms-sub @IsActive("CycleCount")"><i class="bi bi-arrow-repeat"></i><span>Cycle Count</span></a>
+                <a href="/Adjustment" class="wms-sub @IsActive("Adjustment")"><i class="bi bi-sliders"></i><span>Adjustment</span></a>
+                <a href="/BatchTracking" class="wms-sub @IsActive("BatchTracking")"><i class="bi bi-upc-scan"></i><span>Batch Tracking</span></a>
+                <a href="/SerialNumber" class="wms-sub @IsActive("SerialNumber")"><i class="bi bi-hash"></i><span>Serial Numbers</span></a>
+                <a href="/Transfer" class="wms-sub @IsActive("Transfer")"><i class="bi bi-arrow-left-right"></i><span>Transfer</span></a>
+            </div>
+        </div>
+
+        <!-- Finance -->
+        <div class="wms-group @IsGroupActive(new[]{"ChartOfAccount","JournalVoucher","PaymentVoucher","ReceiptVoucher","BankAccount","BankReconciliation","TaxSetting"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-wallet2"></i><span>Finance</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/ChartOfAccount" class="wms-sub @IsActive("ChartOfAccount")"><i class="bi bi-diagram-2"></i><span>Chart of Accounts</span></a>
+                <a href="/JournalVoucher" class="wms-sub @IsActive("JournalVoucher")"><i class="bi bi-journal"></i><span>Journal Vouchers</span></a>
+                <a href="/PaymentVoucher" class="wms-sub @IsActive("PaymentVoucher")"><i class="bi bi-cash-stack"></i><span>Payment Vouchers</span></a>
+                <a href="/ReceiptVoucher" class="wms-sub @IsActive("ReceiptVoucher")"><i class="bi bi-receipt-cutoff"></i><span>Receipt Vouchers</span></a>
+                <a href="/BankAccount" class="wms-sub @IsActive("BankAccount")"><i class="bi bi-bank"></i><span>Bank Accounts</span></a>
+                <a href="/BankReconciliation" class="wms-sub @IsActive("BankReconciliation")"><i class="bi bi-check2-square"></i><span>Bank Reconciliation</span></a>
+                <a href="/TaxSetting" class="wms-sub @IsActive("TaxSetting")"><i class="bi bi-percent"></i><span>Tax Settings</span></a>
+            </div>
+        </div>
+
+        <!-- HR Master -->
+        <div class="wms-group @IsGroupActive(new[]{"Employee","Shift","ShiftAssignment","Holiday","WeeklyOff","EmployeeSalary","EmployeeBankAccount"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-people-fill"></i><span>HR Master</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Employee" class="wms-sub @IsActive("Employee")"><i class="bi bi-person-vcard"></i><span>Employees</span></a>
+                <a href="/Shift" class="wms-sub @IsActive("Shift")"><i class="bi bi-clock"></i><span>Shifts</span></a>
+                <a href="/ShiftAssignment" class="wms-sub @IsActive("ShiftAssignment")"><i class="bi bi-person-badge"></i><span>Shift Assignment</span></a>
+                <a href="/WeeklyOff" class="wms-sub @IsActive("WeeklyOff")"><i class="bi bi-calendar-week"></i><span>Weekly Off</span></a>
+                <a href="/Holiday" class="wms-sub @IsActive("Holiday")"><i class="bi bi-calendar-event"></i><span>Holiday Calendar</span></a>
+                <a href="/EmployeeSalary" class="wms-sub @IsActive("EmployeeSalary")"><i class="bi bi-cash-stack"></i><span>Employee Salaries</span></a>
+                <a href="/EmployeeBankAccount" class="wms-sub @IsActive("EmployeeBankAccount")"><i class="bi bi-bank"></i><span>Bank Accounts</span></a>
+            </div>
+        </div>
+
+        <!-- HR Transactions -->
+        <div class="wms-group @IsGroupActive(new[]{"AttendanceProcessor","Attendance","LeaveType","LeaveRequest","Leave","Overtime","MissingPunch","Absence","AttendanceCorrection"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-calendar-check-fill"></i><span>HR Transactions</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/AttendanceProcessor" class="wms-sub @IsActive("AttendanceProcessor")"><i class="bi bi-fingerprint"></i><span>Attendance (Punch)</span></a>
+                <a href="/Attendance" class="wms-sub @IsActive("Attendance")"><i class="bi bi-calendar-check"></i><span>Attendance Records</span></a>
+                <a href="/MissingPunch" class="wms-sub @IsActive("MissingPunch")"><i class="bi bi-exclamation-triangle"></i><span>Missing Punch</span></a>
+                <a href="/AttendanceCorrection" class="wms-sub @IsActive("AttendanceCorrection")"><i class="bi bi-pencil-square"></i><span>Corrections</span></a>
+                <a href="/Absence" class="wms-sub @IsActive("Absence")"><i class="bi bi-x-circle"></i><span>Absence</span></a>
+                <a href="/LeaveType" class="wms-sub @IsActive("LeaveType")"><i class="bi bi-tags"></i><span>Leave Types</span></a>
+                <a href="/LeaveRequest" class="wms-sub @IsActive("LeaveRequest")"><i class="bi bi-calendar-x"></i><span>Leave Requests</span></a>                <a href="/Overtime" class="wms-sub @IsActive("Overtime")"><i class="bi bi-clock-history"></i><span>Overtime</span></a>
+                <a href="/Loan" class="wms-sub @IsActive("Loan")"><i class="bi bi-cash"></i><span>Loans</span></a>
+                <a href="/Bonus" class="wms-sub @IsActive("Bonus")"><i class="bi bi-gift"></i><span>Bonuses</span></a>
+            </div>
+        </div>
+
+        <!-- Payroll -->
+        <div class="wms-group @IsGroupActive(new[]{"Payroll","PayrollSetting","PayrollRun","Payslip","PayrollPayment","PayrollDashboard","PayrollReports","SalaryComponent","SalaryStructure","PayrollReports"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-cash-coin"></i><span>Payroll</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/PayrollDashboard" class="wms-sub @IsActive("PayrollDashboard")"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+                <a href="/PayrollSetting" class="wms-sub @IsActive("PayrollSetting")"><i class="bi bi-gear"></i><span>Settings</span></a>
+                <a href="/SalaryComponent" class="wms-sub @IsActive("SalaryComponent")"><i class="bi bi-list-check"></i><span>Components</span></a>
+                <a href="/SalaryStructure" class="wms-sub @IsActive("SalaryStructure")"><i class="bi bi-diagram-3"></i><span>Structures</span></a>
+                <a href="/PayrollRun" class="wms-sub @IsActive("PayrollRun")"><i class="bi bi-calculator"></i><span>Run Payroll</span></a>
+                <a href="/Payslip" class="wms-sub @IsActive("Payslip")"><i class="bi bi-file-earmark-text"></i><span>Payslips</span></a>
+                <a href="/PayrollPayment" class="wms-sub @IsActive("PayrollPayment")"><i class="bi bi-credit-card"></i><span>Payments</span></a>
+                <a href="/PayrollReports" class="wms-sub @IsActive("PayrollReports")"><i class="bi bi-bar-chart"></i><span>Reports</span></a>            </div>
+        </div>
+
+        <!-- Workflow -->
+        <div class="wms-group @IsGroupActive(new[]{"WorkflowDefinition","WorkflowStage","WorkflowTransition","WorkflowCondition","WorkflowAssignment","WorkflowDeadline","WorkflowInstance","WorkflowInstanceLog","WorkflowDashboard"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-diagram-3-fill"></i><span>Workflow</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/WorkflowDashboard" class="wms-sub @IsActive("WorkflowDashboard")"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+                <a href="/WorkflowDefinition" class="wms-sub @IsActive("WorkflowDefinition")"><i class="bi bi-diagram-3"></i><span>Definitions</span></a>
+                <a href="/WorkflowStage" class="wms-sub @IsActive("WorkflowStage")"><i class="bi bi-list-ol"></i><span>Stages</span></a>
+                <a href="/WorkflowTransition" class="wms-sub @IsActive("WorkflowTransition")"><i class="bi bi-arrow-left-right"></i><span>Transitions</span></a>
+                <a href="/WorkflowCondition" class="wms-sub @IsActive("WorkflowCondition")"><i class="bi bi-funnel"></i><span>Conditions</span></a>
+                <a href="/WorkflowAssignment" class="wms-sub @IsActive("WorkflowAssignment")"><i class="bi bi-person-check"></i><span>Assignments</span></a>
+                <a href="/WorkflowDeadline" class="wms-sub @IsActive("WorkflowDeadline")"><i class="bi bi-hourglass-split"></i><span>Deadlines</span></a>
+                <a href="/WorkflowInstance" class="wms-sub @IsActive("WorkflowInstance")"><i class="bi bi-play-circle"></i><span>Instances</span></a>
+                <a href="/WorkflowInstanceLog" class="wms-sub @IsActive("WorkflowInstanceLog")"><i class="bi bi-journal-text"></i><span>Instance Logs</span></a>
+            </div>
+        </div>
+
+        <!-- Administration -->
+        <div class="wms-group @IsGroupActive(new[]{"User","Role","SystemSetting","SystemAdminDashboard","UserProfile"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-shield-lock-fill"></i><span>Administration</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/SystemAdminDashboard" class="wms-sub @IsActive("SystemAdminDashboard")"><i class="bi bi-shield-check"></i><span>Admin Dashboard</span></a>
+                <a href="/User" class="wms-sub @IsActive("User")"><i class="bi bi-people-fill"></i><span>Users</span></a>
+                <a href="/UserProfile" class="wms-sub @IsActive("UserProfile")"><i class="bi bi-person-badge"></i><span>User Profile</span></a>
+                <a href="/Role" class="wms-sub @IsActive("Role")"><i class="bi bi-shield-lock"></i><span>Roles</span></a>
+                <a href="/SystemSetting" class="wms-sub @IsActive("SystemSetting")"><i class="bi bi-gear-fill"></i><span>System Settings</span></a>
+                <a href="/Reports" class="wms-sub @IsActive("Reports")"><i class="bi bi-file-earmark-bar-graph"></i><span>Reports</span></a>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="wms-group @IsGroupActive(new[]{"Notification","NotificationTemplate"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-bell-fill"></i><span>Notifications</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Notification" class="wms-sub @IsActive("Notification")"><i class="bi bi-envelope-fill"></i><span>My Notifications</span></a>
+                <a href="/NotificationTemplate" class="wms-sub @IsActive("NotificationTemplate")"><i class="bi bi-file-earmark-text"></i><span>Templates</span></a>
+            </div>
+        </div>
+
+        <!-- System -->
+        <div class="wms-group @IsGroupActive(new[]{"Backup"})">
+            <div class="wms-group-head" onclick="wmsToggle(this)"><i class="bi bi-hdd-stack-fill"></i><span>System</span><i class="bi bi-chevron-down wms-chev"></i></div>
+            <div class="wms-group-body">
+                <a href="/Backup" class="wms-sub @IsActive("Backup")"><i class="bi bi-database-fill-gear"></i><span>Database Backups</span></a>
+            </div>
+        </div>
+    </nav>
+</aside>
+
+<style>
+.wms-sidebar{position:fixed;left:0;top:0;bottom:0;width:250px;background:#0A1628;z-index:1050;display:flex;flex-direction:column;box-shadow:2px 0 12px rgba(0,0,0,.15);transition:transform .25s ease;}
+.wms-sidebar::-webkit-scrollbar{width:5px;}.wms-sidebar::-webkit-scrollbar-thumb{background:#1e293b;border-radius:3px;}
+.wms-logo{display:flex;align-items:center;gap:12px;padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
+.wms-logo-box{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 4px 12px rgba(245,166,35,.35);flex-shrink:0;}
+.wms-logo-text{display:flex;flex-direction:column;line-height:1.1;}.wms-logo-text span{color:#fff;font-size:15px;font-weight:800;letter-spacing:.3px;}.wms-logo-text small{color:#F5A623;font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;}
+.wms-menu{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 8px 30px;}
+.wms-item{display:flex;align-items:center;gap:11px;padding:10px 14px;color:#94A3B8;text-decoration:none;font-size:12.5px;font-weight:600;border-radius:8px;margin:1px 0;transition:all .15s;position:relative;}
+.wms-item:hover{background:rgba(245,166,35,.08);color:#F5A623;}.wms-item.active{background:rgba(245,166,35,.15);color:#F5A623;}
+.wms-item.active::before{content:"";position:absolute;left:0;top:20%;bottom:20%;width:3px;background:#F5A623;border-radius:0 3px 3px 0;}
+.wms-item i:first-child{width:18px;text-align:center;font-size:14px;flex-shrink:0;}
+.wms-group{margin:1px 0;}.wms-group-head{display:flex;align-items:center;gap:11px;padding:10px 14px;color:#94A3B8;font-size:12.5px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .15s;user-select:none;position:relative;}
+.wms-group-head:hover{background:rgba(245,166,35,.08);color:#F5A623;}.wms-group-head i:first-child{width:18px;text-align:center;font-size:14px;flex-shrink:0;}.wms-group-head span{flex:1;}
+.wms-chev{font-size:11px!important;width:auto!important;transition:transform .2s;opacity:.6;}.wms-group.open > .wms-group-head > .wms-chev{transform:rotate(180deg);}
+.wms-group.has-active > .wms-group-head{background:linear-gradient(90deg,rgba(245,166,35,.22),rgba(245,166,35,.08));color:#F5A623;box-shadow:inset 3px 0 0 #F5A623;}
+.wms-group-body{max-height:0;overflow:hidden;transition:max-height .3s ease;padding-left:8px;}.wms-group.open > .wms-group-body{max-height:600px;}
+.wms-sub{display:flex;align-items:center;gap:10px;padding:8px 14px 8px 20px;color:#94A3B8;text-decoration:none;font-size:12px;font-weight:500;border-radius:7px;margin:1px 0;transition:all .15s;position:relative;}
+.wms-sub::before{content:"";position:absolute;left:11px;top:50%;width:5px;height:5px;border-radius:50%;background:#334155;transform:translateY(-50%);transition:background .15s;}
+.wms-sub i{width:16px;text-align:center;font-size:12.5px;flex-shrink:0;margin-left:8px;}
+.wms-sub:hover{background:rgba(255,255,255,.04);color:#E2E8F0;}.wms-sub:hover::before{background:#F5A623;}
+.wms-sub.active{background:rgba(245,166,35,.15);color:#F5A623;font-weight:700;}.wms-sub.active::before{background:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.2);}
+body{background:#F1F5F9;}.wms-main{margin-left:250px;min-height:100vh;transition:margin-left .25s;}
+@@media (max-width:991px){.wms-sidebar{transform:translateX(-100%);}.wms-sidebar.show{transform:translateX(0);}.wms-main{margin-left:0;}.wms-mobile-toggle{display:flex!important;}}
+.wms-mobile-toggle{display:none;position:fixed;top:14px;left:14px;width:42px;height:42px;border-radius:10px;background:#0A1628;color:#F5A623;border:none;font-size:18px;align-items:center;justify-content:center;z-index:1060;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.wms-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1049;}@@media (max-width:991px){.wms-overlay.show{display:block;}}
+</style>
+
+<script>
+function wmsToggle(el){var g=el.closest('.wms-group');if(!g)return;g.classList.toggle('open');}
+function wmsMobileToggle(){document.getElementById('wmsSidebar').classList.toggle('show');document.querySelector('.wms-overlay').classList.toggle('show');}
+document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.wms-group.has-active').forEach(function(g){g.classList.add('open');});});
+</script>

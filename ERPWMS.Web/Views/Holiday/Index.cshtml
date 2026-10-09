@@ -1,0 +1,176 @@
+﻿@{
+    ViewData["Title"] = "Holiday Calendar";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+
+<div class="row g-3">
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Holidays</p><h2 class="kpi-number" id="kpiTotal">0</h2></div><div class="kpi-icon blue"><i class="bi bi-calendar-event"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Paid</p><h2 class="kpi-number" id="kpiPaid">0</h2></div><div class="kpi-icon green"><i class="bi bi-check-circle"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Upcoming</p><h2 class="kpi-number" id="kpiUpcoming">0</h2></div><div class="kpi-icon purple"><i class="bi bi-hourglass-split"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Year</p><h2 class="kpi-number" id="kpiYear">-</h2></div><div class="kpi-icon orange"><i class="bi bi-calendar3"></i></div></div></div></div>
+</div>
+
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-calendar-event" style="color:#F5A623;"></i> Holidays <span class="badge-count" id="xCount">0</span></h5>
+        <div style="display:flex;gap:6px;align-items:center;">
+            <select id="yearFilter" class="form-control" style="width:110px;" onchange="reload_()">
+            </select>
+            <button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+            <button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table-premium" id="xTable">
+            <thead><tr><th>Holiday</th><th>Date</th><th>Day</th><th>Type</th><th>Paid</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="xBody"><tr><td colspan="7" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+        </table>
+        <div id="emptyState" class="empty-state d-none"><i class="bi bi-calendar-x empty-icon"></i><h4>No Holidays</h4><button class="btn-gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i> Add Holiday</button></div>
+    </div>
+    <div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> holidays</span></div>
+</div>
+</div>
+
+<div class="modal fade pm-modal" id="formModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 id="modalTitle"><i class="bi bi-calendar-plus"></i> Add Holiday</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+
+<form id="holidayForm">
+<input type="hidden" id="holidayId" value="0" />
+<div class="row g-3">
+<div class="col-md-12"><label class="form-label">Holiday Name <span class="text-danger">*</span></label><input type="text" id="holidayName" class="form-control" maxlength="200" /></div>
+<div class="col-md-6"><label class="form-label">Date <span class="text-danger">*</span></label><input type="date" id="holidayDate" class="form-control" /></div>
+<div class="col-md-6"><label class="form-label">Type</label><select id="holidayType" class="form-control"><option value="Public">Public</option><option value="Religious">Religious</option><option value="National">National</option><option value="Company">Company</option></select></div>
+<div class="col-md-6"><label class="form-label">Scope</label><select id="scope" class="form-control"><option value="All">All (Company-wide)</option><option value="Branch">Specific Branch</option></select></div>
+<div class="col-md-6"><label class="form-label">Status</label><div class="form-check form-switch" style="padding-top:6px;"><input class="form-check-input" type="checkbox" id="isActive" checked /><label class="form-check-label" for="isActive">Active</label></div></div>
+<div class="col-md-6"><label class="form-label">Paid Holiday?</label><div class="form-check form-switch" style="padding-top:6px;"><input class="form-check-input" type="checkbox" id="isPaid" checked /><label class="form-check-label" for="isPaid">Yes (no salary deduction)</label></div></div>
+<div class="col-md-6"><label class="form-label">Recurring Yearly?</label><div class="form-check form-switch" style="padding-top:6px;"><input class="form-check-input" type="checkbox" id="isRecurring" /><label class="form-check-label" for="isRecurring">Yes (auto-repeat)</label></div></div>
+<div class="col-12"><label class="form-label">Description</label><textarea id="description" class="form-control" rows="2" maxlength="500"></textarea></div>
+</div>
+</form>
+
+</div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn-gold" onclick="saveHoliday()"><i class="bi bi-check-circle"></i> Save</button></div></div></div></div>
+
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+
+(function initYears(){
+    var y = new Date().getFullYear();
+    var s = document.getElementById('yearFilter');
+    for(var i=y-1; i<=y+2; i++){
+        var o = document.createElement('option');
+        o.value = i; o.textContent = i;
+        if(i===y) o.selected = true;
+        s.appendChild(o);
+    }
+})();
+
+function reload_(){
+    var y = parseInt(document.getElementById('yearFilter').value, 10);
+    fetch('/Holiday/GetStatistics').then(function(r){return r.json();}).then(function(d){
+        document.getElementById('kpiTotal').textContent = d.total || 0;
+        document.getElementById('kpiPaid').textContent = d.paid || 0;
+        document.getElementById('kpiUpcoming').textContent = d.upcoming || 0;
+        document.getElementById('kpiYear').textContent = d.thisYear || '-';
+    });
+    fetch('/Holiday/GetAll?year=' + y).then(function(r){return r.json();}).then(function(d){
+        var body = document.getElementById('xBody');
+        if(!d || d.length===0){
+            body.innerHTML = '';
+            document.getElementById('xTable').style.display = 'none';
+            document.getElementById('emptyState').classList.remove('d-none');
+            document.getElementById('xCount').textContent = '0';
+            document.getElementById('tableCount').textContent = '0';
+            return;
+        }
+        document.getElementById('xTable').style.display = '';
+        document.getElementById('emptyState').classList.add('d-none');
+        var h = '';
+        d.forEach(function(x){
+            h += '<tr>';
+            h += '<td><div class="row-name"><span class="avatar"><i class="bi bi-calendar-check"></i></span><div>' + x.holidayName + '</div></div></td>';
+            h += '<td>' + x.holidayDateDisplay + '</td>';
+            h += '<td><span class="badge-status role">' + x.dayOfWeek + '</span></td>';
+            h += '<td>' + x.holidayType + '</td>';
+            h += '<td>' + (x.isPaid ? '<span class="badge-status active">Paid</span>' : '<span class="badge-status inactive">Unpaid</span>') + '</td>';
+            h += '<td>' + (x.isActive ? '<span class="badge-status active">Active</span>' : '<span class="badge-status inactive">Inactive</span>') + '</td>';
+            h += '<td style="text-align:right;"><div class="act-wrap"><button class="btn-icon" onclick="editHoliday(' + x.holidayId + ')"><i class="bi bi-pencil"></i></button><button class="btn-icon" onclick="delHoliday(' + x.holidayId + ')"><i class="bi bi-trash3"></i></button></div></td>';
+            h += '</tr>';
+        });
+        body.innerHTML = h;
+        document.getElementById('xCount').textContent = d.length;
+        document.getElementById('tableCount').textContent = d.length;
+    });
+}
+
+function openAdd(){
+    document.getElementById('modalTitle').innerHTML = '<i class="bi bi-calendar-plus"></i> Add Holiday';
+    document.getElementById('holidayId').value = 0;
+    document.getElementById('holidayName').value = '';
+    document.getElementById('holidayDate').value = '';
+    document.getElementById('holidayType').value = 'Public';
+    document.getElementById('scope').value = 'All';
+    document.getElementById('isPaid').checked = true;
+    document.getElementById('isRecurring').checked = false;
+    document.getElementById('description').value = '';
+    document.getElementById('isActive').checked = true;
+    new bootstrap.Modal(document.getElementById('formModal')).show();
+}
+
+function editHoliday(id){
+    fetch('/Holiday/GetById?id=' + id).then(function(r){return r.json();}).then(function(d){
+        document.getElementById('modalTitle').innerHTML = '<i class="bi bi-pencil-square"></i> Edit Holiday';
+        document.getElementById('holidayId').value = d.holidayId;
+        document.getElementById('holidayName').value = d.holidayName;
+        document.getElementById('holidayDate').value = d.holidayDate;
+        document.getElementById('holidayType').value = d.holidayType;
+        document.getElementById('scope').value = d.scope;
+        document.getElementById('isPaid').checked = d.isPaid;
+        document.getElementById('isRecurring').checked = d.isRecurring;
+        document.getElementById('description').value = d.description || '';
+        document.getElementById('isActive').checked = d.isActive;
+        new bootstrap.Modal(document.getElementById('formModal')).show();
+    });
+}
+
+function saveHoliday(){
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('holidayId', document.getElementById('holidayId').value);
+    fd.append('holidayName', document.getElementById('holidayName').value);
+    fd.append('holidayDate', document.getElementById('holidayDate').value);
+    fd.append('holidayType', document.getElementById('holidayType').value);
+    fd.append('scope', document.getElementById('scope').value);
+    fd.append('isPaid', document.getElementById('isPaid').checked);
+    fd.append('isRecurring', document.getElementById('isRecurring').checked);
+    fd.append('description', document.getElementById('description').value);
+    fd.append('isActive', document.getElementById('isActive').checked);
+
+    fetch('/Holiday/Save', { method:'POST', body: fd }).then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+            if(typeof showToast === 'function') showToast(res.message, 'success'); else alert(res.message);
+            bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+            reload_();
+        } else {
+            if(typeof showToast === 'function') showToast(res.message, 'error'); else alert(res.message);
+        }
+    });
+}
+
+function delHoliday(id){
+    if(!confirm('Delete this holiday?')) return;
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fetch('/Holiday/Delete/' + id, { method:'POST', body: fd }).then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+            if(typeof showToast === 'function') showToast(res.message, 'success'); else alert(res.message);
+            reload_();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', reload_);
+</script>

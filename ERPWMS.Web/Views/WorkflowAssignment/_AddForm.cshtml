@@ -1,0 +1,27 @@
+﻿@{ Layout = null; }
+<form id="addAssignForm" method="post" action="/WorkflowAssignment/Register">
+    @Html.AntiForgeryToken()
+    <div id="addAssignAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-12"><label class="form-label fw-bold">Workflow *</label><select name="workflowDefId" id="addWF" class="form-select form-select-sm" required><option value="">-- Select Workflow --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Stage *</label><select name="stageId" id="addStage" class="form-select form-select-sm" required><option value="">-- Select Workflow First --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Role</label><select name="roleId" id="addRole" class="form-select form-select-sm"><option value="">-- Select Role --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">User</label><select name="userId" id="addUser" class="form-select form-select-sm"><option value="">-- Select User --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Permissions</label><div style="display:flex;flex-wrap:wrap;gap:8px;padding-top:6px;">
+            <label><input type="checkbox" name="canApprove" value="true" /> Approve</label>
+            <label><input type="checkbox" name="canReject" value="true" /> Reject</label>
+            <label><input type="checkbox" name="canHold" value="true" /> Hold</label>
+            <label><input type="checkbox" name="canSendBack" value="true" /> SendBack</label>
+        </div></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Create</button>
+    </div>
+</form>
+<script>
+fetch("/WorkflowAssignment/GetWorkflows").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addWF");if(!s)return;s.innerHTML="<option value=''>-- Select Workflow --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.workflowDefId;o.textContent=x.workflowName;s.appendChild(o);});});
+fetch("/WorkflowAssignment/GetRoles").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addRole");if(!s)return;s.innerHTML="<option value=''>-- Select Role --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.roleId;o.textContent=x.roleName;s.appendChild(o);});});
+fetch("/WorkflowAssignment/GetUsers").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addUser");if(!s)return;s.innerHTML="<option value=''>-- Select User --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.userId;o.textContent=x.userName;s.appendChild(o);});});
+document.getElementById("addWF").addEventListener("change",function(){var wid=this.value;var s=document.getElementById("addStage");s.innerHTML="<option value=''>Loading...</option>";if(!wid)return;fetch("/WorkflowAssignment/GetStages?workflowDefId="+wid).then(function(r){return r.json();}).then(function(d){s.innerHTML="<option value=''>-- Select Stage --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.stageId;o.textContent=x.stageName;s.appendChild(o);});});});
+</script>

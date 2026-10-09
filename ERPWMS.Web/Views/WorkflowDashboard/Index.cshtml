@@ -1,0 +1,157 @@
+﻿@{
+    ViewData["Title"] = "Workflow Dashboard";
+    Layout = "_Layout";
+}
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:20px;">Workflow Dashboard</h4>
+        <small class="text-muted" style="font-size:11px;">Home / Workflow Dashboard</small>
+    </div>
+</div>
+
+<!-- KPI Row 1 -->
+<div class="row g-3">
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Workflow Definitions</p><h2 class="kpi-number" id="kpiDefs">0</h2></div><div class="kpi-icon blue"><i class="bi bi-diagram-3"></i></div></div></div></div>
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Instances</p><h2 class="kpi-number" id="kpiInst">0</h2></div><div class="kpi-icon green"><i class="bi bi-play-circle"></i></div></div></div></div>
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">In Progress</p><h2 class="kpi-number" id="kpiActive">0</h2></div><div class="kpi-icon orange"><i class="bi bi-arrow-repeat"></i></div></div></div></div>
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Completed</p><h2 class="kpi-number" id="kpiDone">0</h2></div><div class="kpi-icon purple"><i class="bi bi-check-circle"></i></div></div></div></div>
+</div>
+<div class="row g-3" style="margin-top:8px;">
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Stages</p><h2 class="kpi-number" id="kpiStages">0</h2></div><div class="kpi-icon blue"><i class="bi bi-list-ol"></i></div></div></div></div>
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Assignments</p><h2 class="kpi-number" id="kpiAssign">0</h2></div><div class="kpi-icon green"><i class="bi bi-person-check"></i></div></div></div></div>
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Pending Deadlines</p><h2 class="kpi-number" id="kpiDeadline">0</h2></div><div class="kpi-icon orange"><i class="bi bi-hourglass-split"></i></div></div></div></div>
+    <div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Rejected</p><h2 class="kpi-number" id="kpiRejected">0</h2></div><div class="kpi-icon purple"><i class="bi bi-x-circle"></i></div></div></div></div>
+</div>
+
+<!-- Recent Instances List -->
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-play-circle" style="color:#F5A623;"></i> Recent Instances <span class="badge-count" id="instCount">0</span></h5>
+        <a href="/WorkflowInstance" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;font-size:11px;font-weight:600;">View All</a>
+    </div>
+    <div class="card-body">
+        <table class="table-premium">
+            <thead><tr><th>Instance</th><th>Workflow</th><th>Record</th><th>Current Stage</th><th>Status</th><th>Started</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="instBody"><tr><td colspan="7" class="text-center py-3"><div class="spinner-border text-primary" style="width:18px;height:18px;"></div></td></tr></tbody>
+        </table>
+    </div>
+    <div class="table-footer"><span><i class="bi bi-info-circle"></i> Latest 10 instances</span></div>
+</div>
+
+<!-- Workflow Summary + Recent Activity -->
+<div class="row g-3" style="margin-top:16px;">
+    <div class="col-lg-6">
+        <div class="table-card" style="margin-top:0;">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-diagram-3" style="color:#F5A623;"></i> Workflow Summary</h5>
+                <a href="/WorkflowDefinition" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;font-size:11px;font-weight:600;">Manage</a>
+            </div>
+            <div class="card-body">
+                <table class="table-premium">
+                    <thead><tr><th>Workflow</th><th>Module</th><th>Stages</th><th>Instances</th></tr></thead>
+                    <tbody id="summaryBody"><tr><td colspan="4" class="text-center py-3"><div class="spinner-border text-primary" style="width:18px;height:18px;"></div></td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="table-card" style="margin-top:0;">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-clock-history" style="color:#F5A623;"></i> Recent Activity</h5>
+                <a href="/WorkflowInstanceLog" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;font-size:11px;font-weight:600;">All Logs</a>
+            </div>
+            <div class="card-body">
+                <table class="table-premium">
+                    <thead><tr><th>Instance</th><th>Action</th><th>User</th><th>Date</th></tr></thead>
+                    <tbody id="activityBody"><tr><td colspan="4" class="text-center py-3"><div class="spinner-border text-primary" style="width:18px;height:18px;"></div></td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+function statusClass(s){
+    if(s === "Completed") return "active";
+    if(s === "Rejected" || s === "Cancelled") return "inactive";
+    return "role";
+}
+document.addEventListener("DOMContentLoaded", function(){
+    // Stats
+    fetch("/WorkflowDashboard/GetStatistics").then(r => r.json()).then(d => {
+        document.getElementById("kpiDefs").textContent = d.definitions || 0;
+        document.getElementById("kpiInst").textContent = d.instances || 0;
+        document.getElementById("kpiActive").textContent = d.active || 0;
+        document.getElementById("kpiDone").textContent = d.completed || 0;
+        document.getElementById("kpiStages").textContent = d.stages || 0;
+        document.getElementById("kpiAssign").textContent = d.assignments || 0;
+        document.getElementById("kpiDeadline").textContent = d.pendingDeadlines || 0;
+        document.getElementById("kpiRejected").textContent = d.rejected || 0;
+    });
+
+    // Recent Instances
+    fetch("/WorkflowDashboard/GetRecentInstances?take=10").then(r => r.json()).then(d => {
+        var h = "";
+        if(!d || d.length === 0){
+            h = "<tr><td colspan='7' class='text-center py-3' style='color:#94A3B8;font-size:11px;'>No instances yet</td></tr>";
+        } else {
+            d.forEach(function(x){
+                var cls = statusClass(x.status);
+                var dt = x.startedDate ? new Date(x.startedDate).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "-";
+                h += "<tr>";
+                h += "<td><div class='row-name'><span class='avatar'><i class='bi bi-play-circle'></i></span><div>#" + x.workflowInstId + "</div></div></td>";
+                h += "<td>" + (x.workflowName || "-") + "</td>";
+                h += "<td style='font-size:10.5px;color:#64748B;'>" + (x.recordType || "") + " #" + (x.recordId || "") + "</td>";
+                h += "<td>" + (x.currentStage || "-") + "</td>";
+                h += "<td><span class='badge-status " + cls + "'>" + (x.status || "InProgress") + "</span></td>";
+                h += "<td style='font-size:10px;color:#64748B;'>" + dt + "</td>";
+                h += "<td style='text-align:right;'><a href='/WorkflowInstance/Profile/" + x.workflowInstId + "' class='btn-icon' title='View'><i class='bi bi-eye'></i></a></td>";
+                h += "</tr>";
+            });
+        }
+        document.getElementById("instBody").innerHTML = h;
+        document.getElementById("instCount").textContent = d ? d.length : 0;
+    });
+
+    // Summary
+    fetch("/WorkflowDashboard/GetWorkflowSummary").then(r => r.json()).then(d => {
+        var h = "";
+        if(!d || d.length === 0){
+            h = "<tr><td colspan='4' class='text-center py-3' style='color:#94A3B8;font-size:11px;'>No workflows</td></tr>";
+        } else {
+            d.forEach(function(x){
+                h += "<tr>";
+                h += "<td><span style='font-weight:600;'>" + (x.workflowName || "-") + "</span></td>";
+                h += "<td><span class='badge-status role'>" + (x.moduleType || "-") + "</span></td>";
+                h += "<td><span class='badge-count'>" + (x.stages || 0) + "</span></td>";
+                h += "<td><span class='badge-count'>" + (x.instances || 0) + "</span></td>";
+                h += "</tr>";
+            });
+        }
+        document.getElementById("summaryBody").innerHTML = h;
+    });
+
+    // Activity
+    fetch("/WorkflowDashboard/GetRecentActivity?take=8").then(r => r.json()).then(d => {
+        var h = "";
+        if(!d || d.length === 0){
+            h = "<tr><td colspan='4' class='text-center py-3' style='color:#94A3B8;font-size:11px;'>No activity</td></tr>";
+        } else {
+            d.forEach(function(x){
+                var dt = x.actionDate ? new Date(x.actionDate).toLocaleDateString("en-GB",{day:"2-digit",month:"short"}) : "-";
+                h += "<tr>";
+                h += "<td>#" + x.workflowInstId + "</td>";
+                h += "<td><span class='badge-status role'>" + (x.actionName || "-") + "</span></td>";
+                h += "<td>" + (x.userName || "-") + "</td>";
+                h += "<td style='font-size:10px;color:#64748B;'>" + dt + "</td>";
+                h += "</tr>";
+            });
+        }
+        document.getElementById("activityBody").innerHTML = h;
+    });
+});
+</script>

@@ -1,0 +1,41 @@
+﻿@*
+   Workflow + Admin Sidebar Menu
+   _Layout.cshtml mein include karo:
+   @await Html.PartialAsync("_SidebarWorkflow")
+*@
+<style>
+.wf-sidebar-menu{list-style:none;padding:0;margin:0;}
+.wf-sidebar-menu li{padding:0;}
+.wf-sidebar-menu a{display:flex;align-items:center;gap:10px;padding:9px 14px;color:#64748B;text-decoration:none;font-size:12px;font-weight:600;border-radius:6px;transition:all .15s;}
+.wf-sidebar-menu a:hover{background:#F8FAFC;color:#0A1628;}
+.wf-sidebar-menu a i{width:16px;text-align:center;font-size:13px;}
+.wf-section-label{padding:14px 14px 6px;color:#94A3B8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+</style>
+
+<div class="wf-section-label">Dashboard</div>
+<ul class="wf-sidebar-menu">
+    <li><a href="/WorkflowDashboard/Index"><i class="bi bi-speedometer2"></i> Workflow Dashboard</a></li>
+</ul>
+
+<div class="wf-section-label">Workflow Setup</div>
+<ul class="wf-sidebar-menu">
+    <li><a href="/WorkflowDefinition/Index"><i class="bi bi-diagram-3"></i> Definitions</a></li>
+    <li><a href="/WorkflowStage/Index"><i class="bi bi-list-ol"></i> Stages</a></li>
+    <li><a href="/WorkflowTransition/Index"><i class="bi bi-arrow-left-right"></i> Transitions</a></li>
+    <li><a href="/WorkflowCondition/Index"><i class="bi bi-funnel"></i> Conditions</a></li>
+</ul>
+
+<div class="wf-section-label">Workflow Operations</div>
+<ul class="wf-sidebar-menu">
+    <li><a href="/WorkflowAssignment/Index"><i class="bi bi-person-check"></i> Assignments</a></li>
+    <li><a href="/WorkflowDeadline/Index"><i class="bi bi-hourglass-split"></i> Deadlines</a></li>
+    <li><a href="/WorkflowInstance/Index"><i class="bi bi-play-circle"></i> Instances</a></li>
+    <li><a href="/WorkflowInstanceLog/Index"><i class="bi bi-journal-text"></i> Instance Logs</a></li>
+</ul>
+
+<div class="wf-section-label">Administration</div>
+<ul class="wf-sidebar-menu">
+    <li><a href="/User/Index"><i class="bi bi-people"></i> Users</a></li>
+    <li><a href="/Role/Index"><i class="bi bi-shield-lock"></i> Roles</a></li>
+    <li><a href="/SystemSetting/Index"><i class="bi bi-gear"></i> System Settings</a></li>
+</ul>

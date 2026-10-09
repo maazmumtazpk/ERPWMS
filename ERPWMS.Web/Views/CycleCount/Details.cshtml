@@ -1,0 +1,195 @@
+@model ERPWMS.Application.DTOs.Inventory.CycleCountDto
+
+@{
+    ViewData["Title"] = "Cycle Count Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Cycle Count Details</h2>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light w-50">Cycle Count ID</th>
+                            <td>#@Model.CycleCountId</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Product</th>
+                            <td>@Model.ProductCode - @Model.ProductName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Bin</th>
+                            <td>@Model.BinName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">System Quantity</th>
+                            <td>@Model.SystemQty</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Actual Quantity</th>
+                            <td>@Model.ActualQty</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Variance</th>
+                            <td>
+                                <span class="@(Model.Variance > 0 ? "text-success" : Model.Variance < 0 ? "text-danger" : "")">
+                                    <strong>@Model.Variance</strong>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>
+                                @{
+                                    var statusClass = Model.Status switch
+                                    {
+                                        "Draft" => "bg-secondary",
+                                        "Submitted" => "bg-primary",
+                                        "Verified" => "bg-success",
+                                        "Rejected" => "bg-danger",
+                                        "Posted" => "bg-info",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @statusClass">@(Model.Status ?? "Draft")</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Counted By</th>
+                            <td>@Model.CountedByName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Counted Date</th>
+                            <td>@Model.CountedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                        @if (Model.VerifiedBy.HasValue)
+                        {
+                            <tr>
+                                <th class="bg-light">Verified By</th>
+                                <td>@Model.VerifiedByName</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Verified Date</th>
+                                <td>@Model.VerifiedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                            </tr>
+                        }
+                        <tr>
+                            <th class="bg-light">Created By</th>
+                            <td>@Model.CreatedByName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <hr />
+            <h5 class="fw-bold">?? Count Details</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Bin</th>
+                            <th>System</th>
+                            <th>Actual</th>
+                            <th>Variance</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.CycleCountDetails != null && Model.CycleCountDetails.Any())
+                        {
+                            foreach (var item in Model.CycleCountDetails)
+                            {
+                                <tr>
+                                    <td>@item.ProductCode - @item.ProductName</td>
+                                    <td>@item.BinName</td>
+                                    <td>@item.SystemQty</td>
+                                    <td>@item.ActualQty</td>
+                                    <td>
+                                        <span class="@(item.Variance > 0 ? "text-success" : item.Variance < 0 ? "text-danger" : "")">
+                                            @item.Variance
+                                        </span>
+                                    </td>
+                                    <td>@item.Remarks</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No details found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <hr />
+            <div class="d-flex gap-2 flex-wrap">
+                @if (Model.Status == "Draft")
+                {
+                    <form method="post" asp-action="SubmitCycleCount" asp-route-id="@Model.CycleCountId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Submit this cycle count for verification?')">
+                            <i class="bi bi-send"></i> Submit
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "Submitted")
+                {
+                    <form method="post" asp-action="VerifyCycleCount" asp-route-id="@Model.CycleCountId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Verify this cycle count?')">
+                            <i class="bi bi-check-circle"></i> Verify
+                        </button>
+                    </form>
+                    <form method="post" asp-action="RejectCycleCount" asp-route-id="@Model.CycleCountId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this cycle count?')">
+                            <i class="bi bi-x-circle"></i> Reject
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "Verified")
+                {
+                    <form method="post" asp-action="PostCycleCount" asp-route-id="@Model.CycleCountId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-info" onclick="return confirm('Post this cycle count? Variance adjustment will be created.')">
+                            <i class="bi bi-check2"></i> Post
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,100 @@
+@model List<ERPWMS.Application.DTOs.Payroll.PayrollHistoryDto>
+
+@{
+    ViewData["Title"] = "Payroll History";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h2>Payroll History</h2>
+        <p class="text-muted">
+            Employee payroll history
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Payroll ID</th>
+                            <th>Month</th>
+                            <th>Gross Pay</th>
+                            <th>Deductions</th>
+                            <th>Net Pay</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+
+                                    <td>@item.PayrollId</td>
+
+                                    <td>
+                                        @item.MonthYear
+                                    </td>
+
+                                    <td>
+                                        @item.GrossPay.ToString("N2")
+                                    </td>
+
+                                    <td>
+                                        @item.TotalDeductions.ToString("N2")
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            @item.NetPay.ToString("N2")
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        @item.Status
+                                    </td>
+
+                                    <td>
+                                        <a asp-action="Details"
+                                               asp-route-id="@item.PayrollId"
+                                               class="btn btn-sm btn-outline-primary">
+                                            Details
+                                        </a>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7"
+                                    class="text-center py-4">
+                                    No payroll history found.
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

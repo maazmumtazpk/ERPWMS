@@ -1,0 +1,130 @@
+@model ERPWMS.Database.Models.Employee
+@{
+    ViewData["Title"] = "Employee Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var emp = Model;
+    var bankAccounts = ViewBag.BankAccounts as List<ERPWMS.Database.Models.EmployeeBankAccount>;
+    var salaries = ViewBag.Salaries as List<ERPWMS.Database.Models.EmployeeSalary>;
+    var fullName = (emp.FirstName + " " + (emp.LastName ?? "")).Trim();
+    string sc = emp.IsActive == true ? "#159A89" : "#94A3B8";
+    string st = emp.IsActive == true ? "ACTIVE" : "INACTIVE";
+}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><h3 class="mb-0 fw-bold" style="color:#0A1628;">Employee Profile</h3><small class="text-muted">Home / Employees / @emp.EmployeeCode</small></div>
+        <div>
+            <a href="javascript:void(0)" onclick="openEditFromProfile(@emp.EmployeeId)" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;border:none;"><i class="bi bi-pencil"></i> Edit</a>
+            <a href="/Employee/Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3" style="background:#0A1628;color:#fff;border:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div style="background:#F5A623;color:#0A1628;padding:14px;border-radius:10px;font-size:1.6rem;margin-right:16px;"><i class="bi bi-person-badge"></i></div>
+                    <div>
+                        <h3 class="mb-1 fw-bold" style="color:#fff;">@fullName</h3>
+                        <div style="font-size:12px;color:#94A3B8;">@emp.EmployeeCode &nbsp;|&nbsp; @(emp.Designation?.DesignationName ?? "-") &nbsp;|&nbsp; @(emp.Department?.DepartmentName ?? "-")</div>
+                    </div>
+                </div>
+                <div><span style="background:@sc;color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;">@st</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-person" style="color:#F5A623;"></i> Personal Information</h6>
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <tr><td style="color:#64748B;border:none;">Code</td><td class="text-end fw-bold" style="border:none;">@emp.EmployeeCode</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Full Name</td><td class="text-end fw-bold" style="border:none;">@fullName</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Father Name</td><td class="text-end" style="border:none;">@(string.IsNullOrEmpty(emp.FatherName) ? "-" : emp.FatherName)</td></tr>
+                    <tr><td style="color:#64748B;border:none;">CNIC</td><td class="text-end" style="border:none;">@(string.IsNullOrEmpty(emp.Cnic) ? "-" : emp.Cnic)</td></tr>
+                    <tr><td style="color:#64748B;border:none;">DOB</td><td class="text-end" style="border:none;">@(emp.DOB?.ToString("dd MMM yyyy") ?? "-")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Gender</td><td class="text-end" style="border:none;">@(string.IsNullOrEmpty(emp.Gender) ? "-" : emp.Gender)</td></tr>
+                </table>
+            </div></div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-briefcase" style="color:#F5A623;"></i> Employment Information</h6>
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <tr><td style="color:#64748B;border:none;">Department</td><td class="text-end fw-bold" style="border:none;">@(emp.Department?.DepartmentName ?? "-")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Designation</td><td class="text-end fw-bold" style="border:none;">@(emp.Designation?.DesignationName ?? "-")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Branch</td><td class="text-end fw-bold" style="border:none;">@(emp.Branch?.BranchName ?? "-")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Shift</td><td class="text-end" style="border:none;">@(emp.Shift?.ShiftName ?? "Not Assigned")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Hire Date</td><td class="text-end fw-bold" style="border:none;">@emp.HireDate.ToString("dd MMM yyyy")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Base Salary</td><td class="text-end fw-bold" style="border:none;color:#059669;">Rs @emp.BaseSalary.ToString("N2")</td></tr>
+                </table>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body p-0">
+            <div class="px-3 py-2" style="border-bottom:2px solid #F1F5F9;">
+                <h6 class="mb-0 fw-bold" style="color:#0A1628;font-size:13px;"><i class="bi bi-bank" style="color:#F5A623;"></i> Bank Accounts <span style="background:#F1F5F9;color:#64748B;font-size:10px;padding:2px 8px;border-radius:12px;margin-left:6px;">@(bankAccounts?.Count ?? 0)</span></h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size:12px;">
+                    <thead style="background:#F8FAFC;"><tr>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">#</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Bank</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Account No</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">IBAN</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Type</th>
+                    </tr></thead>
+                    <tbody>
+                        @if (bankAccounts != null && bankAccounts.Any()) {
+                            int i = 1;
+                            foreach (var b in bankAccounts) {
+                                <tr style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:10px 16px;">@(i++)</td>
+                                    <td style="padding:10px 16px;font-weight:600;">@b.BankName</td>
+                                    <td style="padding:10px 16px;font-family:monospace;">@b.AccountNumber</td>
+                                    <td style="padding:10px 16px;font-family:monospace;font-size:11px;">@(string.IsNullOrEmpty(b.Iban) ? "-" : b.Iban)</td>
+                                    <td style="padding:10px 16px;">@(string.IsNullOrEmpty(b.AccountType) ? "-" : b.AccountType)</td>
+                                </tr>
+                            }
+                        } else { <tr><td colspan="5" class="text-center py-3" style="color:#94A3B8;">No bank accounts.</td></tr> }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body p-0">
+            <div class="px-3 py-2" style="border-bottom:2px solid #F1F5F9;">
+                <h6 class="mb-0 fw-bold" style="color:#0A1628;font-size:13px;"><i class="bi bi-cash-stack" style="color:#F5A623;"></i> Salary History <span style="background:#F1F5F9;color:#64748B;font-size:10px;padding:2px 8px;border-radius:12px;margin-left:6px;">@(salaries?.Count ?? 0)</span></h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size:12px;">
+                    <thead style="background:#F8FAFC;"><tr>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Effective</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Basic</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Allowances</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Deductions</th>
+                        <th style="padding:10px 16px;border:none;font-size:10px;color:#64748B;">Net Salary</th>
+                    </tr></thead>
+                    <tbody>
+                        @if (salaries != null && salaries.Any()) {
+                            foreach (var s in salaries) {
+                                <tr style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:10px 16px;">@s.EffectiveDate.ToString("dd MMM yyyy")</td>
+                                    <td style="padding:10px 16px;">Rs @s.BasicSalary.ToString("N2")</td>
+                                    <td style="padding:10px 16px;color:#059669;">Rs @((s.TotalAllowances ?? 0).ToString("N2"))</td>
+                                    <td style="padding:10px 16px;color:#DC2626;">Rs @((s.TotalDeductions ?? 0).ToString("N2"))</td>
+                                    <td style="padding:10px 16px;font-weight:700;">Rs @((s.NetSalary ?? 0).ToString("N2"))</td>
+                                </tr>
+                            }
+                        } else { <tr><td colspan="5" class="text-center py-3" style="color:#94A3B8;">No salary records.</td></tr> }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

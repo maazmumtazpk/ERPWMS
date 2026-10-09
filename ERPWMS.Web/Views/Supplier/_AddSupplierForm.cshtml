@@ -1,0 +1,39 @@
+﻿@{ Layout = null; }
+<form id="addSupplierForm" method="post" action="/Supplier/Register" autocomplete="off">
+    @Html.AntiForgeryToken()
+    <div id="addSupplierAlert" style="display:none;padding:6px 10px;border-radius:4px;font-size:10px;margin-bottom:8px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-2">
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Supplier Name *</label><input type="text" name="supplierName" class="form-control form-control-sm" required maxlength="300" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Code</label><input type="text" name="supplierCode" class="form-control form-control-sm" maxlength="50" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Contact Person</label><input type="text" name="contactPerson" class="form-control form-control-sm" maxlength="200" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Phone *</label><input type="text" name="phone" class="form-control form-control-sm" required maxlength="20" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Mobile</label><input type="text" name="mobile" class="form-control form-control-sm" maxlength="20" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Email</label><input type="email" name="email" class="form-control form-control-sm" maxlength="100" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Website</label><input type="text" name="website" class="form-control form-control-sm" maxlength="200" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">City</label><input type="text" name="city" class="form-control form-control-sm" maxlength="100" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">State</label><input type="text" name="state" class="form-control form-control-sm" maxlength="100" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Country</label><input type="text" name="country" class="form-control form-control-sm" maxlength="100" value="Pakistan" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Postal Code</label><input type="text" name="postalCode" class="form-control form-control-sm" maxlength="20" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Tax ID</label><input type="text" name="taxId" class="form-control form-control-sm" maxlength="50" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">NTN</label><input type="text" name="ntn" class="form-control form-control-sm" maxlength="50" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Payment Terms</label><input type="text" name="paymentTerms" class="form-control form-control-sm" maxlength="100" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Credit Limit</label><input type="number" step="0.01" name="creditLimit" class="form-control form-control-sm" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Bank Name</label><input type="text" name="bankName" class="form-control form-control-sm" maxlength="200" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Account No</label><input type="text" name="bankAccountNo" class="form-control form-control-sm" maxlength="50" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Bank Branch</label><input type="text" name="bankBranch" class="form-control form-control-sm" maxlength="200" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+
+        <div class="col-8"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Address *</label><input type="text" name="address" class="form-control form-control-sm" required maxlength="500" style="font-size:10.5px;padding:3px 6px;min-height:26px;" /></div>
+        <div class="col-4"><label class="form-label" style="font-size:9px;font-weight:700;margin-bottom:1px;">Status</label><select name="isActive" class="form-select form-select-sm" style="font-size:10.5px;padding:3px 6px;min-height:26px;"><option value="true" selected>Active</option><option value="false">Inactive</option></select></div>
+    </div>
+
+    <div style="padding:8px 0 0;border-top:1px solid #eef2f6;margin-top:8px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:10px;padding:4px 10px;">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="font-size:10px;padding:4px 12px;">Register</button>
+    </div>
+</form>

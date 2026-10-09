@@ -1,0 +1,105 @@
+@model ERPWMS.Database.Models.DispatchMaster
+@{
+    ViewData["Title"] = "Dispatch Details";
+    Layout = "_Layout";
+    var details = ViewBag.Details as System.Collections.Generic.List<ERPWMS.Database.Models.DispatchDetail>
+                  ?? new System.Collections.Generic.List<ERPWMS.Database.Models.DispatchDetail>();
+    var st = Model.Status ?? "Pending";
+    var stClass = (st == "Delivered" || st == "Completed" || st == "Shipped") ? "active" : "inactive";
+}
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">Dispatch Details</h4>
+            <small class="text-muted" style="font-size:11px;">Home / Dispatch / @Model.DispatchNo</small>
+        </div>
+        <div style="display:flex;gap:6px;">
+            <button onclick="window.print()" class="btn-icon" style="width:auto;padding:0 12px;"><i class="bi bi-printer"></i> Print</button>
+            <a href="/Dispatch/Index" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;"><i class="bi bi-arrow-left me-1"></i> Back</a>
+        </div>
+    </div>
+
+    <div class="table-card" style="margin-top:0;">
+        <div style="padding:18px 22px;background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:26px;">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:18px;font-weight:800;">@Model.DispatchNo</h3>
+                    <div style="color:rgba(255,255,255,.7);font-size:11px;margin-top:4px;">
+                        <i class="bi bi-calendar3"></i> @(Model.DispatchDate?.ToString("dd MMM yyyy") ?? "-")
+                        <span> • SO: @(ViewBag.SalesOrderNo ?? "-")</span>
+                    </div>
+                </div>
+            </div>
+            <div><span class="badge-status @stClass" style="padding:6px 14px;font-size:10.5px;">@st.ToUpper()</span></div>
+        </div>
+    </div>
+
+    <div class="row g-3" style="margin-top:16px;">
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-people-fill" style="color:#F5A623;"></i> Customer & Address</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="font-size:14px;font-weight:800;color:#0A1628;margin-bottom:6px;">@(ViewBag.CustomerName ?? "-")</div>
+                    <div style="font-size:11.5px;color:#64748B;margin-bottom:3px;"><i class="bi bi-telephone"></i> @(ViewBag.CustomerPhone ?? "-")</div>
+                    <div style="font-size:11.5px;color:#64748B;"><i class="bi bi-geo-alt"></i> @(ViewBag.CustomerAddress ?? "-")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-truck" style="color:#F5A623;"></i> Shipping Info</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Carrier</span><strong>@(Model.CarrierName ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Tracking No</span><strong style="font-family:monospace;">@(Model.TrackingNo ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Warehouse</span><strong>@(ViewBag.WarehouseName ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:11.5px;"><span style="color:#64748B;">Delivery Date</span><strong>@(Model.DeliveryDate?.ToString("dd MMM yyyy") ?? "-")</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-list-ul" style="color:#F5A623;"></i> Dispatched Items <span class="badge-count">@details.Count</span></h5></div>
+                <div style="overflow-x:auto;">
+                    <table class="table-premium">
+                        <thead>
+                            <tr><th>#</th><th>Product</th><th style="text-align:right;">Qty</th><th>Batch No</th><th>Serial Numbers</th></tr>
+                        </thead>
+                        <tbody>
+                        @if (details.Count == 0)
+                        {
+                            <tr><td colspan="5" style="text-align:center;padding:20px;color:#94A3B8;">No items</td></tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var d in details)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;color:#64748B;">@i</td>
+                                    <td>@(d.Product != null ? d.Product.ProductName : ("Product #" + d.ProductId))</td>
+                                    <td style="text-align:right;font-weight:700;">@d.Quantity</td>
+                                    <td style="font-family:monospace;font-size:11px;">@(d.BatchNo ?? "-")</td>
+                                    <td style="font-size:10.5px;color:#64748B;max-width:300px;word-break:break-all;">@(d.SerialNumbers ?? "-")</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:14px 22px;background:#fafbfc;border-top:1px solid #eef2f6;display:flex;justify-content:flex-end;">
+                    <div style="text-align:right;">
+                        <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Total Quantity</div>
+                        <div style="font-size:22px;font-weight:900;color:#F5A623;">@details.Sum(d => d.Quantity)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

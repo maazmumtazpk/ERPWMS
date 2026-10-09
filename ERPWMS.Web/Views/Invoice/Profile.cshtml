@@ -1,0 +1,477 @@
+@model ERPWMS.Database.Models.Invoice
+@{
+    ViewData["Title"] = "Invoice Details";
+    Layout = "_Layout";
+
+    var details = ViewBag.Details as System.Collections.Generic.List<ERPWMS.Database.Models.InvoiceDetail>
+                  ?? new System.Collections.Generic.List<ERPWMS.Database.Models.InvoiceDetail>();
+
+    var st = Model.Status ?? "Pending";
+    var stClass = (st == "Paid" || st == "Approved") ? "active" : "inactive";
+}
+
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">
+                Invoice Details
+            </h4>
+
+            <small class="text-muted" style="font-size:11px;">
+                Home / Invoices / @Model.InvoiceNo
+            </small>
+        </div>
+
+        <div style="display:flex;gap:6px;">
+            <button onclick="window.print()"
+                    class="btn-icon"
+                    style="width:auto;padding:0 12px;">
+                <i class="bi bi-printer"></i> Print
+            </button>
+
+            <a href="/Invoice/Index"
+                   class="btn-icon"
+                   style="width:auto;padding:0 12px;text-decoration:none;">
+                <i class="bi bi-arrow-left me-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Invoice Header -->
+    <div class="table-card" style="margin-top:0;">
+
+        <div style="
+            padding:18px 22px;
+            background:linear-gradient(135deg,#0A1628,#1a2942);
+            color:#fff;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:14px;">
+
+            <div style="display:flex;align-items:center;gap:14px;">
+
+                <div style="
+                    width:64px;
+                    height:64px;
+                    border-radius:12px;
+                    background:linear-gradient(135deg,#F5A623,#E0951A);
+                    color:#0A1628;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:26px;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+
+                <div>
+                    <h3 style="
+                        margin:0;
+                        font-size:18px;
+                        font-weight:800;">
+                        @Model.InvoiceNo
+                    </h3>
+
+                    <div style="
+                        color:rgba(255,255,255,.7);
+                        font-size:11px;
+                        margin-top:4px;">
+
+                        <i class="bi bi-calendar3"></i>
+                        @(Model.InvoiceDate?.ToString("dd MMM yyyy") ?? "-")
+
+                        <span>
+                            • Due:
+                            @Model.DueDate.ToString("dd MMM yyyy")
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <span class="badge-status @stClass"
+                      style="padding:6px 14px;font-size:10.5px;">
+                    @st.ToUpper()
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Customer + Invoice Info -->
+    <div class="row g-3" style="margin-top:16px;">
+
+        <!-- Customer -->
+        <div class="col-md-6">
+
+            <div class="table-card" style="margin-top:0;">
+
+                <div class="card-header-custom">
+                    <h5>
+                        <i class="bi bi-people-fill"
+                           style="color:#F5A623;"></i>
+                        Customer
+                    </h5>
+                </div>
+
+                <div style="padding:14px 20px;">
+
+                    <div style="
+                        font-size:14px;
+                        font-weight:800;
+                        color:#0A1628;
+                        margin-bottom:6px;">
+                        @(ViewBag.CustomerName ?? "-")
+                    </div>
+
+                    <div style="
+                        font-size:11.5px;
+                        color:#64748B;
+                        margin-bottom:3px;">
+                        <i class="bi bi-telephone"></i>
+                        @(ViewBag.CustomerPhone ?? "-")
+                    </div>
+
+                    <div style="
+                        font-size:11.5px;
+                        color:#64748B;
+                        margin-bottom:3px;">
+                        <i class="bi bi-envelope"></i>
+                        @(ViewBag.CustomerEmail ?? "-")
+                    </div>
+
+                    <div style="
+                        font-size:11.5px;
+                        color:#64748B;">
+                        <i class="bi bi-geo-alt"></i>
+                        @(ViewBag.CustomerAddress ?? "-")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Invoice Info -->
+        <div class="col-md-6">
+
+            <div class="table-card" style="margin-top:0;">
+
+                <div class="card-header-custom">
+                    <h5>
+                        <i class="bi bi-info-circle-fill"
+                           style="color:#F5A623;"></i>
+                        Invoice Info
+                    </h5>
+                </div>
+
+                <div style="padding:14px 20px;">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        padding:6px 0;
+                        border-bottom:1px dashed #F1F5F9;
+                        font-size:11.5px;">
+
+                        <span style="color:#64748B;">
+                            Sales Order
+                        </span>
+
+                        <strong>
+                            @(ViewBag.SalesOrderNo ?? "-")
+                        </strong>
+                    </div>
+
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        padding:6px 0;
+                        border-bottom:1px dashed #F1F5F9;
+                        font-size:11.5px;">
+
+                        <span style="color:#64748B;">
+                            Invoice Date
+                        </span>
+
+                        <strong>
+                            @(Model.InvoiceDate?.ToString("dd MMM yyyy") ?? "-")
+                        </strong>
+                    </div>
+
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        padding:6px 0;
+                        font-size:11.5px;">
+
+                        <span style="color:#64748B;">
+                            Due Date
+                        </span>
+
+                        <strong>
+                            @Model.DueDate.ToString("dd MMM yyyy")
+                        </strong>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Items -->
+        <div class="col-md-12">
+
+            <div class="table-card" style="margin-top:0;">
+
+                <div class="card-header-custom">
+                    <h5>
+                        <i class="bi bi-list-ul"
+                           style="color:#F5A623;"></i>
+                        Items
+
+                        <span class="badge-count">
+                            @details.Count
+                        </span>
+                    </h5>
+                </div>
+
+
+                <div style="overflow-x:auto;">
+
+                    <table class="table-premium">
+
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th style="text-align:right;">Qty</th>
+                                <th style="text-align:right;">Price</th>
+                                <th style="text-align:right;">Disc %</th>
+                                <th style="text-align:right;">Total</th>
+                                <th>Batch</th>
+                            </tr>
+                        </thead>
+
+
+                        <tbody>
+
+                            @if (details.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="7"
+                                        style="
+                                        text-align:center;
+                                        padding:20px;
+                                        color:#94A3B8;">
+                                        No items
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int i = 1;
+
+                                foreach (var d in details)
+                                {
+                                    <tr>
+
+                                        <td style="
+                                            font-weight:600;
+                                            color:#64748B;">
+                                            @i
+                                        </td>
+
+
+                                        <td>
+                                            @(d.Product != null
+                                                ? d.Product.ProductName
+                                                : ("Product #" + d.ProductId))
+                                        </td>
+
+
+                                        <td style="
+                                            text-align:right;
+                                            font-weight:700;">
+                                            @d.Quantity
+                                        </td>
+
+
+                                        <td style="text-align:right;">
+                                            @Convert.ToDecimal(d.UnitPrice).ToString("N2")
+                                        </td>
+
+
+                                        <td style="text-align:right;">
+                                            @Convert.ToDecimal(d.DiscountPercent ?? 0).ToString("N2")
+                                        </td>
+
+
+                                        <td style="
+                                            text-align:right;
+                                            font-weight:700;
+                                            color:#159A89;">
+                                            @Convert.ToDecimal(d.TotalPrice).ToString("N2")
+                                        </td>
+
+
+                                        <td style="
+                                            font-family:monospace;
+                                            font-size:11px;">
+                                            @(d.BatchNo ?? "-")
+                                        </td>
+
+                                    </tr>
+
+                                    i++;
+                                }
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <!-- Totals -->
+                <div style="
+                    padding:16px 22px;
+                    background:#fafbfc;
+                    border-top:1px solid #eef2f6;">
+
+                    <div style="
+                        max-width:400px;
+                        margin-left:auto;">
+
+
+                        <!-- Sub Total -->
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            padding:6px 0;
+                            font-size:12px;">
+
+                            <span style="color:#64748B;">
+                                Sub Total
+                            </span>
+
+                            <strong>
+                                Rs @Convert.ToDecimal(Model.TotalAmount).ToString("N2")
+                            </strong>
+                        </div>
+
+
+                        <!-- Discount -->
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            padding:6px 0;
+                            font-size:12px;">
+
+                            <span style="color:#64748B;">
+                                Discount
+                            </span>
+
+                            <strong style="color:#DC2626;">
+                                - Rs @Convert.ToDecimal(Model.Discount ?? 0).ToString("N2")
+                            </strong>
+                        </div>
+
+
+                        <!-- Tax -->
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            padding:6px 0;
+                            font-size:12px;">
+
+                            <span style="color:#64748B;">
+                                Tax
+                            </span>
+
+                            <strong>
+                                + Rs @Convert.ToDecimal(Model.TaxAmount ?? 0).ToString("N2")
+                            </strong>
+                        </div>
+
+
+                        <!-- Net Amount -->
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            padding:8px 0;
+                            font-size:14px;
+                            font-weight:800;
+                            border-top:2px solid #0A1628;
+                            margin-top:6px;">
+
+                            <span>
+                                Net Amount
+                            </span>
+
+                            <span style="color:#F5A623;">
+                                Rs @Convert.ToDecimal(Model.NetAmount).ToString("N2")
+                            </span>
+                        </div>
+
+
+                        <!-- Paid -->
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            padding:6px 0;
+                            font-size:12px;">
+
+                            <span style="color:#64748B;">
+                                Paid
+                            </span>
+
+                            <strong style="color:#159A89;">
+                                - Rs @Convert.ToDecimal(Model.PaidAmount ?? 0).ToString("N2")
+                            </strong>
+                        </div>
+
+
+                        <!-- Balance Due -->
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            padding:8px 0;
+                            font-size:15px;
+                            font-weight:800;
+                            border-top:2px solid #e2e8f0;
+                            margin-top:4px;">
+
+                            <span style="
+                                color:@(Model.BalanceDue > 0
+                                                                                                      ? "#DC2626"
+                                                                                                      : "#159A89");">
+                                Balance Due
+                            </span>
+
+                            <span style="
+                                color:@(Model.BalanceDue > 0
+                                                                                                      ? "#DC2626"
+                                                                                                      : "#159A89");">
+
+                                Rs @Convert.ToDecimal(Model.BalanceDue).ToString("N2")
+
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

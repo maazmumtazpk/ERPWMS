@@ -1,0 +1,42 @@
+﻿@{ Layout = null; }
+<form id="addTransForm" method="post" action="/WorkflowTransition/QuickAdd">
+    @Html.AntiForgeryToken()
+    <div id="addTransAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-12"><label class="form-label fw-bold">Workflow *</label><select name="workflowDefId" id="addWF" class="form-select form-select-sm" required><option value="">-- Select Workflow --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">From Stage *</label><select name="stageFromId" id="addFrom" class="form-select form-select-sm" required><option value="">-- Select Workflow First --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">To Stage *</label><select name="stageToId" id="addTo" class="form-select form-select-sm" required><option value="">-- Select Workflow First --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Action *</label><select name="actionId" id="addAct" class="form-select form-select-sm" required><option value="">Loading...</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Allowed</label><div style="padding-top:6px;"><label><input type="checkbox" name="isAllowed" value="true" checked /> Yes</label></div></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Create</button>
+    </div>
+</form>
+<script>
+fetch("/WorkflowTransition/GetWorkflows").then(function(r){return r.json();}).then(function(d){
+    var s=document.getElementById("addWF");if(!s)return;
+    s.innerHTML="<option value=''>-- Select Workflow --</option>";
+    (d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.workflowDefId;o.textContent=x.workflowName;s.appendChild(o);});
+}).catch(function(){});
+fetch("/WorkflowTransition/GetActions").then(function(r){return r.json();}).then(function(d){
+    var s=document.getElementById("addAct");if(!s)return;
+    s.innerHTML="<option value=''>-- Select Action --</option>";
+    (d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.actionId;o.textContent=x.actionName;s.appendChild(o);});
+}).catch(function(){});
+document.getElementById("addWF").addEventListener("change",function(){
+    var wid=this.value;
+    var f=document.getElementById("addFrom");var t=document.getElementById("addTo");
+    f.innerHTML="<option value=''>Loading...</option>";t.innerHTML="<option value=''>Loading...</option>";
+    if(!wid)return;
+    fetch("/WorkflowTransition/GetStages?workflowDefId="+wid).then(function(r){return r.json();}).then(function(d){
+        f.innerHTML="<option value=''>-- Select --</option>";
+        t.innerHTML="<option value=''>-- Select --</option>";
+        (d||[]).forEach(function(x){
+            var o1=document.createElement("option");o1.value=x.stageId;o1.textContent=x.stageName;f.appendChild(o1);
+            var o2=document.createElement("option");o2.value=x.stageId;o2.textContent=x.stageName;t.appendChild(o2);
+        });
+    });
+});
+</script>

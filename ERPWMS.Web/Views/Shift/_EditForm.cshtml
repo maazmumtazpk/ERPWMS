@@ -1,0 +1,18 @@
+@model ERPWMS.Database.Models.Shift
+@{ Layout = null; }
+<form id="editShiftForm" method="post" action="/Shift/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="shiftId" value="@Model.ShiftId" />
+    <div id="editShiftAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-12"><label class="form-label fw-bold">Shift Name *</label><input type="text" name="shiftName" class="form-control form-control-sm" value="@Model.ShiftName" required maxlength="100" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Start Time *</label><input type="time" name="startTime" class="form-control form-control-sm" value="@Model.StartTime.ToString("HH:mm")" required /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">End Time *</label><input type="time" name="endTime" class="form-control form-control-sm" value="@Model.EndTime.ToString("HH:mm")" required /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Grace Period (Min)</label><input type="number" name="gracePeriodMinutes" class="form-control form-control-sm" value="@(Model.GracePeriodMinutes ?? 0)" min="0" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Status</label><select name="isActive" class="form-select form-select-sm">@if((Model.IsActive == true)){<option value="true" selected>Active</option><option value="false">Inactive</option>}else{<option value="true">Active</option><option value="false" selected>Inactive</option>}</select></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </div>
+</form>

@@ -1,0 +1,33 @@
+@model ERPWMS.Database.Models.WorkflowCondition
+@{ Layout = null; }
+<form id="editCondForm" method="post" action="/WorkflowCondition/QuickEdit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="conditionId" value="@Model.ConditionId" />
+    <div id="editCondAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">From Stage</label><select name="stageFromId" id="editFrom" class="form-select form-select-sm"><option value="">Loading...</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">To Stage</label><select name="stageToId" id="editTo" class="form-select form-select-sm"><option value="">Loading...</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Field Name</label><input type="text" name="conditionType" class="form-control form-control-sm" value="@Model.ConditionType" /></div>
+        <div class="col-md-3"><label class="form-label fw-bold">Operator</label><input type="text" name="operatorName" class="form-control form-control-sm" value="@Model.Operator" maxlength="10" /></div>
+        <div class="col-md-3"><label class="form-label fw-bold">Value</label><input type="text" name="value" class="form-control form-control-sm" value="@Model.Value" maxlength="100" /></div>
+        <div class="col-md-12"><label class="form-label fw-bold">Action on Fail</label><input type="text" name="actionOnFail" class="form-control form-control-sm" value="@Model.ActionOnFail" maxlength="50" /></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </div>
+</form>
+<script>
+(function(){
+    var wid=@Model.WorkflowDefId,fid=@Model.StageFromId,tid=@Model.StageToId;
+    fetch("/WorkflowCondition/GetStages?workflowDefId="+wid).then(function(r){return r.json();}).then(function(d){
+        var f=document.getElementById("editFrom");var t=document.getElementById("editTo");
+        f.innerHTML="<option value=''>-- Select --</option>";
+        t.innerHTML="<option value=''>-- Select --</option>";
+        (d||[]).forEach(function(x){
+            var o1=document.createElement("option");o1.value=x.stageId;o1.textContent=x.stageName;if(x.stageId===fid)o1.selected=true;f.appendChild(o1);
+            var o2=document.createElement("option");o2.value=x.stageId;o2.textContent=x.stageName;if(x.stageId===tid)o2.selected=true;t.appendChild(o2);
+        });
+    });
+})();
+</script>

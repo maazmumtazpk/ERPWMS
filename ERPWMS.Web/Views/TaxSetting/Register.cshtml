@@ -1,0 +1,317 @@
+@model ERPWMS.Application.DTOs.Finance.TaxSetting.RegisterTaxSettingRequest
+
+@{
+    ViewData["Title"] = "Add Tax Setting";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                ? Add Tax Setting
+            </h2>
+
+            <p class="text-muted mb-0">
+                Create a new tax setting for your company
+            </p>
+        </div>
+
+        <div class="d-flex align-items-center">
+
+            <span class="badge bg-primary fs-6 me-2">
+                ?? @ViewBag.CompanyName
+            </span>
+
+            <a asp-action="Index"
+                   class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                Back to List
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         FORM CARD
+         ========================================================= -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">
+                Tax Information
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <!-- =================================================
+                 VALIDATION SUMMARY
+                 ================================================= -->
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+
+            <form asp-action="Register"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+
+                <!-- =================================================
+                     COMPANY
+                     ================================================= -->
+
+                <input type="hidden"
+                       asp-for="CompanyId" />
+
+                <div class="row mb-4">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label fw-bold">
+                            ?? Company
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="@ViewBag.CompanyName"
+                               disabled
+                               readonly />
+
+                        <small class="text-muted">
+                            Company is automatically selected from your login.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <hr class="mb-4" />
+
+
+                <!-- =================================================
+                     TAX NAME / TAX CODE
+                     ================================================= -->
+
+                <div class="row">
+
+                    <!-- TAX NAME -->
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TaxName"
+                               class="form-label fw-bold">
+                        </label>
+
+                        <input asp-for="TaxName"
+                               class="form-control"
+                               placeholder="e.g., General Sales Tax" />
+
+                        <span asp-validation-for="TaxName"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <!-- TAX CODE -->
+
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="TaxCode"
+                               class="form-label fw-bold">
+                        </label>
+
+                        <input asp-for="TaxCode"
+                               class="form-control"
+                               placeholder="e.g., GST18" />
+
+                        <span asp-validation-for="TaxCode"
+                              class="text-danger">
+                        </span>
+
+                        <small class="text-muted">
+                            Unique tax code for this company.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     TAX RATE / DATES
+                     ================================================= -->
+
+                <div class="row">
+
+                    <!-- TAX RATE -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label asp-for="TaxRate"
+                               class="form-label fw-bold">
+                        </label>
+
+                        <div class="input-group">
+
+                            <input asp-for="TaxRate"
+                                   class="form-control"
+                                   type="number"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="18.00" />
+
+                            <span class="input-group-text">
+                                %
+                            </span>
+
+                        </div>
+
+                        <span asp-validation-for="TaxRate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <!-- EFFECTIVE FROM -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label asp-for="EffectiveFrom"
+                               class="form-label fw-bold">
+                        </label>
+
+                        <input asp-for="EffectiveFrom"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="EffectiveFrom"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <!-- EFFECTIVE TO -->
+
+                    <div class="col-md-4 mb-3">
+
+                        <label asp-for="EffectiveTo"
+                               class="form-label fw-bold">
+                        </label>
+
+                        <input asp-for="EffectiveTo"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="EffectiveTo"
+                              class="text-danger">
+                        </span>
+
+                        <small class="text-muted">
+                            Optional. Leave blank if the tax has no end date.
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     DEFAULT TAX
+                     ================================================= -->
+
+                <div class="row mt-2">
+
+                    <div class="col-md-6 mb-3">
+
+                        <div class="card border">
+
+                            <div class="card-body">
+
+                                <div class="form-check form-switch">
+
+                                    <input asp-for="IsDefault"
+                                           class="form-check-input"
+                                           type="checkbox"
+                                           role="switch" />
+
+                                    <label asp-for="IsDefault"
+                                           class="form-check-label fw-bold">
+                                    </label>
+
+                                </div>
+
+                                <small class="text-muted">
+                                    Set this tax as the default tax for the company.
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <hr class="my-4" />
+
+
+                <!-- =================================================
+                     BUTTONS
+                     ================================================= -->
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        <i class="bi bi-check-circle"></i>
+                        Create Tax Setting
+
+                    </button>
+
+
+                    <a asp-action="Index"
+                           class="btn btn-secondary">
+
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     VALIDATION SCRIPTS
+     ============================================================= -->
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial");
+    }
+
+}

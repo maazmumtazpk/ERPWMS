@@ -1,0 +1,655 @@
+@model ERPWMS.Application.DTOs.Product.ProductDetailDto
+
+@{
+    ViewData["Title"] = "Product Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h3 class="card-title">
+                        <i class="fas fa-box"></i> Product Details
+                    </h3>
+
+                    <div class="card-tools">
+
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+
+                        <a asp-action="Modify"
+                               asp-route-id="@Model.ProductId"
+                               class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <!-- Product Header -->
+
+                    <div class="row">
+
+                        <div class="col-md-3 text-center">
+
+                            @if (!string.IsNullOrEmpty(Model.PrimaryImageUrl))
+                            {
+                                <img src="@Model.PrimaryImageUrl"
+                                     alt="@Model.ProductName"
+                                     style="max-height: 200px; max-width: 200px;"
+                                     class="img-fluid img-thumbnail" />
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+
+                                    <i class="fas fa-image fa-5x text-muted"></i>
+
+                                    <p class="text-muted">Image Not Available</p>
+
+                                </div>
+                            }
+
+                            @if (Model.Images.Any())
+                            {
+                                <div class="mt-2">
+
+                                    @foreach (var image in Model.Images.Take(4))
+                                    {
+                                        <img src="@image.ImageURL"
+                                             alt="Product Image"
+                                             style="max-height: 40px; max-width: 40px;"
+                                             class="img-thumbnail m-1" />
+                                    }
+
+                                    @if (Model.Images.Count > 4)
+                                    {
+                                        <span class="badge badge-info">
+                                            +@(Model.Images.Count - 4)
+                                        </span>
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="col-md-9">
+
+                            <h2>@Model.ProductName</h2>
+
+                            <div class="row">
+
+                                <div class="col-md-6">
+
+                                    <dl class="row">
+
+                                        <dt class="col-sm-4">SKU:</dt>
+
+                                        <dd class="col-sm-8">
+                                            <span class="badge badge-secondary">
+                                                @Model.SKU
+                                            </span>
+                                        </dd>
+
+                                        <dt class="col-sm-4">Barcode:</dt>
+
+                                        <dd class="col-sm-8">
+                                            @(!string.IsNullOrEmpty(Model.Barcode) ? Model.Barcode : "N/A")
+                                        </dd>
+
+                                        <dt class="col-sm-4">Category:</dt>
+
+                                        <dd class="col-sm-8">
+                                            <span class="badge badge-primary">
+                                                @Model.CategoryName
+                                            </span>
+                                        </dd>
+
+                                        <dt class="col-sm-4">Sub Category:</dt>
+
+                                        <dd class="col-sm-8">
+                                            <span class="badge badge-info">
+                                                @Model.SubCategoryName
+                                            </span>
+                                        </dd>
+
+                                        <dt class="col-sm-4">Brand:</dt>
+
+                                        <dd class="col-sm-8">
+                                            <span class="badge badge-secondary">
+                                                @Model.BrandName
+                                            </span>
+                                        </dd>
+
+                                    </dl>
+
+                                </div>
+
+                                <div class="col-md-6">
+
+                                    <dl class="row">
+
+                                        <dt class="col-sm-4">Status:</dt>
+
+                                        <dd class="col-sm-8">
+
+                                            @if ((Model.IsActive == true))
+                                            {
+                                                <span class="badge badge-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-danger">Inactive</span>
+                                            }
+
+                                        </dd>
+
+                                        <dt class="col-sm-4">Unit:</dt>
+
+                                        <dd class="col-sm-8">
+                                            <span class="badge badge-secondary">
+                                                @Model.UnitName
+                                            </span>
+                                        </dd>
+
+                                        <dt class="col-sm-4">Serialized:</dt>
+
+                                        <dd class="col-sm-8">
+                                            @((Model.IsSerialized == true) ? "Yes" : "No")
+                                        </dd>
+
+                                        <dt class="col-sm-4">Batch Managed:</dt>
+
+                                        <dd class="col-sm-8">
+                                            @((Model.IsBatchManaged == true) ? "Yes" : "No")
+                                        </dd>
+
+                                    </dl>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <!-- Description -->
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <h5 class="text-primary">
+                                <i class="fas fa-align-left"></i> Description
+                            </h5>
+
+                            <p>
+                                @(Model.Description ?? "No description available")
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <!-- Physical Dimensions -->
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <h5 class="text-primary">
+                                <i class="fas fa-ruler"></i> Physical Dimensions
+                            </h5>
+
+                            <div class="row">
+
+                                <div class="col-md-3">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-info">
+                                            <i class="fas fa-weight"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">Weight (kg)</span>
+
+                                            <span class="info-box-number">
+                                                @(Model.Weight?.ToString("0.00") ?? "N/A") KG
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-primary">
+                                            <i class="fas fa-arrows-alt-h"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">Length (cm)</span>
+
+                                            <span class="info-box-number">
+                                                @(Model.Length?.ToString("0.00") ?? "N/A") CM
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-success">
+                                            <i class="fas fa-arrows-alt-v"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">Width (cm)</span>
+
+                                            <span class="info-box-number">
+                                                @(Model.Width?.ToString("0.00") ?? "N/A") CM
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-warning">
+                                            <i class="fas fa-arrows-alt"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">Height (cm)</span>
+
+                                            <span class="info-box-number">
+                                                @(Model.Height?.ToString("0.00") ?? "N/A") CM
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <!-- Stock Levels -->
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <h5 class="text-primary">
+                                <i class="fas fa-warehouse"></i> Stock Levels
+                            </h5>
+
+                            <div class="row">
+
+                                <div class="col-md-4">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-danger">
+                                            <i class="fas fa-arrow-down"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">
+                                                Minimum Stock
+                                            </span>
+
+                                            <span class="info-box-number">
+                                                @(Model.MinStockLevel?.ToString() ?? "N/A")
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-4">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-success">
+                                            <i class="fas fa-arrow-up"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">
+                                                Maximum Stock
+                                            </span>
+
+                                            <span class="info-box-number">
+                                                @(Model.MaxStockLevel?.ToString() ?? "N/A")
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-4">
+
+                                    <div class="info-box">
+
+                                        <span class="info-box-icon bg-warning">
+                                            <i class="fas fa-sync"></i>
+                                        </span>
+
+                                        <div class="info-box-content">
+
+                                            <span class="info-box-text">
+                                                Reorder Level
+                                            </span>
+
+                                            <span class="info-box-number">
+                                                @(Model.ReorderLevel?.ToString() ?? "N/A")
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <!-- Attributes -->
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <h5 class="text-primary">
+                                <i class="fas fa-list"></i> Attributes
+                            </h5>
+
+                            @if (Model.Attributes.Any())
+                            {
+                                <table class="table table-bordered table-sm">
+
+                                    <thead class="thead-light">
+
+                                        <tr>
+                                            <th>Attribute Name</th>
+                                            <th>Value</th>
+                                            <th>Status</th>
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        @foreach (var attr in Model.Attributes)
+                                        {
+                                            <tr>
+
+                                                <td>
+                                                    <strong>@attr.AttributeName</strong>
+                                                </td>
+
+                                                <td>
+                                                    @attr.AttributeValue
+                                                </td>
+
+                                                <td>
+
+                                                    @if (attr.IsActive == true)
+                                                    {
+                                                        <span class="badge badge-success">
+                                                            Active
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-danger">
+                                                            Inactive
+                                                        </span>
+                                                    }
+
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+                            }
+                            else
+                            {
+                                <p class="text-muted">
+                                    No attributes available
+                                </p>
+                            }
+
+                        </div>
+
+                        <!-- Images -->
+
+                        <div class="col-md-6">
+
+                            <h5 class="text-primary">
+                                <i class="fas fa-images"></i> Images
+                            </h5>
+
+                            @if (Model.Images.Any())
+                            {
+                                <div class="row">
+
+                                    @foreach (var image in Model.Images)
+                                    {
+                                        <div class="col-md-3 text-center mb-2">
+
+                                            <img src="@image.ImageURL"
+                                                 alt="Product Image"
+                                                 style="max-height: 80px; max-width: 80px;"
+                                                 class="img-thumbnail" />
+
+                                            @if (image.IsPrimary == true)
+                                            {
+                                                <span class="badge badge-success d-block">
+                                                    Primary
+                                                </span>
+                                            }
+
+                                            <small class="text-muted">
+                                                Order: @image.DisplayOrder
+                                            </small>
+
+                                        </div>
+                                    }
+
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">
+                                    No images available
+                                </p>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <hr />
+
+                    <!-- Audit Information -->
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <h5 class="text-primary">
+                                <i class="fas fa-history"></i> Audit Information
+                            </h5>
+
+                            <div class="row">
+
+                                <div class="col-md-3">
+
+                                    <small>
+                                        <strong>Created Date:</strong>
+                                    </small>
+
+                                    <p>
+                                        @(Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "N/A")
+                                    </p>
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <small>
+                                        <strong>Created By:</strong>
+                                    </small>
+
+                                    <p>
+                                        @(Model.CreatedByName ?? Model.CreatedBy.ToString())
+                                    </p>
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <small>
+                                        <strong>Last Modified:</strong>
+                                    </small>
+
+                                    <p>
+                                        @(Model.UpdatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "Never")
+                                    </p>
+
+                                </div>
+
+                                <div class="col-md-3">
+
+                                    <small>
+                                        <strong>Last Modified By:</strong>
+                                    </small>
+
+                                    <p>
+                                        @(Model.UpdatedByName ?? "N/A")
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                            @if ((Model.IsDeleted == true))
+                            {
+                                <div class="alert alert-danger">
+
+                                    <strong>Deleted:</strong>
+                                    @(Model.DeletedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "N/A")
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .info-box {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 0.25rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .info-box-icon {
+        font-size: 1.5rem;
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.25rem;
+        color: white;
+        margin-right: 1rem;
+    }
+
+    .info-box-content {
+        flex: 1;
+    }
+
+    .info-box-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .info-box-number {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+</style>

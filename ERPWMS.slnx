@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ERPWMS.Application/ERPWMS.Application.csproj" />
+  <Project Path="ERPWMS.Database/ERPWMS.Database.csproj" />
+  <Project Path="ERPWMS.Domain/ERPWMS.Domain.csproj" />
+  <Project Path="ERPWMS.Infrastructure/ERPWMS.Infrastructure.csproj" />
+  <Project Path="ERPWMS.Web/ERPWMS.Web.csproj" />
+</Solution>

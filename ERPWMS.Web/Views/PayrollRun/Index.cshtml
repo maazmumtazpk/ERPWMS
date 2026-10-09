@@ -1,0 +1,444 @@
+﻿@{
+    ViewData["Title"] = "Payroll Runs";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+
+<style>
+.payslip-modal .modal-dialog{max-width:960px;margin:15px auto;}
+.payslip-modal .modal-content{border:none;border-radius:10px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+
+.ps-topbar{background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;}
+.ps-topbar-left h4{margin:0;font-size:15px;font-weight:800;letter-spacing:.3px;display:flex;align-items:center;gap:8px;}
+.ps-topbar-left h4 i{color:#F5A623;font-size:16px;}
+.ps-topbar-left .sub{font-size:11px;opacity:.75;margin-top:2px;}
+.ps-status-badge{padding:4px 12px;border-radius:16px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:rgba(245,166,35,.25);color:#F5A623;border:1px solid rgba(245,166,35,.4);}
+
+.ps-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);background:#F8FAFC;border-bottom:1px solid #E2E8F0;}
+.ps-kpi{padding:12px 16px;border-right:1px solid #E2E8F0;position:relative;}
+.ps-kpi:last-child{border-right:none;}
+.ps-kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;}
+.ps-kpi.k1::before{background:#3B82F6;}
+.ps-kpi.k2::before{background:#10B981;}
+.ps-kpi.k3::before{background:#EF4444;}
+.ps-kpi.k4::before{background:#8B5CF6;}
+.ps-kpi-lbl{font-size:9.5px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.ps-kpi-val{font-size:16px;font-weight:900;color:#0A1628;letter-spacing:-.3px;}
+.ps-kpi.k2 .ps-kpi-val{color:#059669;}
+.ps-kpi.k3 .ps-kpi-val{color:#DC2626;}
+
+.ps-tabs{display:flex;background:#fff;border-bottom:2px solid #E2E8F0;overflow-x:auto;padding:0 12px;}
+.ps-tab{padding:10px 14px;font-size:11px;font-weight:700;color:#64748B;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.ps-tab:hover{color:#0A1628;background:#F8FAFC;}
+.ps-tab.active{color:#0A1628;border-bottom-color:#F5A623;}
+
+.ps-body{padding:0;background:#F1F5F9;max-height:calc(100vh - 320px);overflow-y:auto;}
+
+.ps-emp-header{padding:12px 18px;background:#fff;border-bottom:1px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;}
+.ps-emp-name{font-size:14px;font-weight:800;color:#0A1628;}
+.ps-emp-code{font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:1px;}
+.ps-emp-net{text-align:right;}
+.ps-emp-net-lbl{font-size:9px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.4px;}
+.ps-emp-net-val{font-size:18px;font-weight:900;color:#059669;letter-spacing:-.5px;}
+
+.ps-att-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:10px 18px;background:#fff;border-bottom:1px solid #E2E8F0;}
+.ps-att-item{background:#F8FAFC;border-radius:6px;padding:6px;text-align:center;border:1px solid #E2E8F0;}
+.ps-att-lbl{font-size:8.5px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;}
+.ps-att-val{font-size:13px;font-weight:900;color:#0A1628;}
+.ps-att-val.green{color:#059669;}
+.ps-att-val.red{color:#DC2626;}
+.ps-att-val.orange{color:#D97706;}
+.ps-att-val.blue{color:#2563EB;}
+
+.ps-sections{display:grid;grid-template-columns:1fr 1fr;gap:0;background:#F1F5F9;}
+.ps-section{background:#fff;padding:12px 18px;}
+.ps-section:first-child{border-right:1px solid #E2E8F0;}
+
+.ps-sec-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#0A1628;margin-bottom:8px;padding-bottom:5px;border-bottom:1.5px solid #E2E8F0;display:flex;align-items:center;gap:6px;}
+.ps-sec-title i{font-size:12px;}
+.ps-sec-title.earn i{color:#059669;}
+.ps-sec-title.ded i{color:#DC2626;}
+
+.ps-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;font-size:11.5px;border-bottom:1px dashed #F1F5F9;gap:8px;}
+.ps-row:last-child{border-bottom:none;}
+.ps-row-lbl{color:#475569;font-weight:600;flex:1;display:flex;flex-direction:column;gap:1px;}
+.ps-row-lbl .reason{font-size:9.5px;color:#94A3B8;font-weight:500;font-style:italic;line-height:1.3;}
+.ps-row-amt{font-weight:800;color:#0A1628;font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap;}
+.ps-row.plus .ps-row-amt{color:#059669;}
+.ps-row.minus .ps-row-amt{color:#DC2626;}
+
+.ps-row.subtotal{border-top:1px solid #CBD5E1;padding-top:8px;margin-top:4px;}
+.ps-row.subtotal .ps-row-lbl{color:#0A1628;font-weight:800;text-transform:uppercase;font-size:10px;letter-spacing:.4px;}
+.ps-row.subtotal .ps-row-amt{font-size:12.5px;}
+
+.ps-row.grand{border-top:2px solid #0A1628;padding-top:10px;margin-top:6px;}
+.ps-row.grand .ps-row-lbl{color:#0A1628;font-weight:900;text-transform:uppercase;font-size:11px;letter-spacing:.5px;}
+.ps-row.grand .ps-row-amt{font-size:13px;font-weight:900;}
+.ps-row.grand.earn-row .ps-row-amt{color:#059669;}
+.ps-row.grand.ded-row .ps-row-amt{color:#DC2626;}
+
+.ps-no-items{padding:10px;background:#F8FAFC;border-radius:6px;text-align:center;color:#94A3B8;font-size:11px;font-style:italic;}
+
+.ps-loan-info{margin:0 18px 10px;padding:10px 14px;background:#FFF7ED;border-left:3px solid #F5A623;border-radius:6px;font-size:11px;}
+.ps-loan-info-title{font-weight:800;color:#78350F;margin-bottom:4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;}
+.ps-loan-info table{width:100%;font-size:11px;color:#78350F;}
+.ps-loan-info table td{padding:2px 4px;}
+
+.ps-net-summary{margin:12px 18px;padding:12px 16px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:8px;border:1px solid #a7f3d0;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.ps-net-summary-left{font-size:11px;color:#065f46;font-weight:600;}
+.ps-net-summary-left b{color:#0A1628;}
+.ps-net-summary-right{font-size:18px;font-weight:900;color:#059669;white-space:nowrap;}
+
+.ps-notes{margin:0 18px 12px;padding:8px 12px;background:#FEF3C7;border-left:3px solid #F5A623;border-radius:6px;font-size:10.5px;color:#78350F;}
+
+.ps-footer{padding:10px 18px;background:#fff;border-top:1px solid #E2E8F0;display:flex;justify-content:flex-end;gap:8px;}
+
+.ps-btn{padding:8px 16px;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.ps-btn-primary{background:#0A1628;color:#fff;}
+.ps-btn-primary:hover{background:#1a2942;}
+.ps-btn-outline{background:#fff;color:#64748B;border:1.5px solid #E2E8F0;}
+.ps-btn-outline:hover{background:#F8FAFC;}
+
+@@media print{
+    body *{visibility:hidden !important;}
+    .ps-print-area, .ps-print-area *{visibility:visible !important;}
+    .ps-print-area{position:absolute;left:0;top:0;width:100%;}
+    .modal-backdrop{display:none !important;}
+    .modal{position:static !important;background:none !important;}
+    .modal-dialog{max-width:100% !important;margin:0 !important;}
+    .ps-footer, .ps-tabs, .btn-close{display:none !important;}
+    .ps-body{max-height:none !important;overflow:visible !important;}
+}
+</style>
+
+<div style="padding-bottom:30px;">
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-calculator" style="color:#F5A623;"></i> Payroll Runs</h5>
+        <div style="display:flex;gap:6px;align-items:center;">
+            <select id="yearSel" class="form-control" style="width:100px;"></select>
+            <select id="monthSel" class="form-control" style="width:120px;"></select>
+            <button type="button" class="btn-gold" onclick="calculate()"><i class="bi bi-play-circle"></i> Run Payroll</button>
+            <button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table-premium" id="xTable">
+            <thead><tr><th>Run No</th><th>Period</th><th>Employees</th><th>Gross</th><th>Deductions</th><th>Net</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="xBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty-state d-none"><h4>No payroll runs yet</h4></div>
+    </div>
+</div>
+</div>
+
+<div class="modal fade payslip-modal" id="detailsModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="ps-print-area">
+                <div class="ps-topbar">
+                    <div class="ps-topbar-left">
+                        <h4><i class="bi bi-receipt-cutoff"></i> PAYROLL DETAILS</h4>
+                        <div class="sub" id="psRunInfo">Loading...</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="ps-status-badge" id="psStatusBadge">-</span>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+
+                <div class="ps-kpi-row" id="psKpiRow"></div>
+                <div class="ps-tabs" id="psTabs"></div>
+                <div class="ps-body" id="psBody">
+                    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+
+            <div class="ps-footer">
+                <button class="ps-btn ps-btn-outline" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button>
+                <button class="ps-btn ps-btn-primary" onclick="printDetails()"><i class="bi bi-printer"></i> Print / PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+function fmt(n){ return (n||0).toLocaleString('en-PK', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function num(n){ return (n||0); }
+function fmtH(n){ var x = (n||0); return x % 1 === 0 ? x : x.toFixed(2); }
+
+var currentData = null;
+
+(function initSelects(){
+    var y = new Date().getFullYear(), m = new Date().getMonth() + 1;
+    var ys = document.getElementById('yearSel');
+    for(var i=y-1; i<=y+1; i++){ var o=document.createElement('option'); o.value=i; o.textContent=i; if(i===y)o.selected=true; ys.appendChild(o); }
+    var ms = document.getElementById('monthSel');
+    var names = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    for(var i=1; i<=12; i++){ var o=document.createElement('option'); o.value=i; o.textContent=names[i]; if(i===m)o.selected=true; ms.appendChild(o); }
+})();
+
+function calculate(){
+    var y = document.getElementById('yearSel').value;
+    var m = document.getElementById('monthSel').value;
+    if(!confirm('Calculate payroll for ' + y + '-' + m + '?')) return;
+    var fd = new FormData(); fd.append('__RequestVerificationToken', tk());
+    fd.append('year', y); fd.append('month', m);
+    fetch('/PayrollRun/Calculate', { method:'POST', body: fd })
+        .then(function(r){return r.json();})
+        .then(function(res){
+            if(res.success){ showToast(res.message,'success'); reload_(); }
+            else showToast(res.message,'error');
+        });
+}
+
+function details(id){
+    document.getElementById('psBody').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+    document.getElementById('psTabs').innerHTML = '';
+    document.getElementById('psKpiRow').innerHTML = '';
+    new bootstrap.Modal(document.getElementById('detailsModal')).show();
+
+    fetch('/PayrollRun/Details?id=' + id)
+        .then(function(r){return r.json();})
+        .then(function(d){
+            currentData = d;
+            renderTop(d.run);
+            renderKpis(d.registers);
+            renderTabs(d.registers);
+            showEmployee(0);
+        })
+        .catch(function(e){
+            document.getElementById('psBody').innerHTML = '<div class="alert alert-danger m-3">Error: ' + e.message + '</div>';
+        });
+}
+
+function renderTop(run){
+    var monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('psRunInfo').innerHTML = '<b>' + run.runNo + '</b> &nbsp;·&nbsp; ' + monthNames[run.month] + ' ' + run.year;
+    var badge = document.getElementById('psStatusBadge');
+    badge.textContent = run.status;
+    if(run.status === 'Approved' || run.status === 'Paid' || run.status === 'Locked'){
+        badge.style.background = 'rgba(16,185,129,.25)';
+        badge.style.color = '#10B981';
+        badge.style.borderColor = 'rgba(16,185,129,.4)';
+    }
+}
+
+function renderKpis(regs){
+    var gross = regs.reduce(function(a,x){ return a + num(x.totalEarnings); }, 0);
+    var deduct = regs.reduce(function(a,x){ return a + num(x.totalDeductions); }, 0);
+    var net = regs.reduce(function(a,x){ return a + num(x.netPay); }, 0);
+
+    var h = '';
+    h += '<div class="ps-kpi k1"><div class="ps-kpi-lbl">Employees</div><div class="ps-kpi-val">' + regs.length + '</div></div>';
+    h += '<div class="ps-kpi k2"><div class="ps-kpi-lbl">Total Earnings</div><div class="ps-kpi-val">' + fmt(gross) + '</div></div>';
+    h += '<div class="ps-kpi k3"><div class="ps-kpi-lbl">Total Deductions</div><div class="ps-kpi-val">' + fmt(deduct) + '</div></div>';
+    h += '<div class="ps-kpi k4"><div class="ps-kpi-lbl">Total Net Pay</div><div class="ps-kpi-val">' + fmt(net) + '</div></div>';
+    document.getElementById('psKpiRow').innerHTML = h;
+}
+
+function renderTabs(regs){
+    var h = '';
+    regs.forEach(function(r, i){
+        h += '<div class="ps-tab' + (i===0?' active':'') + '" onclick="showEmployee(' + i + ')">';
+        h += '<span style="color:#0A1628;font-weight:800;">' + r.employeeCode + '</span> · ' + r.employeeName;
+        h += '</div>';
+    });
+    document.getElementById('psTabs').innerHTML = h;
+}
+
+function showEmployee(idx){
+    var tabs = document.querySelectorAll('.ps-tab');
+    tabs.forEach(function(t, i){ t.classList.toggle('active', i === idx); });
+
+    var r = currentData.registers[idx];
+    var divisor = r.divisor;
+    var dailyRate = r.dailyRate;
+    var hourlyRate = r.hourlyRate;
+
+    var h = '';
+
+    // Header
+    h += '<div class="ps-emp-header">';
+    h += '<div>';
+    h += '<div class="ps-emp-name">' + r.employeeName + '</div>';
+    h += '<div class="ps-emp-code">' + r.employeeCode + ' &nbsp;·&nbsp; Daily: PKR ' + fmt(dailyRate) + ' &nbsp;·&nbsp; Hourly: PKR ' + fmt(hourlyRate) + '</div>';
+    h += '</div>';
+    h += '<div class="ps-emp-net">';
+    h += '<div class="ps-emp-net-lbl">Net Payable</div>';
+    h += '<div class="ps-emp-net-val">PKR ' + fmt(r.netPay) + '</div>';
+    h += '</div>';
+    h += '</div>';
+
+    // Attendance
+    h += '<div class="ps-att-grid">';
+    h += '<div class="ps-att-item"><div class="ps-att-lbl">Working</div><div class="ps-att-val">' + num(r.workingDays) + '</div></div>';
+    h += '<div class="ps-att-item"><div class="ps-att-lbl">Present</div><div class="ps-att-val green">' + num(r.presentDays) + '</div></div>';
+    h += '<div class="ps-att-item"><div class="ps-att-lbl">Absent</div><div class="ps-att-val red">' + num(r.absentDays) + '</div></div>';
+    h += '<div class="ps-att-item"><div class="ps-att-lbl">Late</div><div class="ps-att-val orange">' + num(r.lateDays) + '</div></div>';
+    h += '<div class="ps-att-item"><div class="ps-att-lbl">Leave</div><div class="ps-att-val">' + num(r.leaveDays) + '</div></div>';
+    h += '<div class="ps-att-item"><div class="ps-att-lbl">OT Hours</div><div class="ps-att-val blue">' + fmtH(r.overtimeHours) + '</div></div>';
+    h += '</div>';
+
+    // Two columns
+    h += '<div class="ps-sections">';
+
+    // EARNINGS
+    h += '<div class="ps-section">';
+    h += '<div class="ps-sec-title earn"><i class="bi bi-arrow-up-circle-fill"></i> Earnings</div>';
+
+    if(r.basicSalary > 0){
+        h += '<div class="ps-row"><div class="ps-row-lbl">Basic Salary</div><div class="ps-row-amt">' + fmt(r.basicSalary) + '</div></div>';
+    }
+    if(r.houseRent > 0){
+        h += '<div class="ps-row"><div class="ps-row-lbl">House Rent</div><div class="ps-row-amt">' + fmt(r.houseRent) + '</div></div>';
+    }
+    if(r.utilityAllowance > 0){
+        h += '<div class="ps-row"><div class="ps-row-lbl">Utility</div><div class="ps-row-amt">' + fmt(r.utilityAllowance) + '</div></div>';
+    }
+    if(r.medicalAllowance > 0){
+        h += '<div class="ps-row"><div class="ps-row-lbl">Medical</div><div class="ps-row-amt">' + fmt(r.medicalAllowance) + '</div></div>';
+    }
+    if(r.otherAllowances > 0){
+        h += '<div class="ps-row"><div class="ps-row-lbl">Other Allowances</div><div class="ps-row-amt">' + fmt(r.otherAllowances) + '</div></div>';
+    }
+
+    h += '<div class="ps-row subtotal"><div class="ps-row-lbl">Gross Salary</div><div class="ps-row-amt">' + fmt(r.grossSalary) + '</div></div>';
+
+    // OT - Show details if available
+    if(r.overtimeAmount > 0 || (r.overtimeDetails && r.overtimeDetails.length > 0)){
+        var otAmt = r.overtimeAmount || 0;
+        var otDetailHtml = '';
+        if(r.overtimeDetails && r.overtimeDetails.length > 0){
+            var reasons = [];
+            r.overtimeDetails.forEach(function(ot){
+                var tag = ot.isHoliday ? ' [Holiday]' : (ot.isWeeklyOff ? ' [Weekly Off]' : '');
+                reasons.push(ot.date + ': ' + ot.hours + 'h × ' + ot.rate + ' × ' + ot.multiplier + tag);
+            });
+            otDetailHtml = reasons.join(' • ');
+        } else if(r.overtimeHours > 0){
+            otDetailHtml = fmtH(r.overtimeHours) + ' hrs × PKR ' + fmt(hourlyRate) + ' × ' + r.otMultiplier;
+        }
+        h += '<div class="ps-row plus"><div class="ps-row-lbl">Overtime<div class="reason">' + otDetailHtml + '</div></div><div class="ps-row-amt">+ ' + fmt(otAmt) + '</div></div>';
+    }
+
+    if(r.bonusAmount > 0){
+        h += '<div class="ps-row plus"><div class="ps-row-lbl">Bonus<div class="reason">Approved bonus in this period</div></div><div class="ps-row-amt">+ ' + fmt(r.bonusAmount) + '</div></div>';
+    }
+    if(r.commissionAmount > 0){
+        h += '<div class="ps-row plus"><div class="ps-row-lbl">Commission<div class="reason">Approved commission</div></div><div class="ps-row-amt">+ ' + fmt(r.commissionAmount) + '</div></div>';
+    }
+
+    h += '<div class="ps-row grand earn-row"><div class="ps-row-lbl">Total Earnings</div><div class="ps-row-amt">' + fmt(r.totalEarnings) + '</div></div>';
+    h += '</div>';
+
+    // DEDUCTIONS
+    h += '<div class="ps-section">';
+    h += '<div class="ps-sec-title ded"><i class="bi bi-arrow-down-circle-fill"></i> Deductions</div>';
+
+    var hasAny = false;
+
+    if(r.incomeTax > 0){
+        hasAny = true;
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Income Tax</div><div class="ps-row-amt">' + fmt(r.incomeTax) + '</div></div>';
+    }
+    if(r.professionalTax > 0){
+        hasAny = true;
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Professional Tax</div><div class="ps-row-amt">' + fmt(r.professionalTax) + '</div></div>';
+    }
+    if(r.lateDeduction > 0){
+        hasAny = true;
+        var fullLate = Math.floor(r.lateDays / r.lateFullDayCount);
+        var halfLate = Math.floor((r.lateDays % r.lateFullDayCount) / r.lateHalfDayCount);
+        var lateReason = r.lateDays + ' late days → ' + fullLate + ' full-day' + (halfLate > 0 ? ' + ' + halfLate + ' half-day' : '') + ' deduction';
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Late Deduction<div class="reason">' + lateReason + '</div></div><div class="ps-row-amt">' + fmt(r.lateDeduction) + '</div></div>';
+    }
+    if(r.absenceDeduction > 0){
+        hasAny = true;
+        var absReason = r.absentDays + ' absent days × PKR ' + fmt(dailyRate);
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Absence Deduction<div class="reason">' + absReason + '</div></div><div class="ps-row-amt">' + fmt(r.absenceDeduction) + '</div></div>';
+    }
+    if(r.unpaidLeaveDeduction > 0){
+        hasAny = true;
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Unpaid Leave<div class="reason">Approved unpaid leave</div></div><div class="ps-row-amt">' + fmt(r.unpaidLeaveDeduction) + '</div></div>';
+    }
+    if(r.loanRecovery > 0){
+        hasAny = true;
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Loan Recovery<div class="reason">Monthly installment</div></div><div class="ps-row-amt">' + fmt(r.loanRecovery) + '</div></div>';
+    }
+    if(r.advanceRecovery > 0){
+        hasAny = true;
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Advance Recovery<div class="reason">Salary advance</div></div><div class="ps-row-amt">' + fmt(r.advanceRecovery) + '</div></div>';
+    }
+    if(r.otherDeductions > 0){
+        hasAny = true;
+        h += '<div class="ps-row minus"><div class="ps-row-lbl">Other</div><div class="ps-row-amt">' + fmt(r.otherDeductions) + '</div></div>';
+    }
+
+    if(!hasAny){
+        h += '<div class="ps-no-items"><i class="bi bi-check-circle" style="color:#10B981;"></i> No deductions</div>';
+    } else {
+        h += '<div class="ps-row grand ded-row"><div class="ps-row-lbl">Total Deductions</div><div class="ps-row-amt">' + fmt(r.totalDeductions) + '</div></div>';
+    }
+
+    h += '</div>';
+    h += '</div>';
+
+    // LOAN INFO
+    if(r.loans && r.loans.length > 0){
+        h += '<div class="ps-loan-info">';
+        h += '<div class="ps-loan-info-title"><i class="bi bi-cash-stack"></i> Active Loan Details</div>';
+        h += '<table>';
+        r.loans.forEach(function(l){
+            h += '<tr><td><b>' + l.loanNo + '</b></td>';
+            h += '<td>Total: ' + fmt(l.loanAmount) + '</td>';
+            h += '<td>Recovered: ' + fmt(l.totalRecovered) + '</td>';
+            h += '<td style="color:#DC2626;"><b>Remaining: ' + fmt(l.remainingAmount) + '</b></td>';
+            h += '</tr>';
+        });
+        h += '</table>';
+        h += '</div>';
+    }
+
+    // Net summary
+    h += '<div class="ps-net-summary">';
+    h += '<div class="ps-net-summary-left"><b>' + fmt(r.totalEarnings) + '</b> Earnings − <b>' + fmt(r.totalDeductions) + '</b> Deductions =</div>';
+    h += '<div class="ps-net-summary-right">PKR ' + fmt(r.netPay) + '</div>';
+    h += '</div>';
+
+    document.getElementById('psBody').innerHTML = h;
+}
+
+function printDetails(){ window.print(); }
+function approve(id){ if(!confirm('Approve this payroll?')) return; var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/PayrollRun/Approve/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}else showToast(res.message,'error');}); }
+function lock(id){ if(!confirm('Lock this payroll?')) return; var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/PayrollRun/Lock/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}}); }
+function del_(id){ if(!confirm('Delete?')) return; var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/PayrollRun/Delete/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}}); }
+function genPayslips(id){ var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/Payslip/GenerateAll?runId='+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success');}else showToast(res.message,'error');}); }
+
+function reload_(){
+    fetch('/PayrollRun/GetAll').then(function(r){return r.json();}).then(function(d){
+        var b = document.getElementById('xBody');
+        if(!d || d.length===0){ b.innerHTML=''; document.getElementById('xTable').style.display='none'; document.getElementById('emptyState').classList.remove('d-none'); return; }
+        document.getElementById('xTable').style.display=''; document.getElementById('emptyState').classList.add('d-none');
+        var h='';
+        d.forEach(function(x){
+            var cls = x.status==='Approved'?'active':(x.status==='Locked'?'role':(x.status==='Calculated'?'role':'inactive'));
+            h += '<tr><td>' + x.runNo + '</td><td>' + x.year + '-' + x.month + '</td><td>' + x.totalEmployees + '</td>';
+            h += '<td>' + fmt(x.totalGross) + '</td><td>' + fmt(x.totalDeductions) + '</td><td><b>' + fmt(x.totalNet) + '</b></td>';
+            h += '<td><span class="badge-status ' + cls + '">' + x.status + '</span></td>';
+            h += '<td style="text-align:right;">';
+            h += '<button class="btn-icon" onclick="details('+x.runId+')" title="Details"><i class="bi bi-list-ul"></i></button> ';
+            if(x.status === 'Calculated'){ h += '<button class="btn-icon" onclick="approve('+x.runId+')" title="Approve"><i class="bi bi-check-circle"></i></button> '; }
+            if(x.status === 'Approved'){ h += '<button class="btn-icon" onclick="genPayslips('+x.runId+')" title="Generate Payslips"><i class="bi bi-file-earmark-text"></i></button> '; h += '<button class="btn-icon" onclick="lock('+x.runId+')" title="Lock"><i class="bi bi-lock"></i></button> '; }
+            h += '<button class="btn-icon" onclick="del_('+x.runId+')"><i class="bi bi-trash3"></i></button>';
+            h += '</td></tr>';
+        });
+        b.innerHTML = h;
+    });
+}
+document.addEventListener('DOMContentLoaded', reload_);
+</script>

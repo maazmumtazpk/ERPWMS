@@ -1,0 +1,45 @@
+@model ERPWMS.Web.ViewModels.Warehouse.RegisterWarehouseViewModel
+@{ Layout = null; }
+<form id="whAddForm" method="post" action="/Warehouse/Register">
+    @Html.AntiForgeryToken()
+    <div id="whAddAlert" style="display:none;padding:9px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Warehouse Name *</label>
+            <input type="text" name="warehouseName" class="form-control" required maxlength="200" placeholder="Enter warehouse name" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Warehouse Code</label>
+            <input type="text" name="warehouseCode" class="form-control" maxlength="20" placeholder="WH-001" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Branch *</label>
+            <select name="branchId" id="whAddBranch" class="form-select" required>
+                <option value="">Loading...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Phone</label>
+            <input type="text" name="phone" class="form-control" maxlength="20" placeholder="0300-1234567" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Email</label>
+            <input type="email" name="email" class="form-control" maxlength="100" placeholder="wh@company.com" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Address</label>
+            <textarea name="address" class="form-control" rows="2" maxlength="500" placeholder="Full address"></textarea>
+        </div>
+    </div>
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Register</button>
+    </div>
+</form>
+<script>
+fetch('/Warehouse/GetBranches').then(function(r){return r.json();}).then(function(d){
+    var s=document.getElementById('whAddBranch');if(!s)return;
+    s.innerHTML='<option value="">-- Select Branch --</option>';
+    (d||[]).forEach(function(b){var o=document.createElement('option');o.value=b.branchId;o.textContent=b.branchName;s.appendChild(o);});
+});
+</script>

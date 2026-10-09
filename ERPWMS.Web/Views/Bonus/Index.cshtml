@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Bonuses";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-gift" style="color:#F5A623;"></i> Bonuses</h5>
+        <button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+    </div>
+    <div class="card-body">
+        <table class="table-premium" id="xTable">
+            <thead><tr><th>Employee</th><th>Type</th><th>Amount</th><th>Date</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="xBody"></tbody>
+        </table>
+    </div>
+</div>
+</div>
+<div class="modal fade pm-modal" id="formModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5>Add Bonus</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+<div class="row g-3">
+<div class="col-12"><label class="form-label">Employee *</label><select id="employeeId" class="form-control"></select></div>
+<div class="col-md-6"><label class="form-label">Bonus Type</label><select id="bonusType" class="form-control"><option>Performance</option><option>Eid</option><option>Yearly</option><option>Festival</option></select></div>
+<div class="col-md-6"><label class="form-label">Amount *</label><input type="number" id="amount" class="form-control" step="0.01" /></div>
+<div class="col-md-6"><label class="form-label">Date</label><input type="date" id="bonusDate" class="form-control" /></div>
+<div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
+</div>
+</div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn-gold" onclick="save_()">Add</button></div></div></div></div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+function openAdd(){
+    fetch('/Bonus/GetEmployees').then(function(r){return r.json();}).then(function(d){
+        var e=document.getElementById('employeeId'); e.innerHTML='<option value="">-- Select --</option>';
+        d.forEach(function(x){var o=document.createElement('option'); o.value=x.employeeId; o.textContent=x.employeeCode+' - '+x.fullName; e.appendChild(o);});
+        document.getElementById('bonusDate').value=new Date().toISOString().split('T')[0];
+        document.getElementById('amount').value='';
+        document.getElementById('remarks').value='';
+        new bootstrap.Modal(document.getElementById('formModal')).show();
+    });
+}
+function save_(){
+    var fd=new FormData();
+    fd.append('__RequestVerificationToken',tk());
+    fd.append('employeeId',document.getElementById('employeeId').value);
+    fd.append('bonusType',document.getElementById('bonusType').value);
+    fd.append('amount',document.getElementById('amount').value);
+    fd.append('bonusDate',document.getElementById('bonusDate').value);
+    fd.append('remarks',document.getElementById('remarks').value);
+    fetch('/Bonus/Save',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){
+        if(res.success){showToast(res.message,'success'); bootstrap.Modal.getInstance(document.getElementById('formModal')).hide(); reload_();}
+        else showToast(res.message,'error');
+    });
+}
+function approve(id){var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/Bonus/Approve/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}});}
+function del_(id){ if(!confirm('Delete?')) return; var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/Bonus/Delete/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}}); }
+function reload_(){
+    fetch('/Bonus/GetAll').then(function(r){return r.json();}).then(function(d){
+        var b=document.getElementById('xBody');
+        if(!d||d.length===0){b.innerHTML='<tr><td colspan="6" class="text-center">No bonuses</td></tr>'; return;}
+        var h='';
+        d.forEach(function(x){
+            var cls = x.status==='Approved'?'active':(x.status==='Paid'?'active':'inactive');
+            h+='<tr><td>'+x.employeeName+'</td><td>'+x.bonusType+'</td><td>'+x.amount.toFixed(2)+'</td><td>'+x.bonusDate+'</td><td><span class="badge-status '+cls+'">'+x.status+'</span></td>';
+            h+='<td style="text-align:right;">';
+            if(x.status==='Pending'){h+='<button class="btn-icon" onclick="approve('+x.bonusId+')"><i class="bi bi-check-circle"></i></button> ';}
+            h+='<button class="btn-icon" onclick="del_('+x.bonusId+')"><i class="bi bi-trash3"></i></button></td></tr>';
+        });
+        b.innerHTML=h;
+    });
+}
+document.addEventListener('DOMContentLoaded', reload_);
+</script>

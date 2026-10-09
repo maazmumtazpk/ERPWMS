@@ -1,0 +1,231 @@
+﻿@{
+    Layout = null;
+}
+<style>
+    .so-f .form-label { font-size: 11px; font-weight: 600; color: #1e293b; margin-bottom: 3px; display: block; }
+    .so-f .form-control, .so-f .form-select { font-size: 12px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid #cbd5e1; }
+    .so-f .form-control[readonly] { background: #f1f5f9; }
+    .so-f .row.g-2 { --bs-gutter-y: 8px; --bs-gutter-x: 10px; }
+    .so-f .item-row { padding: 10px 12px; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+    .so-f .btn-gold { background:#F5A623;color:#0A1628;border:none;font-weight:700;padding:6px 16px;border-radius:6px;font-size:12px; }
+    .so-f .btn-ghost { background:#fff;color:#475569;border:1px solid #cbd5e1;padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600; }
+    .stock-indicator { margin-top: 6px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: none; }
+    .stock-indicator.show { display: block; }
+    .stock-indicator.instock { background: #DCFCE7; color: #15803D; border-left: 3px solid #22C55E; }
+    .stock-indicator.lowstock { background: #FEF3C7; color: #92400E; border-left: 3px solid #F59E0B; }
+    .stock-indicator.outstock { background: #FEE2E2; color: #B91C1C; border-left: 3px solid #DC2626; }
+    .stock-indicator .stock-detail { font-weight: 400; font-size: 10px; margin-top: 2px; color: inherit; opacity: 0.85; }
+</style>
+
+<form id="addForm" method="post" action="/Sales/Register" autocomplete="off" class="so-f">
+    @Html.AntiForgeryToken()
+    <div id="addAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Customer *</label>
+            <select name="CustomerId" class="form-select" required>
+                <option value="">-- Select Customer --</option>
+                @if(ViewBag.Customers != null) { foreach(var c in ViewBag.Customers) {
+                    <option value="@c.customerId">@c.customerName</option>
+                } }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Warehouse *</label>
+            <select name="WarehouseId" class="form-select" required>
+                <option value="">-- Select Warehouse --</option>
+                @if(ViewBag.Warehouses != null) { foreach(var w in ViewBag.Warehouses) {
+                    <option value="@w.warehouseId">@w.warehouseName</option>
+                } }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">SO Number *</label>
+            <input type="text" name="SalesOrderNo" class="form-control" readonly value="@(ViewBag.NextSONo ?? "")" style="font-family:monospace;font-weight:700;" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Order Date</label>
+            <input type="date" name="OrderDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Delivery Date</label>
+            <input type="date" name="DeliveryDate" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Discount</label>
+            <input type="number" step="0.01" name="Discount" class="form-control discount-input" value="0" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Tax</label>
+            <input type="number" step="0.01" name="TaxAmount" class="form-control tax-input" value="0" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Net Amount</label>
+            <input type="text" class="form-control" id="netAmountDisplay" readonly value="Rs 0.00" style="background:#f8fafc;font-weight:700;" />
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;">
+        <span style="font-size:12px;font-weight:700;color:#0A1628;">Items</span>
+        <button type="button" class="btn btn-sm btn-gold" id="addItemBtn"><i class="bi bi-plus"></i> Add Item</button>
+    </div>
+
+    <div id="itemsContainer">
+        <div class="item-row">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <label class="form-label">Product *</label>
+                    <select name="SalesDetails[0].ProductId" class="form-select product-select" required>
+                        <option value="">-- Select Product --</option>
+                        @if(ViewBag.Products != null) { foreach(var p in ViewBag.Products) {
+                            <option value="@p.productId">@p.productName</option>
+                        } }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Qty *</label>
+                    <input type="number" name="SalesDetails[0].Quantity" class="form-control qty-input" min="1" value="1" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Price *</label>
+                    <input type="number" step="0.01" name="SalesDetails[0].UnitPrice" class="form-control price-input" min="0" value="0" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Disc %</label>
+                    <input type="number" step="0.01" name="SalesDetails[0].DiscountPercent" class="form-control disc-input" min="0" value="0" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger remove-item w-100" style="font-size:11px;"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Batch No</label>
+                    <input type="text" name="SalesDetails[0].BatchNo" class="form-control" maxlength="50" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Line Total</label>
+                    <input type="text" class="form-control line-total" readonly value="Rs 0.00" style="background:#f8fafc;font-weight:700;" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-check-lg"></i> Create Sales Order</button>
+    </div>
+</form>
+
+<script>
+(function(){
+    var form = document.getElementById('addForm'); if(!form) return;
+    var idx = 1;
+
+    function fmt(n){ return "Rs " + (Number(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+    function calc(){
+        var sub = 0;
+        form.querySelectorAll('.item-row').forEach(function(row){
+            var q = parseFloat(row.querySelector('.qty-input')?.value||0)||0;
+            var p = parseFloat(row.querySelector('.price-input')?.value||0)||0;
+            var dp = parseFloat(row.querySelector('.disc-input')?.value||0)||0;
+            var lt = q * p;
+            var net = lt - (lt * dp / 100);
+            sub += net;
+            var ltField = row.querySelector('.line-total');
+            if(ltField) ltField.value = fmt(net);
+        });
+        var disc = parseFloat(form.querySelector('.discount-input')?.value||0)||0;
+        var tax = parseFloat(form.querySelector('.tax-input')?.value||0)||0;
+        var grand = sub - disc + tax;
+        var nd = document.getElementById('netAmountDisplay');
+        if(nd) nd.value = fmt(grand);
+    }
+    form.addEventListener('input', function(e){
+        if((e.target.name||'').match(/quantity|price|discount|tax/i)) calc();
+    });
+
+    document.getElementById('addItemBtn').addEventListener('click', function(){
+        var cont = document.getElementById('itemsContainer');
+        var clone = cont.querySelector('.item-row').cloneNode(true);
+        clone.querySelectorAll('[name]').forEach(function(el){
+            var nm = el.getAttribute('name');
+            el.setAttribute('name', nm.replace(/SalesDetails\[\d+\]/, 'SalesDetails['+idx+']'));
+        });
+        clone.querySelectorAll('input[type=number]').forEach(function(i){ i.value = i.classList.contains('qty-input')?1:0; });
+        clone.querySelectorAll('input[type=text]').forEach(function(i){ i.value=''; });
+        clone.querySelectorAll('select').forEach(function(s){ s.value=''; });
+        var lt = clone.querySelector('.line-total'); if(lt) lt.value = 'Rs 0.00';
+        cont.appendChild(clone); idx++;
+    });
+
+    form.addEventListener('click', function(e){
+        if(e.target.closest('.remove-item')){
+            var rows = form.querySelectorAll('.item-row');
+            if(rows.length > 1){ e.target.closest('.item-row').remove(); calc(); }
+            else alert('At least one item required.');
+        }
+    });
+
+    setTimeout(calc, 300);
+
+    // ═══ STOCK CHECK JS ═══
+    function checkStock(row){
+        var sel = row.querySelector('.product-select');
+        var ind = row.querySelector('.stock-indicator') || document.getElementById('stockIndicator');
+        if(!sel || !ind) return;
+        var pid = sel.value;
+        if(!pid){
+            ind.className = 'stock-indicator';
+            return;
+        }
+        ind.className = 'stock-indicator show';
+        ind.querySelector('#stockText').textContent = 'Checking stock...';
+        ind.querySelector('#stockDetail').textContent = '';
+
+        fetch('/Sales/GetProductStock?productId=' + pid)
+            .then(r => r.json())
+            .then(function(d){
+                if(!d.success){
+                    ind.className = 'stock-indicator outstock show';
+                    ind.querySelector('#stockText').textContent = '❌ ' + (d.message || 'Error');
+                    return;
+                }
+                var cls = d.status === 'IN_STOCK' ? 'instock'
+                        : d.status === 'LOW_STOCK' ? 'lowstock'
+                        : 'outstock';
+                var icon = d.status === 'IN_STOCK' ? '✅'
+                         : d.status === 'LOW_STOCK' ? '⚠️'
+                         : '❌';
+                var msg = d.status === 'IN_STOCK' ? 'Stock Available'
+                        : d.status === 'LOW_STOCK' ? 'Low Stock'
+                        : 'Out of Stock';
+                ind.className = 'stock-indicator ' + cls + ' show';
+                ind.querySelector('#stockText').textContent = icon + ' ' + msg + ': ' + d.available + ' units';
+                ind.querySelector('#stockDetail').textContent =
+                    'In: ' + d.totalIn + ' | Sold: ' + d.totalOut + ' | Reserved: ' + d.reserved;
+            })
+            .catch(function(e){
+                ind.className = 'stock-indicator outstock show';
+                ind.querySelector('#stockText').textContent = '❌ Error loading stock';
+            });
+    }
+
+    // Attach listener
+    form.addEventListener('change', function(e){
+        if(e.target.classList.contains('product-select')){
+            var row = e.target.closest('.item-row');
+            // Ensure stock indicator exists in this row
+            if(!row.querySelector('.stock-indicator')){
+                var indHtml = document.createElement('div');
+                indHtml.className = 'stock-indicator';
+                indHtml.innerHTML = '<div id="stockText">Loading...</div><div class="stock-detail" id="stockDetail"></div>';
+                e.target.parentElement.appendChild(indHtml);
+            }
+            checkStock(row);
+        }
+    });
+})();
+</script>
+
+

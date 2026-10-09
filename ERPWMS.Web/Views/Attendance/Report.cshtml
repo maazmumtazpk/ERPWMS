@@ -1,0 +1,57 @@
+@model IEnumerable<ERPWMS.Application.DTOs.Attendance.AttendanceDetails>
+
+@{
+    ViewData["Title"] = "Attendance Report";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <h4 class="mb-0">Attendance Report</h4>
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover">
+
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Date</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Status</th>
+                            <th>Working Hours</th>
+                            <th>Overtime</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.EmployeeId</td>
+                                <td>@item.AttendanceDate</td>
+                                <td>@item.CheckInTime</td>
+                                <td>@item.CheckOutTime</td>
+                                <td>@item.Status</td>
+                                <td>@item.WorkingHours</td>
+                                <td>@item.OvertimeHours</td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+</div>

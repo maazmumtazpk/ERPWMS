@@ -1,0 +1,208 @@
+@model ERPWMS.Database.Models.ChartOfAccount
+@{
+    ViewData["Title"] = "Account Details";
+    Layout = "_Layout";
+    var ledgerEntries = ViewBag.LedgerEntries as List<ERPWMS.Database.Models.AccountLedger>;
+    decimal totalDebit = ViewBag.TotalDebit ?? 0m;
+    decimal totalCredit = ViewBag.TotalCredit ?? 0m;
+    decimal currentBalance = ViewBag.CurrentBalance ?? 0m;
+    string companyName = ViewBag.CompanyName ?? "N/A";
+    string parentAccountName = ViewBag.ParentAccountName ?? "None";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0 fw-bold" style="color:#0A1628;">Account Details</h3>
+            <small class="text-muted">Home / Chart of Accounts / @Model.AccountCode</small>
+        </div>
+        <div>
+            <a href="/ChartOfAccount/Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        </div>
+    </div>
+
+    <!-- Dark Header Card -->
+    <div class="card shadow-sm mb-3" style="background:#0A1628;color:#fff;border:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div style="background:#F5A623;color:#0A1628;padding:14px;border-radius:10px;font-size:1.6rem;margin-right:16px;">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1 fw-bold" style="color:#fff;">@Model.AccountName</h3>
+                        <div style="font-size:12px;color:#94A3B8;">
+                            Code: <strong style="color:#F5A623;">@Model.AccountCode</strong>
+                            &nbsp;|&nbsp; Type: @Model.AccountType
+                            &nbsp;|&nbsp; Company: @companyName
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    @{
+                        var statusColor = (Model.IsActive == true) ? "#159A89" : "#94A3B8";
+                        var statusText = (Model.IsActive == true) ? "ACTIVE" : "INACTIVE";
+                    }
+                    <span style="background:@statusColor;color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;">@statusText</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="row mb-3">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card shadow-sm h-100" style="border:1px solid #edf0f4;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-info-circle" style="color:#F5A623;"></i> Account Information</h6>
+                    <table class="table table-sm mb-0" style="font-size:12px;">
+                        <tr><td style="color:#64748B;border:none;">Account Code</td><td class="text-end fw-bold" style="color:#0A1628;border:none;font-family:monospace;">@Model.AccountCode</td></tr>
+                        <tr><td style="color:#64748B;border:none;">Account Name</td><td class="text-end fw-bold" style="color:#0A1628;border:none;">@Model.AccountName</td></tr>
+                        <tr><td style="color:#64748B;border:none;">Account Type</td><td class="text-end fw-bold" style="color:#0A1628;border:none;">@Model.AccountType</td></tr>
+                        <tr><td style="color:#64748B;border:none;">Parent Account</td><td class="text-end fw-bold" style="color:#0A1628;border:none;">@parentAccountName</td></tr>
+                        <tr><td style="color:#64748B;border:none;">Status</td><td class="text-end fw-bold" style="border:none;color:@statusColor;">@statusText</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100" style="border:1px solid #edf0f4;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-graph-up" style="color:#F5A623;"></i> Financial Summary</h6>
+                    <table class="table table-sm mb-0" style="font-size:12px;">
+                        <tr><td style="color:#64748B;border:none;">Total Debit</td><td class="text-end fw-bold" style="border:none;color:#059669;">@totalDebit.ToString("N2")</td></tr>
+                        <tr><td style="color:#64748B;border:none;">Total Credit</td><td class="text-end fw-bold" style="border:none;color:#DC2626;">@totalCredit.ToString("N2")</td></tr>
+                        <tr><td style="color:#64748B;border:none;">Current Balance</td><td class="text-end fw-bold" style="border:none;color:#0A1628;font-size:14px;">@currentBalance.ToString("N2")</td></tr>
+                    </table>
+                    <small class="text-muted d-block mt-2" style="font-size:10px;">Based on last @(ledgerEntries?.Count ?? 0) transactions</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-3">
+        <button class="btn btn-warning btn-sm" onclick="openEdit(@Model.AccountId)" style="background:#F5A623;color:#0A1628;font-weight:700;border:none;">
+            <i class="bi bi-pencil"></i> Edit Account
+        </button>
+        <button class="btn btn-outline-danger btn-sm" onclick="deleteAccount(@Model.AccountId, '@Model.AccountName')">
+            <i class="bi bi-trash3"></i> Delete Account
+        </button>
+        <button class="btn btn-outline-info btn-sm" onclick="toggleActive(@Model.AccountId)">
+            <i class="bi bi-power"></i> @((Model.IsActive == true) ? "Deactivate" : "Activate")
+        </button>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="card shadow-sm" style="border:1px solid #edf0f4;">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom:2px solid #F1F5F9;">
+                <h6 class="mb-0 fw-bold" style="color:#0A1628;font-size:13px;">
+                    <i class="bi bi-clock-history" style="color:#F5A623;"></i> Transaction History
+                    <span style="background:#F1F5F9;color:#64748B;font-size:10px;padding:2px 8px;border-radius:12px;margin-left:6px;">@(ledgerEntries?.Count ?? 0)</span>
+                </h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size:12px;">
+                    <thead style="background:#F8FAFC;">
+                        <tr>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">#</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Date</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Voucher</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Reference</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Description</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;text-align:right;">Debit</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;text-align:right;">Credit</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;text-align:right;">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ledgerEntries != null && ledgerEntries.Any())
+                        {
+                            int i = 1;
+                            foreach (var entry in ledgerEntries)
+                            {
+                                <tr style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:10px 16px;color:#64748B;font-weight:600;">@(i++)</td>
+                                    <td style="padding:10px 16px;color:#0A1628;">@(entry.EntryDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                                    <td style="padding:10px 16px;color:#64748B;font-size:11px;">@(entry.VoucherType ?? "-")</td>
+                                    <td style="padding:10px 16px;color:#64748B;font-size:11px;font-family:monospace;">@(entry.ReferenceNo ?? "-")</td>
+                                    <td style="padding:10px 16px;color:#475569;">@(entry.Description ?? "-")</td>
+                                    <td style="padding:10px 16px;text-align:right;color:#059669;font-weight:600;">@(entry.Debit.HasValue ? entry.Debit.Value.ToString("N2") : "-")</td>
+                                    <td style="padding:10px 16px;text-align:right;color:#DC2626;font-weight:600;">@(entry.Credit.HasValue ? entry.Credit.Value.ToString("N2") : "-")</td>
+                                    <td style="padding:10px 16px;text-align:right;color:#0A1628;font-weight:700;">@entry.Balance.ToString("N2")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4" style="color:#94A3B8;">
+                                    <i class="bi bi-inbox" style="font-size:24px;display:block;margin-bottom:6px;"></i>
+                                    No transactions found for this account.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5>Edit Account</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="editModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5>Confirm Delete</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete <strong id="deleteName"></strong>?</p>
+            <p class="text-danger small">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <form id="deleteForm" method="post" action="/ChartOfAccount/Delete">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="deleteId" />
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div></div>
+</div>
+
+<script>
+function openEdit(id){
+    var el = document.getElementById("editModal");
+    var b = document.getElementById("editModalBody");
+    b.innerHTML = "<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";
+    new bootstrap.Modal(el).show();
+    fetch("/ChartOfAccount/EditAccountPartial?id=" + id).then(r => r.text()).then(h => {
+        b.innerHTML = h;
+        b.querySelectorAll("script").forEach(function(s){ var n=document.createElement("script"); n.textContent=s.textContent; document.body.appendChild(n); });
+    });
+}
+function deleteAccount(id, name){
+    document.getElementById('deleteId').value = id;
+    document.getElementById('deleteName').textContent = name;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+function toggleActive(id){
+    var e = document.querySelector("input[name=__RequestVerificationToken]");
+    var fd = new FormData();
+    fd.append("__RequestVerificationToken", e ? e.value : "");
+    fetch("/ChartOfAccount/ToggleActive/" + id, {method:"POST", body:fd})
+        .then(r=>r.json())
+        .then(res => { if(res.success){ location.reload(); } });
+}
+</script>

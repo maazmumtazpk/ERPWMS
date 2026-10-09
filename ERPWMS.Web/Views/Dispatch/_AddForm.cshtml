@@ -1,0 +1,182 @@
+﻿@{
+    Layout = null;
+}
+<style>
+    .dsp-f .form-label { font-size: 11px; font-weight: 600; color: #1e293b; margin-bottom: 3px; display: block; }
+    .dsp-f .form-control, .dsp-f .form-select { font-size: 12px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid #cbd5e1; }
+    .dsp-f .form-control[readonly] { background: #f1f5f9; }
+    .dsp-f .row.g-2 { --bs-gutter-y: 8px; --bs-gutter-x: 10px; }
+    .dsp-f .item-row { padding: 10px 12px; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+    .dsp-f .btn-gold { background:#F5A623;color:#0A1628;border:none;font-weight:700;padding:6px 16px;border-radius:6px;font-size:12px; }
+    .dsp-f .btn-ghost { background:#fff;color:#475569;border:1px solid #cbd5e1;padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600; }
+</style>
+
+<form id="addForm" method="post" action="/Dispatch/Register" autocomplete="off" class="dsp-f">
+    @Html.AntiForgeryToken()
+    <div id="addAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Sales Order *</label>
+            <select name="SalesId" id="soSelect" class="form-select" required>
+                <option value="">-- Select Sales Order --</option>
+                @if(ViewBag.Sales != null) { foreach(var s in ViewBag.Sales) {
+                    <option value="@s.salesId">@s.salesOrderNo</option>
+                } }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Warehouse *</label>
+            <select name="WarehouseId" class="form-select" required>
+                <option value="">-- Select Warehouse --</option>
+                @if(ViewBag.Warehouses != null) { foreach(var w in ViewBag.Warehouses) {
+                    <option value="@w.warehouseId">@w.warehouseName</option>
+                } }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Dispatch No *</label>
+            <input type="text" name="DispatchNo" class="form-control" readonly value="@(ViewBag.NextDispatchNo ?? "")" style="font-family:monospace;font-weight:700;" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Dispatch Date</label>
+            <input type="date" name="DispatchDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Delivery Date</label>
+            <input type="date" name="DeliveryDate" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Carrier Name</label>
+            <input type="text" name="CarrierName" class="form-control" maxlength="200" placeholder="e.g. TCS, Leopards" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Tracking No</label>
+            <input type="text" name="TrackingNo" class="form-control" maxlength="100" placeholder="e.g. TCS-123456" />
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;">
+        <span style="font-size:12px;font-weight:700;color:#0A1628;">Items to Dispatch</span>
+        <button type="button" class="btn btn-sm btn-gold" id="addItemBtn"><i class="bi bi-plus"></i> Add Item</button>
+    </div>
+
+    <div id="itemsContainer">
+        <div class="item-row">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <label class="form-label">Product *</label>
+                    <select name="DispatchDetails[0].ProductId" class="form-select product-select" required>
+                        <option value="">-- Select SO first --</option>
+                    </select>
+                    <input type="hidden" name="DispatchDetails[0].SalesDetailId" class="sdetail-id" value="0" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Qty *</label>
+                    <input type="number" name="DispatchDetails[0].Quantity" class="form-control qty-input" min="1" value="1" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Batch No</label>
+                    <input type="text" name="DispatchDetails[0].BatchNo" class="form-control batch-input" maxlength="50" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger remove-item w-100" style="font-size:11px;"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Serial Numbers (comma separated)</label>
+                    <input type="text" name="DispatchDetails[0].SerialNumbers" class="form-control" maxlength="500" placeholder="SN-001, SN-002, ..." />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-check-lg"></i> Create Dispatch</button>
+    </div>
+</form>
+
+<script>
+(function(){
+    var form = document.getElementById('addForm'); if(!form) return;
+    var idx = 1;
+
+    var soSel = document.getElementById('soSelect');
+    if(soSel) soSel.addEventListener('change', function(){
+        var sid = this.value;
+        if(!sid) return;
+        fetch('/Dispatch/GetSalesDetails?salesId=' + sid)
+            .then(r => r.json())
+            .then(function(items){
+                var cont = document.getElementById('itemsContainer');
+                cont.innerHTML = '';
+                idx = 0;
+
+                if(!Array.isArray(items) || items.length === 0){
+                    alert('Is Sales Order mein koi items nahi hain.');
+                    return;
+                }
+
+                items.forEach(function(it){
+                    var row = document.createElement('div');
+                    row.className = 'item-row';
+                    row.innerHTML = `
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <label class="form-label">Product *</label>
+                                <select name="DispatchDetails[${idx}].ProductId" class="form-select product-select" required>
+                                    <option value="${it.productId}" selected>${it.productName} (Qty: ${it.quantity})</option>
+                                </select>
+                                <input type="hidden" name="DispatchDetails[${idx}].SalesDetailId" class="sdetail-id" value="${it.salesDetailId}" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Qty *</label>
+                                <input type="number" name="DispatchDetails[${idx}].Quantity" class="form-control qty-input" min="1" value="${it.quantity}" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Batch No</label>
+                                <input type="text" name="DispatchDetails[${idx}].BatchNo" class="form-control batch-input" value="${it.batchNo || ''}" maxlength="50" />
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-danger remove-item w-100" style="font-size:11px;"><i class="bi bi-x"></i></button>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Serial Numbers</label>
+                                <input type="text" name="DispatchDetails[${idx}].SerialNumbers" class="form-control" maxlength="500" />
+                            </div>
+                        </div>
+                    `;
+                    cont.appendChild(row);
+                    idx++;
+                });
+            });
+    });
+
+    document.getElementById('addItemBtn').addEventListener('click', function(){
+        var cont = document.getElementById('itemsContainer');
+        var clone = cont.querySelector('.item-row').cloneNode(true);
+        clone.querySelectorAll('[name]').forEach(function(el){
+            var nm = el.getAttribute('name');
+            el.setAttribute('name', nm.replace(/DispatchDetails\[\d+\]/, 'DispatchDetails['+idx+']'));
+        });
+        clone.querySelectorAll('input[type=number]').forEach(function(i){ i.value=1; });
+        clone.querySelectorAll('input[type=text]').forEach(function(i){ i.value=''; });
+        clone.querySelectorAll('input[type=hidden]').forEach(function(i){ i.value=0; });
+        clone.querySelectorAll('select').forEach(function(s){ s.value=''; });
+        cont.appendChild(clone); idx++;
+    });
+
+    form.addEventListener('click', function(e){
+        if(e.target.closest('.remove-item')){
+            var rows = form.querySelectorAll('.item-row');
+            if(rows.length > 1){ e.target.closest('.item-row').remove(); }
+            else alert('At least one item required.');
+        }
+    });
+})();
+</script>
+
+
+
+
+

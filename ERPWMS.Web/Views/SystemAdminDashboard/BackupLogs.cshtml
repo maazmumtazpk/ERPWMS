@@ -1,0 +1,85 @@
+@model IEnumerable<ERPWMS.Application.DTOs.System.DataBackupLogDto>
+
+@{
+    ViewData["Title"] = "Backup Logs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var totalCount = ViewBag.TotalCount ?? 0;
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var pageSize = ViewBag.PageSize ?? 50;
+    var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Backup Logs</h2>
+        <span class="badge bg-primary fs-6">@totalCount backups</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>File Size</th>
+                            <th>Created By</th>
+                            <th>Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.BackupDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                                    <td><span class="badge bg-info">@(item.BackupType ?? "Full")</span></td>
+                                    <td>@Html.Raw(item.StatusDisplay)</td>
+                                    <td>@item.FileSizeDisplay</td>
+                                    <td>@(item.CreatedByUsername ?? "System")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.ErrorMessage))
+                                        {
+                                            <span class="text-danger" title="@item.ErrorMessage">??</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox display-6 d-block"></i>
+                                    No backup logs found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="?page=@i&pageSize=@pageSize">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>

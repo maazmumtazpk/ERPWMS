@@ -1,0 +1,553 @@
+
+@model ERPWMS.Application.DTOs.Sales.UpdatePickingListRequest
+
+@{
+    ViewData["Title"] = "Edit Picking List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Edit Picking List</h2>
+
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        Status: <strong>@Model.Status</strong>
+
+        @if (Model.Status != "Draft")
+        {
+            <span class="text-danger">
+                - Only Draft picking lists can be edited.
+            </span>
+        }
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <form asp-action="Edit" method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="PickingId" />
+                <input type="hidden" asp-for="Status" />
+
+                <div class="row">
+
+                    <!-- SALES ORDER -->
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label fw-bold">
+                            Sales Order
+                        </label>
+
+                        @if (Model.Status == "Draft")
+                        {
+                            <select asp-for="SalesId"
+                                    class="form-select"
+                                    required>
+
+                                <option value="">
+                                    -- Select --
+                                </option>
+
+                                @foreach (var sales in ViewBag.SalesOrders)
+                                {
+                                    <option value="@sales.SalesId">
+                                        @sales.SalesOrderNo -
+                                        @sales.Customer.CustomerName
+                                    </option>
+                                }
+
+                            </select>
+                        }
+                        else
+                        {
+                            <input type="hidden"
+                                   asp-for="SalesId" />
+
+                            <select class="form-select"
+                                    disabled>
+
+                                @foreach (var sales in ViewBag.SalesOrders)
+                                {
+                                    if (sales.SalesId == Model.SalesId)
+                                    {
+                                        <option value="@sales.SalesId">
+                                            @sales.SalesOrderNo -
+                                            @sales.Customer.CustomerName
+                                        </option>
+                                    }
+                                }
+
+                            </select>
+                        }
+
+                    </div>
+
+                    <!-- WAREHOUSE -->
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label fw-bold">
+                            Warehouse
+                        </label>
+
+                        <select asp-for="WarehouseId"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                -- Select --
+                            </option>
+
+                            @foreach (var warehouse in ViewBag.Warehouses)
+                            {
+                                <option value="@warehouse.WarehouseId">
+                                    @warehouse.WarehouseName
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <!-- PICKING NUMBER -->
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="PickingNo"
+                               class="form-label fw-bold">
+                            Picking Number
+                        </label>
+
+                        <input asp-for="PickingNo"
+                               class="form-control"
+                               readonly />
+
+                    </div>
+
+                    <!-- PICKING DATE -->
+                    <div class="col-md-6 mb-3">
+
+                        <label asp-for="PickingDate"
+                               class="form-label fw-bold">
+                            Picking Date
+                        </label>
+
+                        <input asp-for="PickingDate"
+                               class="form-control"
+                               type="date" />
+
+                    </div>
+
+                </div>
+
+                <!-- ASSIGNED TO -->
+                <div class="mb-3">
+
+                    <label asp-for="AssignedTo"
+                           class="form-label fw-bold">
+                        Assign To
+                    </label>
+
+                    @if (Model.Status == "Draft")
+                    {
+                        <select asp-for="AssignedTo"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Picker --
+                            </option>
+
+                            @foreach (var user in ViewBag.Users)
+                            {
+                                <option value="@user.Id">
+                                    @user.UserName
+                                </option>
+                            }
+
+                        </select>
+                    }
+                    else
+                    {
+                        <input type="hidden"
+                               asp-for="AssignedTo" />
+
+                        <select class="form-select"
+                                disabled>
+
+                            @foreach (var user in ViewBag.Users)
+                            {
+                                if (user.Id == Model.AssignedTo)
+                                {
+                                    <option value="@user.Id">
+                                        @user.UserName
+                                    </option>
+                                }
+                            }
+
+                        </select>
+                    }
+
+                </div>
+
+                <hr />
+
+                <h5 class="fw-bold">
+                    ?? Items to Pick
+                </h5>
+
+                <div id="itemsContainer">
+
+                    @if (Model.PickingDetails != null &&
+                                             Model.PickingDetails.Any())
+                    {
+                        for (int i = 0;
+                             i < Model.PickingDetails.Count;
+                             i++)
+                        {
+                            <div class="item-row card mb-2 p-3">
+
+                                <div class="row">
+
+                                    <!-- SALES DETAIL -->
+                                    <div class="col-md-5">
+
+                                        <label class="form-label">
+                                            Sales Detail
+                                        </label>
+
+                                        @if (Model.Status == "Draft")
+                                        {
+                                            <select name="PickingDetails[@i].SalesDetailId"
+                                                    class="form-select"
+                                                    required>
+
+                                                <option value="">
+                                                    -- Select --
+                                                </option>
+
+                                                @foreach (var detail in ViewBag.SalesDetails ?? new List<SalesDetail>())
+                                                {
+                                                    if (detail.DetailId ==
+                                                        Model.PickingDetails[i].SalesDetailId)
+                                                    {
+                                                        <option value="@detail.DetailId"
+                                                                selected>
+                                                            @detail.Product.ProductName
+                                                            (Qty: @detail.Quantity)
+                                                        </option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@detail.DetailId">
+                                                            @detail.Product.ProductName
+                                                            (Qty: @detail.Quantity)
+                                                        </option>
+                                                    }
+                                                }
+
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <input type="hidden"
+                                                   name="PickingDetails[@i].SalesDetailId"
+                                                   value="@Model.PickingDetails[i].SalesDetailId" />
+
+                                            <select class="form-select"
+                                                    disabled>
+
+                                                @foreach (var detail in ViewBag.SalesDetails ?? new List<SalesDetail>())
+                                                {
+                                                    if (detail.DetailId ==
+                                                        Model.PickingDetails[i].SalesDetailId)
+                                                    {
+                                                        <option value="@detail.DetailId">
+                                                            @detail.Product.ProductName
+                                                            (Qty: @detail.Quantity)
+                                                        </option>
+                                                    }
+                                                }
+
+                                            </select>
+                                        }
+
+                                    </div>
+
+                                    <!-- PICKED QUANTITY -->
+                                    <div class="col-md-2">
+
+                                        <label class="form-label">
+                                            Picked Qty
+                                        </label>
+
+                                        @if (Model.Status == "Draft")
+                                        {
+                                            <input name="PickingDetails[@i].PickedQty"
+                                                   class="form-control"
+                                                   type="number"
+                                                   min="0"
+                                                   value="@Model.PickingDetails[i].PickedQty"
+                                                   required />
+                                        }
+                                        else
+                                        {
+                                            <input type="hidden"
+                                                   name="PickingDetails[@i].PickedQty"
+                                                   value="@Model.PickingDetails[i].PickedQty" />
+
+                                            <input class="form-control"
+                                                   type="number"
+                                                   value="@Model.PickingDetails[i].PickedQty"
+                                                   readonly />
+                                        }
+
+                                    </div>
+
+                                    <!-- BIN -->
+                                    <div class="col-md-4">
+
+                                        <label class="form-label">
+                                            Bin
+                                        </label>
+
+                                        @if (Model.Status == "Draft")
+                                        {
+                                            <select name="PickingDetails[@i].BinId"
+                                                    class="form-select"
+                                                    required>
+
+                                                <option value="">
+                                                    -- Select --
+                                                </option>
+
+                                                @foreach (var bin in ViewBag.Bins ?? new List<Bin>())
+                                                {
+                                                    if (bin.BinId ==
+                                                        Model.PickingDetails[i].BinId)
+                                                    {
+                                                        <option value="@bin.BinId"
+                                                                selected>
+                                                            @bin.BinName
+                                                        </option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@bin.BinId">
+                                                            @bin.BinName
+                                                        </option>
+                                                    }
+                                                }
+
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            <input type="hidden"
+                                                   name="PickingDetails[@i].BinId"
+                                                   value="@Model.PickingDetails[i].BinId" />
+
+                                            <select class="form-select"
+                                                    disabled>
+
+                                                @foreach (var bin in ViewBag.Bins ?? new List<Bin>())
+                                                {
+                                                    if (bin.BinId ==
+                                                        Model.PickingDetails[i].BinId)
+                                                    {
+                                                        <option value="@bin.BinId">
+                                                            @bin.BinName
+                                                        </option>
+                                                    }
+                                                }
+
+                                            </select>
+                                        }
+
+                                    </div>
+
+                                    <!-- REMOVE -->
+                                    <div class="col-md-1 d-flex align-items-end">
+
+                                        @if (Model.Status == "Draft")
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-danger remove-item">
+                                                ?
+                                            </button>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+                                <!-- BATCH / SERIAL -->
+                                <div class="row mt-2">
+
+                                    <div class="col-md-4">
+
+                                        <label class="form-label">
+                                            Batch No
+                                        </label>
+
+                                        <input name="PickingDetails[@i].BatchNo"
+                                               class="form-control"
+                                               value="@Model.PickingDetails[i].BatchNo" />
+
+                                    </div>
+
+                                    <div class="col-md-4">
+
+                                        <label class="form-label">
+                                            Serial Numbers
+                                        </label>
+
+                                        <input name="PickingDetails[@i].SerialNumbers"
+                                               class="form-control"
+                                               value="@Model.PickingDetails[i].SerialNumbers"
+                                               placeholder="Comma separated" />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+                @if (Model.Status == "Draft")
+                {
+                    <div class="mt-2">
+
+                        <button type="button"
+                                class="btn btn-outline-primary"
+                                id="addItemBtn">
+
+                            <i class="bi bi-plus-circle"></i>
+                            Add Item
+
+                        </button>
+
+                    </div>
+                }
+
+                <hr />
+
+                <div class="d-flex gap-2">
+
+                    @if (Model.Status == "Draft")
+                    {
+                        <button type="submit"
+                                class="btn btn-primary">
+
+                            <i class="bi bi-save"></i>
+                            Update Picking List
+
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button"
+                                class="btn btn-primary"
+                                disabled>
+
+                            <i class="bi bi-save"></i>
+                            Update Picking List
+
+                        </button>
+                    }
+
+                    <a asp-action="Details"
+                           asp-route-id="@Model.PickingId"
+                           class="btn btn-info">
+                        View Details
+                    </a>
+
+                    <a asp-action="Index"
+                           class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    @if (Model.Status == "Draft")
+    {
+        <script>
+
+            let itemIndex = @(Model.PickingDetails?.Count ?? 0);
+
+            $('#addItemBtn').click(function () {
+
+                const row = $('.item-row').first().clone();
+
+                row.find('input').val('');
+                row.find('select').val('');
+
+                row.find('input, select').each(function () {
+
+                    const name = $(this).attr('name');
+
+                    if (name) {
+
+                        $(this).attr(
+                            'name',
+                            name.replace(
+                                /\[\d+\]/,
+                                '[' + itemIndex + ']'
+                            )
+                        );
+
+                    }
+
+                });
+
+                $('#itemsContainer').append(row);
+
+                itemIndex++;
+            });
+
+            $(document).on(
+                'click',
+                '.remove-item',
+                function () {
+
+                    if ($('.item-row').length > 1) {
+
+                        $(this)
+                            .closest('.item-row')
+                            .remove();
+
+                    }
+
+                }
+            );
+
+        </script>
+    }
+
+}
+

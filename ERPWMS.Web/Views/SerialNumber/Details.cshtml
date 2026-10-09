@@ -1,0 +1,66 @@
+@model ERPWMS.Application.DTOs.Inventory.SerialNumberDto
+
+@{
+    ViewData["Title"] = "Serial Number Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Serial Number Details</h2>
+        <a asp-action="SerialNumbers" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light w-50">Serial No</th>
+                            <td><code><strong>@Model.SerialNo</strong></code></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Product</th>
+                            <td>@Model.ProductCode - @Model.ProductName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>@Html.Raw(Model.StatusDisplay)</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">GRN Detail</th>
+                            <td>#@Model.GrndetailId</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Sales Detail</th>
+                            <td>@(Model.SalesDetailId.HasValue ? "#" + Model.SalesDetailId.Value.ToString() : "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Customer</th>
+                            <td>@(Model.CustomerName ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Out Date</th>
+                            <td>@Model.OutDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created By</th>
+                            <td>@Model.CreatedByName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-3 text-muted small">
+                <i class="bi bi-info-circle"></i> Serial numbers are automatically tracked through GRN, Sales, and Returns.
+            </div>
+        </div>
+    </div>
+</div>

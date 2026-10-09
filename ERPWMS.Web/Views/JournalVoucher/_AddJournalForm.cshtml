@@ -1,0 +1,181 @@
+﻿@{ Layout = null; }
+<form id="addJournalForm" method="post" action="/JournalVoucher/Register">
+    @Html.AntiForgeryToken()
+    <div id="addJournalAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    
+    <div class="row g-2 mb-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size:11px;">Voucher No *</label>
+            <input type="text" name="voucherNo" id="voucherNoField" class="form-control form-control-sm" required readonly style="font-size:12px;background:#f1f5f9;font-weight:700;" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size:11px;">Voucher Date *</label>
+            <input type="date" name="voucherDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" required style="font-size:12px;" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size:11px;">Description</label>
+            <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g., Monthly Depreciation" style="font-size:12px;" />
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px;">
+        <span style="font-size:12px;font-weight:700;color:#0A1628;">Entry Lines (Debit / Credit)</span>
+        <button type="button" class="btn btn-sm" id="addLineBtn" style="background:#F5A623;color:#0A1628;font-weight:700;padding:4px 12px;border-radius:6px;font-size:11px;border:none;">
+            <i class="bi bi-plus"></i> Add Line
+        </button>
+    </div>
+
+    <div id="linesContainer">
+        <div class="line-row" style="padding:10px;background:#fafbfc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size:10px;font-weight:600;">Account *</label>
+                    <select name="Details[0].AccountId" class="form-select form-select-sm account-select" required style="font-size:11px;">
+                        <option value="">-- Select Account --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" style="font-size:10px;font-weight:600;">Debit (Rs)</label>
+                    <input type="number" name="Details[0].Debit" class="form-control form-control-sm debit-input" step="0.01" value="0" style="font-size:11px;" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" style="font-size:10px;font-weight:600;">Credit (Rs)</label>
+                    <input type="number" name="Details[0].Credit" class="form-control form-control-sm credit-input" step="0.01" value="0" style="font-size:11px;" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:10px;font-weight:600;">Narration</label>
+                    <input type="text" name="Details[0].Narration" class="form-control form-control-sm" style="font-size:11px;" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger remove-line w-100" style="font-size:11px;"><i class="bi bi-x"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="background:#F8FAFC;padding:10px 14px;border-radius:8px;margin-top:12px;display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
+        <span>Total Debit: <span id="totalDebitDisplay" style="color:#059669;">Rs 0.00</span></span>
+        <span>Total Credit: <span id="totalCreditDisplay" style="color:#DC2626;">Rs 0.00</span></span>
+        <span id="balanceStatus" style="color:#F5A623;">Not Balanced</span>
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" id="jvSubmitBtn" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;border:none;">
+            <i class="bi bi-check-lg"></i> Create Voucher
+        </button>
+    </div>
+</form>
+
+<script>
+(function(){
+    var accountsData = [];
+    var idx = 1;
+    var form = document.getElementById('addJournalForm');
+    var submitBtn = document.getElementById('jvSubmitBtn');
+
+    // Load accounts
+    fetch("/JournalVoucher/GetAccounts").then(r=>r.json()).then(d=>{
+        accountsData = d || [];
+        document.querySelectorAll('.account-select').forEach(function(sel){
+            sel.innerHTML = "<option value=''>-- Select Account --</option>";
+            accountsData.forEach(function(a){
+                var o = document.createElement("option");
+                o.value = a.accountId;
+                o.textContent = a.accountCode + " - " + a.accountName + " (" + a.accountType + ")";
+                sel.appendChild(o);
+            });
+        });
+    });
+
+    function recalc(){
+        var td = 0, tc = 0;
+        form.querySelectorAll('.debit-input').forEach(function(i){ td += parseFloat(i.value) || 0; });
+        form.querySelectorAll('.credit-input').forEach(function(i){ tc += parseFloat(i.value) || 0; });
+        document.getElementById('totalDebitDisplay').textContent = "Rs " + td.toFixed(2);
+        document.getElementById('totalCreditDisplay').textContent = "Rs " + tc.toFixed(2);
+        var status = document.getElementById('balanceStatus');
+        if (td === tc && td > 0) { status.textContent = "Balanced"; status.style.color = "#059669"; submitBtn.disabled = false; }
+        else { status.textContent = "Not Balanced"; status.style.color = "#DC2626"; submitBtn.disabled = true; }
+    }
+
+    form.addEventListener('input', recalc);
+
+    document.getElementById('addLineBtn').addEventListener('click', function(){
+        var cont = document.getElementById('linesContainer');
+        var clone = cont.querySelector('.line-row').cloneNode(true);
+        clone.querySelectorAll('[name]').forEach(function(el){
+            el.setAttribute('name', el.getAttribute('name').replace(/\[\d+\]/, '[' + idx + ']'));
+        });
+        clone.querySelectorAll('input[type=number]').forEach(function(i){ i.value = 0; });
+        clone.querySelectorAll('input[type=text]').forEach(function(i){ i.value = ''; });
+        clone.querySelectorAll('select').forEach(function(s){
+            s.innerHTML = "<option value=''>-- Select Account --</option>";
+            accountsData.forEach(function(a){
+                var o = document.createElement("option");
+                o.value = a.accountId;
+                o.textContent = a.accountCode + " - " + a.accountName + " (" + a.accountType + ")";
+                s.appendChild(o);
+            });
+        });
+        cont.appendChild(clone);
+        idx++;
+    });
+
+    form.addEventListener('click', function(e){
+        if (e.target.closest('.remove-line')){
+            var rows = form.querySelectorAll('.line-row');
+            if (rows.length > 1) e.target.closest('.line-row').remove();
+            else alert('At least 2 lines required.');
+            recalc();
+        }
+    });
+})();
+</script>
+
+
+
+
+<script>
+// Turant chalao - DOMContentLoaded ka intezar NAHI karo
+(function(){
+    var tries = 0;
+    var maxTries = 20;
+    
+    function loadVoucherNo() {
+        tries++;
+        var vf = document.getElementById("voucherNoField") || document.querySelector("input[name='voucherNo']");
+        
+        if (!vf) {
+            if (tries < maxTries) setTimeout(loadVoucherNo, 200);
+            return;
+        }
+        
+        if (vf.value && vf.value.trim() !== "") return;
+        
+        fetch("/JournalVoucher/GetNextVoucherNo")
+            .then(function(r){ return r.json(); })
+            .then(function(d){
+                if (d && d.voucherNo) {
+                    vf.value = d.voucherNo;
+                    console.log("✓ Voucher No loaded:", d.voucherNo);
+                }
+            })
+            .catch(function(err){
+                console.error("Voucher no fetch failed:", err);
+                // Fallback: manual generate
+                var now = new Date();
+                vf.value = "JV-" + now.getFullYear() + "-" + 
+                    String(now.getMonth()+1).padStart(2,'0') + 
+                    String(now.getDate()).padStart(2,'0') + 
+                    String(now.getHours()).padStart(2,'0') + 
+                    String(now.getMinutes()).padStart(2,'0') +
+                    String(now.getSeconds()).padStart(2,'0');
+                console.log("⚠ Fallback Voucher No:", vf.value);
+            });
+    }
+    
+    // Foran chalao (chahe DOM ready ho ya na ho)
+    loadVoucherNo();
+})();
+</script>

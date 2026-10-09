@@ -1,0 +1,177 @@
+@model ERPWMS.Application.DTOs.Sales.CreatePickingListRequest
+
+@{
+    ViewData["Title"] = "Create Picking List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Create Picking List</h2>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Create" method="post" id="pickingForm">
+                @Html.AntiForgeryToken()
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="SalesId" class="form-label fw-bold">Sales Order</label>
+                        <select asp-for="SalesId" class="form-select" id="salesSelect" required>
+                            <option value="">-- Select Sales Order --</option>
+                            @foreach (var sales in ViewBag.SalesOrders)
+                            {
+                                <option value="@sales.SalesId" data-warehouse="@sales.WarehouseId">
+                                    @sales.SalesOrderNo - @sales.Customer.CustomerName
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="SalesId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="WarehouseId" class="form-label fw-bold"></label>
+                        <select asp-for="WarehouseId" class="form-select" required>
+                            <option value="">-- Select Warehouse --</option>
+                            @foreach (var warehouse in ViewBag.Warehouses)
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.WarehouseName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="WarehouseId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PickingNo" class="form-label fw-bold">Picking Number</label>
+                        <input asp-for="PickingNo" class="form-control" placeholder="e.g., PICK-2026-0001" />
+                        <span asp-validation-for="PickingNo" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PickingDate" class="form-label fw-bold">Picking Date</label>
+                        <input asp-for="PickingDate" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="PickingDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="AssignedTo" class="form-label fw-bold">Assign To</label>
+                    <select asp-for="AssignedTo" class="form-select">
+                        <option value="">-- Select Picker --</option>
+                        @foreach (var user in ViewBag.Users)
+                        {
+                            <option value="@user.Id">@user.UserName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="AssignedTo" class="text-danger"></span>
+                </div>
+
+                <hr />
+                <h5 class="fw-bold">?? Items to Pick</h5>
+
+                <div id="itemsContainer">
+                    <div class="item-row card mb-2 p-3">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="form-label">Sales Detail</label>
+                                <select name="PickingDetails[0].SalesDetailId" class="form-select sales-detail-select" required>
+                                    <option value="">-- Select Item --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Picked Qty</label>
+                                <input name="PickingDetails[0].PickedQty" class="form-control" type="number" min="0" value="0" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Bin</label>
+                                <select name="PickingDetails[0].BinId" class="form-select bin-select" required>
+                                    <option value="">-- Select Bin --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger remove-item">?</button>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Batch No</label>
+                                <input name="PickingDetails[0].BatchNo" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Serial Numbers</label>
+                                <input name="PickingDetails[0].SerialNumbers" class="form-control" placeholder="Comma separated" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <button type="button" class="btn btn-outline-primary" id="addItemBtn">
+                        <i class="bi bi-plus-circle"></i> Add Item
+                    </button>
+                </div>
+
+                <hr />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Create Picking List
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            let itemIndex = 1;
+
+            $('#salesSelect').change(function() {
+                const salesId = $(this).val();
+                if (salesId) {
+                    $.get(`/Sales/GetSalesDetails?salesId=${salesId}`, function(data) {
+                        $('.sales-detail-select').each(function() {
+                            const select = $(this);
+                            select.empty();
+                            select.append('<option value="">-- Select Item --</option>');
+                            $.each(data, function(i, item) {
+                                select.append(`<option value="${item.detailId}" data-remaining="${item.remainingQty}">${item.productName} (Remaining: ${item.remainingQty})</option>`);
+                            });
+                        });
+                    });
+                }
+            });
+
+            $('#addItemBtn').click(function() {
+                const row = $('.item-row').first().clone();
+                row.find('input').val('');
+                row.find('select').val('');
+                row.find('input, select').each(function() {
+                    const name = $(this).attr('name');
+                    if (name) {
+                        $(this).attr('name', name.replace(/\[\d+\]/, '[' + itemIndex + ']'));
+                    }
+                });
+                $('#itemsContainer').append(row);
+                itemIndex++;
+                // Trigger sales select to populate details
+                $('#salesSelect').trigger('change');
+            });
+
+            $(document).on('click', '.remove-item', function() {
+                if ($('.item-row').length > 1) {
+                    $(this).closest('.item-row').remove();
+                }
+            });
+        });
+    </script>
+}

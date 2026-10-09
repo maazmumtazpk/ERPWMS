@@ -1,0 +1,19 @@
+﻿@{ Layout = null; }
+<form id="addInstForm" method="post" action="/WorkflowInstance/Register">
+    @Html.AntiForgeryToken()
+    <div id="addInstAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Workflow *</label><select name="workflowDefId" id="addWF" class="form-select form-select-sm" required><option value="">-- Select Workflow --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Start Stage *</label><select name="currentStageId" id="addStage" class="form-select form-select-sm" required><option value="">-- Select Workflow First --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Record ID *</label><input type="number" name="recordId" class="form-control form-control-sm" required value="1" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Record Type *</label><input type="text" name="recordType" class="form-control form-control-sm" required maxlength="50" placeholder="Purchase, Sales..." /></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Start</button>
+    </div>
+</form>
+<script>
+fetch("/WorkflowInstance/GetWorkflows").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addWF");if(!s)return;s.innerHTML="<option value=''>-- Select Workflow --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.workflowDefId;o.textContent=x.workflowName;s.appendChild(o);});});
+document.getElementById("addWF").addEventListener("change",function(){var wid=this.value;var s=document.getElementById("addStage");s.innerHTML="<option value=''>Loading...</option>";if(!wid)return;fetch("/WorkflowInstance/GetFirstStages?workflowDefId="+wid).then(function(r){return r.json();}).then(function(d){s.innerHTML="<option value=''>-- Select Stage --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.stageId;o.textContent=x.stageName;s.appendChild(o);});});});
+</script>

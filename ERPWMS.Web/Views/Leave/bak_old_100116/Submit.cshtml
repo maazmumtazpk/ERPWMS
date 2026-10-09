@@ -1,0 +1,183 @@
+@model ERPWMS.Application.DTOs.Leave.SubmitLeaveRequest
+
+@{
+    ViewData["Title"] = "Submit Leave";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+        <h2>Submit Leave Request</h2>
+        <p class="text-muted">
+            Submit a new employee leave request
+        </p>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <form asp-action="Submit"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger">
+                </div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label asp-for="EmployeeId"
+                               class="form-label">
+                            Employee
+                        </label>
+
+                        <input asp-for="EmployeeId"
+                               class="form-control"
+                               type="number"
+                               min="1"
+                               required />
+
+                        <span asp-validation-for="EmployeeId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="LeaveType"
+                               class="form-label">
+                            Leave Type
+                        </label>
+
+                        <select asp-for="LeaveType"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                -- Select Leave Type --
+                            </option>
+
+                            <option value="Annual">
+                                Annual
+                            </option>
+
+                            <option value="Sick">
+                                Sick
+                            </option>
+
+                            <option value="Casual">
+                                Casual
+                            </option>
+
+                            <option value="Maternity">
+                                Maternity
+                            </option>
+
+                            <option value="Paternity">
+                                Paternity
+                            </option>
+
+                            <option value="Unpaid">
+                                Unpaid
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="LeaveType"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="FromDate"
+                               class="form-label">
+                            From Date
+                        </label>
+
+                        <input asp-for="FromDate"
+                               class="form-control"
+                               type="date"
+                               required />
+
+                        <span asp-validation-for="FromDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="ToDate"
+                               class="form-label">
+                            To Date
+                        </label>
+
+                        <input asp-for="ToDate"
+                               class="form-control"
+                               type="date"
+                               required />
+
+                        <span asp-validation-for="ToDate"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label asp-for="Reason"
+                               class="form-label">
+                            Reason
+                        </label>
+
+                        <textarea asp-for="Reason"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="500"
+                                  required></textarea>
+
+                        <span asp-validation-for="Reason"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-4">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Submit Leave Request
+                    </button>
+
+                    <a asp-action="Index"
+                           class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    @{
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial");
+    }
+}

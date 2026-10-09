@@ -1,0 +1,118 @@
+using ERPWMS.Domain.Services;
+using ERPWMS.Database.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ERPWMS.Database;
+
+namespace ERPWMS.Infrastructure.Services.Audit
+{
+    public class AuditLogService : IAuditLogService
+    {
+        private readonly AppDbContext _context;
+
+        public AuditLogService(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<AuditLog>> GetAuditLogsAsync(
+            int? userId = null,
+            int? moduleId = null,
+            string? action = null,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            string? recordType = null,
+            int? recordId = null,
+            int page = 1,
+            int pageSize = 50)
+        {
+            var query = _context.AuditLogs
+                .Include(a => a.User)
+                .Include(a => a.Module)
+                .AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(a => a.UserId == userId);
+
+            if (moduleId.HasValue)
+                query = query.Where(a => a.ModuleId == moduleId);
+
+            if (!string.IsNullOrEmpty(action))
+                query = query.Where(a => a.Action == action);
+
+            if (fromDate.HasValue)
+                query = query.Where(a => a.Timestamp >= fromDate);
+
+            if (toDate.HasValue)
+                query = query.Where(a => a.Timestamp <= toDate);
+
+            if (!string.IsNullOrEmpty(recordType))
+                query = query.Where(a => a.RecordType == recordType);
+
+            if (recordId.HasValue)
+                query = query.Where(a => a.RecordId == recordId);
+
+            return await query
+                .OrderByDescending(a => a.Timestamp)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetAuditLogCountAsync(
+            int? userId = null,
+            int? moduleId = null,
+            string? action = null,
+            DateTime? fromDate = null,
+            DateTime? toDate = null)
+        {
+            var query = _context.AuditLogs.AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(a => a.UserId == userId);
+
+            if (moduleId.HasValue)
+                query = query.Where(a => a.ModuleId == moduleId);
+
+            if (!string.IsNullOrEmpty(action))
+                query = query.Where(a => a.Action == action);
+
+            if (fromDate.HasValue)
+                query = query.Where(a => a.Timestamp >= fromDate);
+
+            if (toDate.HasValue)
+                query = query.Where(a => a.Timestamp <= toDate);
+
+            return await query.CountAsync();
+        }
+
+        public async Task<AuditLog?> GetAuditLogByIdAsync(int auditId)
+        {
+            return await _context.AuditLogs
+                .Include(a => a.User)
+                .Include(a => a.Module)
+                .FirstOrDefaultAsync(a => a.AuditId == auditId);
+        }
+
+        public async Task<IEnumerable<string>> GetDistinctActionsAsync()
+        {
+            return await _context.AuditLogs
+                .Select(a => a.Action)
+                .Distinct()
+                .OrderBy(a => a)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<string>> GetDistinctRecordTypesAsync()
+        {
+            return await _context.AuditLogs
+                .Select(a => a.RecordType)
+                .Distinct()
+                .OrderBy(a => a)
+                .ToListAsync();
+        }
+    }
+}

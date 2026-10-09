@@ -1,0 +1,17 @@
+@model ERPWMS.Database.Models.PickingList
+@{ Layout = null; }
+<form id="editPickingForm" method="post" action="/PickingList/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="pickingId" value="@Model.PickingId" />
+    <div id="editPickingAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Picking No *</label><input type="text" name="pickingNo" class="form-control form-control-sm" value="@Model.PickingNo" required maxlength="50" style="font-size:11px;" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Status</label><select name="status" class="form-select form-select-sm" style="font-size:11px;">@foreach(var s in new[]{"Created","Verified","Completed"}){if(Model.Status == s){<option value="@s" selected>@s</option>}else{<option value="@s">@s</option>}}</select></div>
+        <input type="hidden" name="salesId" value="@Model.SalesId" />
+        <input type="hidden" name="warehouseId" value="@Model.WarehouseId" />
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:10px;padding:4px 12px;">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="font-size:10px;padding:4px 12px;">Update</button>
+    </div>
+</form>

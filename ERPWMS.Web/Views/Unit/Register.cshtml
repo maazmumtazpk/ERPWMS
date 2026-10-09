@@ -1,0 +1,165 @@
+@model ERPWMS.Application.DTOs.Unit.RegisterUnitDto
+
+@{
+    ViewData["Title"] = "Create Unit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i> Create Unit
+                    </h3>
+                    <div class="card-tools">
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <form asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-group">
+                            <label asp-for="UnitName" class="control-label required">
+                                Unit Name
+                            </label>
+
+                            <input asp-for="UnitName"
+                                   class="form-control"
+                                   placeholder="Example: Kilogram, Meter" />
+
+                            <span asp-validation-for="UnitName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="UnitCode" class="control-label">
+                                Unit Code
+                            </label>
+
+                            <input asp-for="UnitCode"
+                                   class="form-control"
+                                   placeholder="Example: KG, M" />
+
+                            <span asp-validation-for="UnitCode" class="text-danger"></span>
+
+                            <small class="form-text text-muted">
+                                Code can contain only uppercase letters and numbers.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input asp-for="IsBaseUnit"
+                                       class="custom-control-input"
+                                       id="isBaseUnit" />
+
+                                <label asp-for="IsBaseUnit"
+                                       class="custom-control-label">
+                                    Is Base Unit
+                                </label>
+                            </div>
+
+                            <small class="form-text text-muted">
+                                A base unit is the primary unit of measurement.
+                                Sub-units are derived from the base unit.
+                            </small>
+                        </div>
+
+                        <div id="subUnitFields" style="display: none;">
+                            <div class="form-group">
+                                <label asp-for="BaseUnitId"
+                                       class="control-label required">
+                                    Select Base Unit
+                                </label>
+
+                                <select asp-for="BaseUnitId"
+                                        class="form-control"
+                                        asp-items="ViewBag.BaseUnitList">
+                                    <option value="">-- Select Base Unit --</option>
+                                </select>
+
+                                <span asp-validation-for="BaseUnitId"
+                                      class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="ConversionFactor"
+                                       class="control-label required">
+                                    Conversion Factor
+                                </label>
+
+                                <input asp-for="ConversionFactor"
+                                       class="form-control"
+                                       placeholder="Enter conversion factor" />
+
+                                <span asp-validation-for="ConversionFactor"
+                                      class="text-danger"></span>
+
+                                <small class="form-text text-muted">
+                                    Example: If 1 unit = 2 base units, enter 2.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input asp-for="IsActive"
+                                       class="custom-control-input"
+                                       checked="@(Model.IsActive ?? true)" />
+
+                                <label asp-for="IsActive"
+                                       class="custom-control-label">
+                                    Is Active
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+
+                            <a asp-action="Index"
+                                   class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            toggleSubUnitFields();
+
+            $('#isBaseUnit').change(function () {
+                toggleSubUnitFields();
+            });
+        });
+
+        function toggleSubUnitFields() {
+            if ($('#isBaseUnit').is(':checked')) {
+                $('#subUnitFields').hide();
+                $('#BaseUnitId').val('');
+                $('#ConversionFactor').val('');
+            } else {
+                $('#subUnitFields').show();
+            }
+        }
+    </script>
+}

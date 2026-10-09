@@ -1,0 +1,83 @@
+﻿@{ Layout = null; }
+<form id="addEmployeeForm" method="post" action="/Employee/RegisterEmployee">
+    @Html.AntiForgeryToken()
+    <div id="addEmpAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Employee Code *</label>
+            <input type="text" name="EmployeeCode" class="form-control form-control-sm" value="@(ViewBag.NextEmployeeCode ?? "")" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">First Name *</label>
+            <input type="text" name="FirstName" class="form-control form-control-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Last Name *</label>
+            <input type="text" name="LastName" class="form-control form-control-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Father Name</label>
+            <input type="text" name="FatherName" class="form-control form-control-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">CNIC</label>
+            <input type="text" name="Cnic" class="form-control form-control-sm" placeholder="12345-1234567-1" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Date of Birth</label>
+            <input type="date" name="DOB" class="form-control form-control-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Gender</label>
+            <select name="Gender" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="M">Male</option><option value="F">Female</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Hire Date *</label>
+            <input type="date" name="HireDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Department *</label>
+            <select name="DepartmentId" id="addDept" class="form-select form-select-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Designation *</label>
+            <select name="DesignationId" id="addDesig" class="form-select form-select-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Branch *</label>
+            <select name="BranchId" id="addBranch" class="form-select form-select-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Warehouse</label>
+            <select name="WarehouseId" id="addWh" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Shift</label>
+            <select name="ShiftId" id="addShift" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Base Salary *</label>
+            <input type="number" name="BaseSalary" class="form-control form-control-sm" step="0.01" value="0" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:11px;padding:6px 16px;border-radius:6px;">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;font-size:11px;padding:6px 16px;border-radius:6px;border:none;">Create</button>
+    </div>
+</form>
+<script>
+    fetch("/Employee/GetDropdowns").then(r=>r.json()).then(d=>{
+        var fill = function(id, arr, valKey, textKey){
+            var s=document.getElementById(id); if(!s)return;
+            s.innerHTML="<option value=''>-- Select --</option>";
+            (arr||[]).forEach(function(x){ var o=document.createElement("option"); o.value=x[valKey]; o.textContent=x[textKey]; s.appendChild(o); });
+        };
+        fill("addDept", d.departments, "departmentId", "departmentName");
+        fill("addDesig", d.designations, "designationId", "designationName");
+        fill("addBranch", d.branches, "branchId", "branchName");
+        fill("addWh", d.warehouses, "warehouseId", "warehouseName");
+        fill("addShift", d.shifts, "shiftId", "shiftName");
+    });
+</script>

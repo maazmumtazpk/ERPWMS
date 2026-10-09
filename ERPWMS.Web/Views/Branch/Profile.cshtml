@@ -1,0 +1,234 @@
+namespace ERPWMS.Web.ViewModels.Branch
+@{
+    ViewData["Title"] = "Branch - " + Model.BranchName;
+    Layout = "_Layout";
+    var warehouses = ViewBag.Warehouses as System.Collections.IEnumerable;
+    var whList = warehouses != null ? System.Linq.Enumerable.ToList(System.Linq.Enumerable.Cast<object>(warehouses)) : new System.Collections.Generic.List<object>();
+    int whCount = whList.Count;
+    int empCount = Model.EmployeeCount;
+    string initials = (Model.BranchName ?? "BR").Length >= 2 ? Model.BranchName.Substring(0,2).ToUpper() : (Model.BranchName ?? "BR").ToUpper();
+    bool isActive = Model.IsActive == true;
+}
+
+<style>
+    .bp-wrap{max-width:1200px;margin:0 auto;padding:10px 16px 40px}
+    .bp-hero{background:linear-gradient(135deg,#0A1628 0%,#1a2a4a 100%);border-radius:14px;padding:22px 26px;color:#fff;position:relative;overflow:hidden;margin-bottom:20px}
+    .bp-hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(245,166,35,.12)}
+    .bp-hero-inner{display:flex;align-items:center;gap:18px;position:relative;z-index:2;flex-wrap:wrap}
+    .bp-avatar{width:68px;height:68px;border-radius:14px;background:#F5A623;color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex-shrink:0;letter-spacing:1px}
+    .bp-hero-info{flex:1;min-width:240px}
+    .bp-hero-info h2{font-size:20px;font-weight:800;margin:0 0 6px}
+    .bp-hero-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;opacity:.9;align-items:center}
+    .bp-hero-meta i{color:#F5A623;margin-right:4px}
+    .bp-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;text-transform:uppercase}
+    .bp-status.active{background:rgba(16,185,129,.20);color:#6ee7b7}
+    .bp-status.inactive{background:rgba(239,68,68,.20);color:#fca5a5}
+    .bp-status i{font-size:7px}
+    .bp-btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;font-size:11.5px;font-weight:600;text-decoration:none;border:0;cursor:pointer}
+    .bp-btn.ghost{background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.22)}
+    .bp-btn.ghost:hover{background:rgba(255,255,255,.18);color:#fff}
+    .bp-btn.gold{background:#F5A623;color:#0A1628}
+    .bp-btn.gold:hover{background:#E39A19;color:#0A1628}
+    .bp-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px;max-width:720px}
+    .bp-stat{background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit;transition:all .2s}
+    .bp-stat:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(15,23,42,.09);color:inherit}
+    .bp-stat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .bp-stat-icon.blue{background:#dbeafe;color:#2563eb}
+    .bp-stat-icon.purple{background:#ede9fe;color:#7c3aed}
+    .bp-stat-info h3{font-size:28px;font-weight:800;margin:0;color:#0A1628;line-height:1.1}
+    .bp-stat-info small{font-size:11px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:.4px}
+    .bp-card{background:#fff;border:1px solid #e8edf3;border-radius:12px;overflow:hidden;max-width:900px;margin:0 auto 16px}
+    .bp-card-header{padding:13px 20px;border-bottom:1px solid #eef2f6;background:#fafbfc;display:flex;justify-content:space-between;align-items:center}
+    .bp-card-header h6{font-size:13px;font-weight:700;color:#0A1628;margin:0}
+    .bp-card-header h6 i{color:#F5A623;margin-right:6px}
+    .bp-card-header .edit-lnk{font-size:11px;color:#F5A623;text-decoration:none;font-weight:600}
+    .bp-card-header .edit-lnk:hover{color:#D97706}
+    .bp-card-body{padding:18px 24px}
+    .bp-info-table{width:100%;border-collapse:collapse}
+    .bp-info-table tr{border-bottom:1px solid #f3f4f6}
+    .bp-info-table tr:last-child{border-bottom:none}
+    .bp-info-table td{padding:12px 0;font-size:12.5px;color:#0A1628}
+    .bp-info-table td:first-child{color:#64748b;font-weight:600;width:38%}
+    .bp-empty{padding:30px 16px;text-align:center;color:#94a3b8;font-size:12px}
+    .bp-empty i{font-size:32px;color:#E2E8F0;display:block;margin-bottom:8px}
+    .bp-wh-list{list-style:none;padding:0;margin:0}
+    .bp-wh-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f3f4f6}
+    .bp-wh-item:last-child{border-bottom:none}
+    .bp-wh-info{display:flex;align-items:center;gap:12px;text-decoration:none;color:#0A1628}
+    .bp-wh-info:hover{color:#F5A623}
+    .bp-wh-avatar{width:36px;height:36px;border-radius:8px;background:#DBEAFE;color:#1D4ED8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+    .bp-wh-name{font-size:13px;font-weight:600}
+    .bp-wh-code{font-size:11px;color:#94a3b8}
+    .bp-wh-arrow{color:#94a3b8;font-size:12px}
+</style>
+
+<div class="bp-wrap">
+    <div class="bp-hero">
+        <div class="bp-hero-inner">
+            <div class="bp-avatar">@initials</div>
+            <div class="bp-hero-info">
+                <h2>@Model.BranchName</h2>
+                <div class="bp-hero-meta">
+                    <span><i class="bi bi-hash"></i> ID: @Model.BranchId</span>
+                    @if(!string.IsNullOrEmpty(Model.BranchCode)){ <span><i class="bi bi-tag"></i> @Model.BranchCode</span> }
+                    <span><i class="bi bi-building"></i> @(!string.IsNullOrEmpty(Model.CompanyName) ? Model.CompanyName : "N/A")</span>
+                    <span class="bp-status @(isActive ? "active" : "inactive")"><i class="bi bi-circle-fill"></i>@(isActive ? "Active" : "Inactive")</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="/Branch" class="bp-btn ghost"><i class="bi bi-arrow-left"></i> Back to List</a>
+                @if(Model.CanEdit)
+                {
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="bp-stats">
+        <a href="/Employee/Index?branchId=@Model.BranchId" class="bp-stat">
+            <div class="bp-stat-icon blue"><i class="bi bi-people"></i></div>
+            <div class="bp-stat-info"><h3>@empCount</h3><small>Employees</small></div>
+        </a>
+        <a href="#wh" class="bp-stat">
+            <div class="bp-stat-icon purple"><i class="bi bi-shop"></i></div>
+            <div class="bp-stat-info"><h3>@whCount</h3><small>Warehouses</small></div>
+        </a>
+    </div>
+
+    <div class="bp-card">
+        <div class="bp-card-header">
+            <h6><i class="bi bi-info-circle"></i> Branch Details</h6>
+            @if(Model.CanEdit)
+            {
+                <a href="javascript:void(0)" class="edit-lnk" onclick="editBranch(@Model.BranchId)">EDIT →</a>
+            }
+        </div>
+        <div class="bp-card-body">
+            <table class="bp-info-table">
+                <tr><td>Branch Name</td><td>@Model.BranchName</td></tr>
+                <tr><td>Branch Code</td><td>@(string.IsNullOrEmpty(Model.BranchCode) ? "-" : Model.BranchCode)</td></tr>
+                <tr><td>Company</td><td>@(!string.IsNullOrEmpty(Model.CompanyName) ? Model.CompanyName : "N/A")</td></tr>
+                <tr><td>Email</td><td>@(string.IsNullOrEmpty(Model.Email) ? "-" : Model.Email)</td></tr>
+                <tr><td>Phone</td><td>@(string.IsNullOrEmpty(Model.Phone) ? "-" : Model.Phone)</td></tr>
+                <tr><td>Address</td><td>@(string.IsNullOrEmpty(Model.Address) ? "-" : Model.Address)</td></tr>
+                <tr><td>Created Date</td><td>@(Model.CreatedDate?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="bp-card" id="wh">
+        <div class="bp-card-header">
+            <h6><i class="bi bi-shop"></i> Warehouses <span style="background:#F1F5F9;color:#64748B;font-size:9px;padding:1px 8px;border-radius:12px;margin-left:6px;">@whCount</span></h6>
+        </div>
+        <div class="bp-card-body">
+            @if(whCount > 0)
+            {
+                <ul class="bp-wh-list">
+                @foreach(dynamic wh in whList)
+                {
+                    string whName = wh.WarehouseName != null ? (string)wh.WarehouseName : "";
+                    string whCode = wh.WarehouseCode != null ? (string)wh.WarehouseCode : "";
+                    string whIni = whName.Length >= 2 ? whName.Substring(0,2).ToUpper() : "WH";
+                    <li class="bp-wh-item">
+                        <a href="/Warehouse/Profile/@wh.WarehouseId" class="bp-wh-info">
+                            <div class="bp-wh-avatar">@whIni</div>
+                            <div>
+                                <div class="bp-wh-name">@whName</div>
+                                <div class="bp-wh-code">@(string.IsNullOrEmpty(whCode) ? "No code" : whCode)</div>
+                            </div>
+                        </a>
+                        <i class="bi bi-chevron-right bp-wh-arrow"></i>
+                    </li>
+                }
+                </ul>
+            }
+            else
+            {
+                <div class="bp-empty">
+                    <i class="bi bi-shop"></i>
+                    <p style="margin:0;">No warehouses in this branch.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade pm-modal" id="editBranchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border:0;border-radius:12px;box-shadow:0 20px 60px rgba(15,23,42,.25);overflow:hidden;">
+            <div class="modal-header" style="background:#0A1628;color:#fff;padding:14px 20px;border:0;">
+                <h5 style="font-size:14px;font-weight:700;margin:0;display:flex;align-items:center;">
+                    <i class="bi bi-pencil-square" style="color:#F5A623;margin-right:8px;"></i>Edit Branch
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:invert(1);opacity:.7;"></button>
+            </div>
+            <div class="modal-body" id="editBranchModalBody" style="padding:18px 22px;">
+                <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="__pfAntiforgery" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder" style="position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;"></div>
+
+<style>
+    .pm-modal .form-label{font-size:11px;font-weight:600;color:#475569;margin-bottom:3px;}
+    .pm-modal .form-control,.pm-modal .form-select{font-size:12px;padding:7px 11px;min-height:34px;border-radius:6px;border:1px solid #dde4ec;}
+    .pm-modal .btn-gold{background:#F5A623;border-color:#F5A623;color:#0A1628;font-weight:700;font-size:12px;}
+    .toast-item{background:#fff;border-left:4px solid #10b981;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.15);padding:12px 16px;min-width:280px;display:flex;align-items:center;gap:10px;font-size:12px;}
+    .toast-item.error{border-left-color:#ef4444;}
+    .toast-item i{font-size:16px;color:#10b981;}
+    .toast-item.error i{color:#ef4444;}
+    .toast-item .msg{font-weight:600;color:#0A1628;}
+</style>
+
+@section Scripts {
+<script>
+    function tk(){ var e=document.querySelector('input[name="__RequestVerificationToken"]'); return e?e.value:''; }
+    function showToast(msg,type){
+        var h=document.getElementById('toastHolder'); if(!h) return;
+        var d=document.createElement('div'); d.className='toast-item '+(type||'success');
+        var ic=type==='error'?'bi-x-circle-fill':'bi-check-circle-fill';
+        d.innerHTML='<i class="bi '+ic+'"></i><span class="msg">'+msg+'</span>';
+        h.appendChild(d);
+        setTimeout(function(){d.style.transition='opacity .4s';d.style.opacity='0';setTimeout(function(){d.remove();},400);},3500);
+    }
+    window.editBranch = function(id){
+        var el=document.getElementById('editBranchModal');
+        var body=document.getElementById('editBranchModalBody');
+        body.innerHTML='<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted" style="font-size:11px;">Loading...</p></div>';
+        new bootstrap.Modal(el).show();
+        fetch('/Branch/EditBranchPartial?id='+id).then(function(r){return r.text();}).then(function(h){ body.innerHTML=h; });
+    };
+    window.toggleBranch = function(id){
+        var fd = new FormData(); fd.append('__RequestVerificationToken', tk());
+        fetch('/Branch/Delete/'+id,{method:'POST',body:fd});
+    };
+    document.addEventListener('submit', function(e){
+        var f = e.target;
+        if(!f || f.id !== 'editBranchForm') return;
+        e.preventDefault();
+        var ab = document.getElementById('editBranchAlert');
+        if(ab) ab.style.display='none';
+        var btn = f.querySelector('button[type="submit"]');
+        var orig = btn ? btn.textContent : '';
+        if(btn){ btn.disabled=true; btn.textContent='Updating...'; }
+        fetch(f.action,{method:'POST',body:new FormData(f)})
+            .then(function(r){ return r.json(); })
+            .then(function(res){
+                if(res.success){
+                    var m = bootstrap.Modal.getInstance(document.getElementById('editBranchModal'));
+                    if(m) m.hide();
+                    showToast(res.message||'Branch updated successfully','success');
+                    setTimeout(function(){ location.reload(); }, 900);
+                } else {
+                    if(ab){ ab.textContent=res.message||'Update failed'; ab.style.display='block'; }
+                }
+            })
+            .catch(function(){ if(ab){ ab.textContent='Network error. Please try again.'; ab.style.display='block'; }})
+            .finally(function(){ if(btn){ btn.disabled=false; btn.textContent=orig; }});
+    });
+</script>
+}

@@ -1,0 +1,86 @@
+@model ERPWMS.Application.DTOs.Finance.ChartOfAccount.ChartOfAccountResponse
+
+@{
+    ViewData["Title"] = "Account Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">??? Account Details</h2>
+        <div>
+            <span class="badge bg-primary fs-6 me-2">
+                ?? @ViewBag.CompanyName
+            </span>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light w-50">Account ID</th>
+                            <td>@Model.AccountId</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Account Code</th>
+                            <td><strong>@Model.AccountCode</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Account Name</th>
+                            <td>@Model.AccountName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Account Type</th>
+                            <td>
+                                <span class="badge @(Model.AccountType == "Income" ? "bg-success" :
+                                                                                                                            Model.AccountType == "Expense" ? "bg-danger" :
+                                                                                                                            Model.AccountType == "Asset" ? "bg-primary" :
+                                                                                                                            Model.AccountType == "Liability" ? "bg-warning" : "bg-secondary")">
+                                    @Model.AccountType
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Parent Account</th>
+                            <td>@(Model.ParentAccountName ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>
+                                @if ((Model.IsActive == true))
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>@(Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Updated Date</th>
+                            <td>@(Model.UpdatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "-")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <a asp-action="Edit" asp-route-id="@Model.AccountId" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,76 @@
+﻿@{
+    ViewData["Title"] = "Leave Requests";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-calendar-event" style="color:#F5A623;"></i> Leave Requests</h5>
+        <button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+    </div>
+    <div class="card-body">
+        <table class="table-premium" id="xTable">
+            <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="xBody"></tbody>
+        </table>
+    </div>
+</div>
+</div>
+<div class="modal fade pm-modal" id="formModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5>Apply Leave</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+<div class="row g-3">
+<div class="col-12"><label class="form-label">Employee *</label><select id="employeeId" class="form-control"></select></div>
+<div class="col-12"><label class="form-label">Leave Type *</label><select id="leaveTypeId" class="form-control"></select></div>
+<div class="col-6"><label class="form-label">From *</label><input type="date" id="fromDate" class="form-control" /></div>
+<div class="col-6"><label class="form-label">To *</label><input type="date" id="toDate" class="form-control" /></div>
+<div class="col-12"><label class="form-label">Reason *</label><textarea id="reason" class="form-control" rows="2"></textarea></div>
+</div>
+</div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn-gold" onclick="save_()">Submit</button></div></div></div></div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+function openAdd(){
+    fetch('/LeaveRequest/GetDropdowns').then(function(r){return r.json();}).then(function(d){
+        var e=document.getElementById('employeeId'); e.innerHTML='<option value="">-- Select --</option>';
+        d.employees.forEach(function(x){var o=document.createElement('option'); o.value=x.id; o.textContent=x.name; e.appendChild(o);});
+        var t=document.getElementById('leaveTypeId'); t.innerHTML='<option value="">-- Select --</option>';
+        d.leaveTypes.forEach(function(x){var o=document.createElement('option'); o.value=x.id; o.textContent=x.name; t.appendChild(o);});
+        document.getElementById('fromDate').value=new Date().toISOString().split('T')[0];
+        document.getElementById('toDate').value=new Date().toISOString().split('T')[0];
+        new bootstrap.Modal(document.getElementById('formModal')).show();
+    });
+}
+function save_(){
+    var fd=new FormData();
+    fd.append('__RequestVerificationToken',tk());
+    fd.append('employeeId',document.getElementById('employeeId').value);
+    fd.append('leaveTypeId',document.getElementById('leaveTypeId').value);
+    fd.append('fromDate',document.getElementById('fromDate').value);
+    fd.append('toDate',document.getElementById('toDate').value);
+    fd.append('reason',document.getElementById('reason').value);
+    fetch('/LeaveRequest/Submit',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){
+        if(res.success){showToast(res.message,'success'); bootstrap.Modal.getInstance(document.getElementById('formModal')).hide(); reload_();}
+        else showToast(res.message,'error');
+    });
+}
+function approve(id){var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/LeaveRequest/Approve/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}});}
+function reject(id){var fd=new FormData(); fd.append('__RequestVerificationToken',tk()); fetch('/LeaveRequest/Reject/'+id,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message,'success'); reload_();}});}
+function reload_(){
+    fetch('/LeaveRequest/GetAll').then(function(r){return r.json();}).then(function(d){
+        var b=document.getElementById('xBody');
+        if(!d||d.length===0){b.innerHTML='<tr><td colspan="7" class="text-center">No requests</td></tr>'; return;}
+        var h='';
+        d.forEach(function(x){
+            var cls=x.status==='Approved'?'active':(x.status==='Rejected'?'inactive':'role');
+            h+='<tr><td>'+x.employeeName+'<br><small>'+x.employeeCode+'</small></td><td>'+x.leaveType+'</td><td>'+x.fromDate+'</td><td>'+x.toDate+'</td><td>'+x.totalDays+'</td><td><span class="badge-status '+cls+'">'+x.status+'</span></td>';
+            h+='<td style="text-align:right;">';
+            if(x.status==='Pending'){h+='<button class="btn-icon" onclick="approve('+x.leaveRequestId+')"><i class="bi bi-check-circle"></i></button> <button class="btn-icon" onclick="reject('+x.leaveRequestId+')"><i class="bi bi-x-circle"></i></button>';}
+            h+='</td></tr>';
+        });
+        b.innerHTML=h;
+    });
+}
+document.addEventListener('DOMContentLoaded', reload_);
+</script>

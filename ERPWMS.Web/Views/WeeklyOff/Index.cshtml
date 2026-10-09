@@ -1,0 +1,138 @@
+﻿@{
+    ViewData["Title"] = "Weekly Off";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-calendar-week" style="color:#F5A623;"></i> Employee Weekly Off <span class="badge-count" id="xCount">0</span></h5>
+        <div style="display:flex;gap:4px;align-items:center;">
+            <input type="text" id="tSearch" class="search-input" placeholder="Search..." onkeyup="filterRows()" />
+            <button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+            <button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table-premium" id="xTable">
+            <thead><tr><th>Employee</th><th>Code</th><th>Day Off</th><th>From</th><th>To</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="xBody"><tr><td colspan="7" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+        </table>
+        <div id="emptyState" class="empty-state d-none"><i class="bi bi-calendar-x empty-icon"></i><h4>No Weekly Off Set</h4><button class="btn-gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i> Set Weekly Off</button></div>
+    </div>
+    <div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> records</span></div>
+</div>
+</div>
+
+<div class="modal fade pm-modal" id="formModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-calendar-week"></i> Set Weekly Off</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+<div class="row g-3">
+<div class="col-12"><label class="form-label">Employee <span class="text-danger">*</span></label><select id="employeeId" class="form-control"></select></div>
+<div class="col-12"><label class="form-label">Day Off <span class="text-danger">*</span></label><select id="dayOfWeek" class="form-control">
+<option value="Sunday">Sunday</option><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="None">None (no weekly off)</option>
+</select></div>
+<div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="2" maxlength="500"></textarea></div>
+</div>
+</div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn-gold" onclick="saveSetting()"><i class="bi bi-check-circle"></i> Save</button></div></div></div></div>
+
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+
+var employeesLoaded = false;
+
+function loadEmployees(){
+    if(employeesLoaded) return Promise.resolve();
+    return fetch('/WeeklyOff/GetEmployees').then(function(r){return r.json();}).then(function(d){
+        var s = document.getElementById('employeeId');
+        s.innerHTML = '<option value="">-- Select Employee --</option>';
+        d.forEach(function(e){
+            var o = document.createElement('option');
+            o.value = e.employeeId;
+            o.textContent = e.employeeCode + ' - ' + e.fullName;
+            s.appendChild(o);
+        });
+        employeesLoaded = true;
+    });
+}
+
+function openAdd(){
+    loadEmployees().then(function(){
+        document.getElementById('employeeId').value = '';
+        document.getElementById('dayOfWeek').value = 'Sunday';
+        document.getElementById('remarks').value = '';
+        new bootstrap.Modal(document.getElementById('formModal')).show();
+    });
+}
+
+function saveSetting(){
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('employeeId', document.getElementById('employeeId').value);
+    fd.append('dayOfWeek', document.getElementById('dayOfWeek').value);
+    fd.append('remarks', document.getElementById('remarks').value);
+
+    fetch('/WeeklyOff/Set', { method:'POST', body: fd }).then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+            if(typeof showToast==='function') showToast(res.message,'success'); else alert(res.message);
+            bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+            reload_();
+        } else {
+            if(typeof showToast==='function') showToast(res.message,'error'); else alert(res.message);
+        }
+    });
+}
+
+function delRow(id){
+    if(!confirm('Delete this record?')) return;
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fetch('/WeeklyOff/Delete/' + id, { method:'POST', body: fd }).then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+            if(typeof showToast==='function') showToast(res.message,'success'); else alert(res.message);
+            reload_();
+        }
+    });
+}
+
+function reload_(){
+    fetch('/WeeklyOff/GetAll').then(function(r){return r.json();}).then(function(d){
+        var body = document.getElementById('xBody');
+        if(!d || d.length===0){
+            body.innerHTML = '';
+            document.getElementById('xTable').style.display = 'none';
+            document.getElementById('emptyState').classList.remove('d-none');
+            document.getElementById('xCount').textContent = '0';
+            document.getElementById('tableCount').textContent = '0';
+            return;
+        }
+        document.getElementById('xTable').style.display = '';
+        document.getElementById('emptyState').classList.add('d-none');
+        var h = '';
+        d.forEach(function(x){
+            h += '<tr>';
+            h += '<td><div class="row-name"><span class="avatar"><i class="bi bi-person"></i></span><div>' + x.employeeName + '</div></div></td>';
+            h += '<td>' + x.employeeCode + '</td>';
+            h += '<td><span class="badge-status role">' + x.dayOfWeek + '</span></td>';
+            h += '<td>' + x.effectiveFrom + '</td>';
+            h += '<td>' + (x.effectiveTo || '-') + '</td>';
+            h += '<td>' + (x.isActive ? '<span class="badge-status active">Active</span>' : '<span class="badge-status inactive">Inactive</span>') + '</td>';
+            h += '<td style="text-align:right;"><button class="btn-icon" onclick="delRow(' + x.weeklyOffId + ')"><i class="bi bi-trash3"></i></button></td>';
+            h += '</tr>';
+        });
+        body.innerHTML = h;
+        document.getElementById('xCount').textContent = d.length;
+        document.getElementById('tableCount').textContent = d.length;
+    });
+}
+
+function filterRows(){
+    var t = document.getElementById('tSearch').value.toLowerCase();
+    var rows = document.querySelectorAll('#xBody tr');
+    rows.forEach(function(r){ r.style.display = r.textContent.toLowerCase().indexOf(t) >= 0 ? '' : 'none'; });
+}
+
+document.addEventListener('DOMContentLoaded', reload_);
+</script>

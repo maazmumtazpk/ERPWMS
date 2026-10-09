@@ -1,0 +1,180 @@
+@using ERPWMS.Web.ViewModels.Designation
+@model RegisterDesignationViewModel
+
+@{
+    ViewData["Title"] = $"Edit Designation - {Model.DesignationName}";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1>
+                    <i class="bi bi-pencil"></i> Edit Designation Profile
+                </h1>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index")">Designations</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("Profile", new { id = Model.DesignationId })">@Model.DesignationName</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Designation Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post" id="editForm" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <input type="hidden" asp-for="DesignationId" />
+                        <input type="hidden" asp-for="IsActive" />
+                        <input type="hidden" asp-for="DepartmentId" />
+                        <input type="hidden" asp-for="CompanyId" />
+                        <input type="hidden" asp-for="DepartmentName" />
+                        <input type="hidden" asp-for="CompanyName" />
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group mb-3">
+                                    <label asp-for="DesignationName" class="form-label">Designation Name <span class="text-danger">*</span></label>
+                                    <input asp-for="DesignationName" class="form-control" placeholder="Enter designation name" />
+                                    <span asp-validation-for="DesignationName" class="text-danger"></span>
+                                    <small class="form-text text-muted">Must be unique within the department and between 2-200 characters.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="RankLevel" class="form-label">Rank Level</label>
+                                    <input asp-for="RankLevel" class="form-control" type="number" min="0" placeholder="Enter rank level" />
+                                    <span asp-validation-for="RankLevel" class="text-danger"></span>
+                                    <small class="form-text text-muted">Optional. Higher number = higher rank.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" value="@Model.DepartmentName" disabled />
+                                    <small class="form-text text-muted">Department cannot be changed after creation.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Update Profile
+                            </button>
+                            <a href="@Url.Action("Profile", new { id = Model.DesignationId })" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-question-circle"></i> Help & Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            Designation name is required and must be unique within the department.
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            Rank level is optional (0 = highest, higher number = lower rank).
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            All fields are validated before submission.
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            Changes will be logged for audit purposes.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="bi bi-shield"></i> Current Status</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>Status:</strong>
+                        @* ✅ FIX: Model.IsActive is bool? — use == true *@
+                        <span class="badge @((Model.IsActive == true) ? "badge-success" : "badge-secondary")">
+                            @((Model.IsActive == true) ? "Active" : "Inactive")
+                        </span>
+                    </p>
+                    <p class="text-muted">Current status cannot be changed here. Use the activate/deactivate buttons on the profile page.</p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="bi bi-eye"></i> Quick View</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("Profile", new { id = Model.DesignationId })" class="btn btn-info w-100">
+                        <i class="bi bi-eye"></i> View Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            $('#editForm').validate({
+                rules: {
+                    DesignationName: {
+                        required: true,
+                        minlength: 2,
+                        maxlength: 200,
+                        remote: {
+                            url: '@Url.Action("ValidateName")',
+                            type: 'GET',
+                            data: {
+                                name: function() { return $('#DesignationName').val(); },
+                                departmentId: function() { return $('#DepartmentId').val(); },
+                                excludeId: function() { return $('#DesignationId').val(); }
+                            },
+                            dataType: 'json'
+                        }
+                    },
+                    RankLevel: {
+                        min: 0
+                    }
+                },
+                messages: {
+                    DesignationName: {
+                        required: "Designation name is required.",
+                        remote: "Designation name already exists in this department."
+                    },
+                    RankLevel: {
+                        min: "Rank level cannot be negative."
+                    }
+                }
+            });
+        });
+    </script>
+}

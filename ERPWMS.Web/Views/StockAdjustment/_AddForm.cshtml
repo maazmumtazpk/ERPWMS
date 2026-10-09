@@ -1,0 +1,177 @@
+﻿@{ Layout = null; }
+<form id="addForm" method="post" action="/StockAdjustment/Register">
+    @Html.AntiForgeryToken()
+    <div id="addAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    
+    <div id="stockWarn" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;background:#FFF7ED;color:#C2410C;border-left:4px solid #F5A623;font-weight:600;">
+        <i class="bi bi-exclamation-triangle-fill" style="margin-right:6px;"></i>
+        <span id="stockWarnMsg"></span>
+    </div>
+
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Product *</label>
+            <select name="productId" id="saProduct" class="form-select" required>
+                <option value="">Loading...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Warehouse * (auto)</label>
+            <select name="warehouseId" id="saWarehouse" class="form-select" required>
+                <option value="">-- Select Product first --</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Bin * (auto)</label>
+            <select name="binId" id="saBin" class="form-select" required>
+                <option value="">-- Select Product first --</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Adjustment Type *</label>
+            <select name="adjustmentType" id="saType" class="form-select" required>
+                <option value="Increase">Increase (+)</option>
+                <option value="Decrease">Decrease (-)</option>
+                <option value="Damage">Damage</option>
+                <option value="Return">Return</option>
+                <option value="Correction">Correction</option>
+                <option value="Expiry">Expiry</option>
+                <option value="Theft">Theft</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Previous Qty (auto)</label>
+            <input type="number" name="previousQty" id="saPrevQty" class="form-control" min="0" value="0" readonly style="background:#f1f5f9;" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Adjust Qty *</label>
+            <input type="number" name="quantity" id="saAdjQty" class="form-control" min="1" value="1" required />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">New Qty (auto)</label>
+            <input type="number" id="saNewQty" class="form-control" value="0" readonly style="background:#f1f5f9;font-weight:700;color:#0A1628;" />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Reason *</label>
+            <textarea name="reason" class="form-control" rows="2" required placeholder="Reason for adjustment..."></textarea>
+        </div>
+    </div>
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" id="saSubmitBtn" class="btn btn-gold btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;border:none;">Create</button>
+    </div>
+</form>
+<script>
+(function(){
+    var prodSel = document.getElementById("saProduct");
+    var whSel = document.getElementById("saWarehouse");
+    var binSel = document.getElementById("saBin");
+    var typeSel = document.getElementById("saType");
+    var prevQty = document.getElementById("saPrevQty");
+    var adjQty = document.getElementById("saAdjQty");
+    var newQty = document.getElementById("saNewQty");
+    var warnBox = document.getElementById("stockWarn");
+    var warnMsg = document.getElementById("stockWarnMsg");
+    var submitBtn = document.getElementById("saSubmitBtn");
+
+    function showWarning(msg){
+        warnMsg.textContent = msg;
+        warnBox.style.display = "block";
+        if(submitBtn){ submitBtn.disabled = true; submitBtn.style.opacity = "0.5"; submitBtn.style.cursor = "not-allowed"; }
+    }
+    function hideWarning(){
+        warnBox.style.display = "none";
+        if(submitBtn){ submitBtn.disabled = false; submitBtn.style.opacity = "1"; submitBtn.style.cursor = "pointer"; }
+    }
+    function recalc(){
+        var p = parseInt(prevQty.value) || 0;
+        var a = parseInt(adjQty.value) || 0;
+        var t = typeSel.value;
+        var n = (t === "Decrease") ? (p - a) : (p + a);
+        if (n < 0) n = 0;
+        newQty.value = n;
+    }
+
+    // Load Products
+    fetch("/StockAdjustment/GetProducts").then(r=>r.json()).then(d=>{
+        prodSel.innerHTML = "<option value=''>-- Select --</option>";
+        (d||[]).forEach(x=>{
+            var o = document.createElement("option");
+            o.value = x.productId;
+            o.textContent = x.productName;
+            prodSel.appendChild(o);
+        });
+    });
+
+    // Type ya Adjust Qty change par New Qty calculate
+    typeSel.addEventListener("change", recalc);
+    adjQty.addEventListener("input", recalc);
+
+    // Product change par auto-load
+    prodSel.addEventListener("change", function(){
+        var pid = this.value;
+        whSel.innerHTML = "<option value=''>Loading...</option>";
+        binSel.innerHTML = "<option value=''>Loading...</option>";
+        prevQty.value = 0;
+        newQty.value = 0;
+        hideWarning();
+
+        if(!pid){
+            whSel.innerHTML = "<option value=''>-- Select Product first --</option>";
+            binSel.innerHTML = "<option value=''>-- Select Product first --</option>";
+            return;
+        }
+
+        fetch("/StockAdjustment/GetProductBins?productId=" + pid)
+            .then(r => r.json())
+            .then(function(res){
+                if(!res.warehouseId || res.warehouseId <= 0){
+                    whSel.innerHTML = "<option value=''>-- Not Available --</option>";
+                    binSel.innerHTML = "<option value=''>-- Not Available --</option>";
+                    showWarning("Please do Stock IN first for this product.");
+                    return;
+                }
+
+                whSel.innerHTML = "<option value='"+res.warehouseId+"' selected>"+res.warehouseName+"</option>";
+
+                if(!res.bins || res.bins.length === 0){
+                    binSel.innerHTML = "<option value=''>-- No Bin found --</option>";
+                    showWarning("Please do Stock IN first for this product.");
+                    return;
+                }
+
+                binSel.innerHTML = "<option value=''>-- Select Bin --</option>";
+                res.bins.forEach(function(b){
+                    var o = document.createElement("option");
+                    o.value = b.binId;
+                    o.textContent = b.binName + " (Balance: " + b.balance + ")";
+                    o.setAttribute("data-balance", b.balance);
+                    binSel.appendChild(o);
+                });
+
+                // Agar sirf 1 bin hai toh auto-select + balance auto-fill
+                if(res.bins.length === 1){
+                    binSel.value = res.bins[0].binId;
+                    prevQty.value = res.bins[0].balance || 0;
+                    recalc();
+                }
+            })
+            .catch(function(err){
+                console.error("Error:", err);
+                whSel.innerHTML = "<option value=''>-- Error --</option>";
+                binSel.innerHTML = "<option value=''>-- Error --</option>";
+                showWarning("Please do Stock IN first for this product.");
+            });
+    });
+
+    // Bin select par Previous Qty auto-fill
+    binSel.addEventListener("change", function(){
+        var opt = this.options[this.selectedIndex];
+        var bal = opt ? parseInt(opt.getAttribute("data-balance")) || 0 : 0;
+        prevQty.value = bal;
+        recalc();
+    });
+})();
+</script>
+

@@ -1,0 +1,167 @@
+@model ERPWMS.Application.DTOs.Inventory.CreateStockTransferRequest
+
+@{
+    ViewData["Title"] = "Create Stock Transfer";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Create Stock Transfer</h2>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="CreateTransfer" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FromWarehouseId" class="form-label fw-bold">From Warehouse</label>
+                        <select asp-for="FromWarehouseId" class="form-select" required>
+                            <option value="">-- Select --</option>
+                            @foreach (var warehouse in ViewBag.Warehouses)
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.WarehouseName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="FromWarehouseId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ToWarehouseId" class="form-label fw-bold">To Warehouse</label>
+                        <select asp-for="ToWarehouseId" class="form-select" required>
+                            <option value="">-- Select --</option>
+                            @foreach (var warehouse in ViewBag.Warehouses)
+                            {
+                                <option value="@warehouse.WarehouseId">@warehouse.WarehouseName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ToWarehouseId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ProductId" class="form-label fw-bold"></label>
+                        <select asp-for="ProductId" class="form-select" required>
+                            <option value="">-- Select --</option>
+                            @foreach (var product in ViewBag.Products)
+                            {
+                                <option value="@product.ProductId">@product.ProductCode - @product.ProductName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ProductId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="Quantity" class="form-label fw-bold"></label>
+                        <input asp-for="Quantity" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="TransferNo" class="form-label fw-bold">Transfer Number</label>
+                        <input asp-for="TransferNo" class="form-control" placeholder="e.g., TRF-2026-0001" />
+                        <span asp-validation-for="TransferNo" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TransferDate" class="form-label fw-bold">Transfer Date</label>
+                        <input asp-for="TransferDate" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="TransferDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Transfer Details</label>
+                        <div id="itemsContainer">
+                            <div class="item-row card mb-2 p-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label">From Bin</label>
+                                        <select name="TransferDetails[0].FromBinId" class="form-select" required>
+                                            <option value="">-- Select --</option>
+                                            @foreach (var bin in ViewBag.Bins)
+                                            {
+                                                <option value="@bin.BinId">@bin.BinName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">To Bin</label>
+                                        <select name="TransferDetails[0].ToBinId" class="form-select" required>
+                                            <option value="">-- Select --</option>
+                                            @foreach (var bin in ViewBag.Bins)
+                                            {
+                                                <option value="@bin.BinId">@bin.BinName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Quantity</label>
+                                        <input name="TransferDetails[0].Quantity" class="form-control" type="number" min="1" value="1" required />
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Batch No</label>
+                                        <input name="TransferDetails[0].BatchNo" class="form-control" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Expiry Date</label>
+                                        <input name="TransferDetails[0].ExpiryDate" class="form-control" type="date" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addItemBtn">
+                            <i class="bi bi-plus-circle"></i> Add Item
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Remarks" class="form-label fw-bold"></label>
+                    <textarea asp-for="Remarks" class="form-control" rows="2"></textarea>
+                </div>
+
+                <hr />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Create Transfer
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        let itemIndex = 1;
+        $('#addItemBtn').click(function() {
+            const row = $('.item-row').first().clone();
+            row.find('input').val('');
+            row.find('select').val('');
+            row.find('input, select').each(function() {
+                const name = $(this).attr('name');
+                if (name) {
+                    $(this).attr('name', name.replace(/\[\d+\]/, '[' + itemIndex + ']'));
+                }
+            });
+            $('#itemsContainer').append(row);
+            itemIndex++;
+        });
+
+        $(document).on('click', '.remove-item', function() {
+            if ($('.item-row').length > 1) {
+                $(this).closest('.item-row').remove();
+            }
+        });
+    </script>
+}

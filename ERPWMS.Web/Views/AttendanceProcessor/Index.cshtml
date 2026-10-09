@@ -1,0 +1,190 @@
+﻿@{
+    ViewData["Title"] = "Attendance Processor";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+
+<div class="row g-3">
+    <div class="col-xl-4 col-lg-6">
+        <div class="table-card">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-fingerprint" style="color:#F5A623;"></i> Manual Punch</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Employee <span class="text-danger">*</span></label>
+                        <select id="employeeId" class="form-control" onchange="onEmployeeChange()"></select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" id="attendanceDate" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Check In</label>
+                        <input type="time" id="checkIn" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Check Out</label>
+                        <input type="time" id="checkOut" class="form-control" />
+                    </div>
+                    <div class="col-12" id="shiftInfoBox" style="display:none;">
+                        <div class="alert alert-info py-2 px-3" style="font-size:12px;margin:0;">
+                            <i class="bi bi-info-circle"></i> <b>Shift:</b> <span id="shiftInfoText"></span>
+                            <br><small>Times auto-filled hain — late hone par manually edit kar sakte ho.</small>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn-gold w-100" onclick="submitPunch()">
+                            <i class="bi bi-fingerprint"></i> Process Attendance
+                        </button>
+                    </div>
+                    <div class="col-12" id="resultBox" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8 col-lg-6">
+        <div class="table-card">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-calendar-check" style="color:#F5A623;"></i> Today's Attendance <span class="badge-count" id="xCount">0</span></h5>
+                <button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+            <div class="card-body">
+                <table class="table-premium" id="xTable">
+                    <thead><tr><th>Employee</th><th>In</th><th>Out</th><th>Late</th><th>OT</th><th>Status</th></tr></thead>
+                    <tbody id="xBody"><tr><td colspan="6" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+                </table>
+                <div id="emptyState" class="empty-state d-none"><i class="bi bi-calendar-x empty-icon"></i><h4>No Attendance Today</h4></div>
+            </div>
+            <div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> records</span></div>
+        </div>
+    </div>
+</div>
+</div>
+
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+
+var employeeShiftData = {};
+
+function loadEmployees(){
+    return fetch('/AttendanceProcessor/GetEmployees').then(function(r){return r.json();}).then(function(d){
+        var s = document.getElementById('employeeId');
+        s.innerHTML = '<option value="">-- Select Employee --</option>';
+        d.forEach(function(e){
+            var o = document.createElement('option');
+            o.value = e.employeeId;
+            o.textContent = e.employeeCode + ' - ' + e.fullName;
+            s.appendChild(o);
+            employeeShiftData[e.employeeId] = {
+                shiftName: e.shiftName,
+                startTime: e.startTime,
+                endTime: e.endTime
+            };
+        });
+    });
+}
+
+function onEmployeeChange(){
+    var empId = document.getElementById('employeeId').value;
+    var box = document.getElementById('shiftInfoBox');
+    var txt = document.getElementById('shiftInfoText');
+    var checkIn = document.getElementById('checkIn');
+    var checkOut = document.getElementById('checkOut');
+
+    if(!empId){
+        box.style.display = 'none';
+        checkIn.value = '';
+        checkOut.value = '';
+        return;
+    }
+
+    var info = employeeShiftData[empId];
+    if(info && info.startTime && info.endTime){
+        checkIn.value = info.startTime;
+        checkOut.value = info.endTime;
+        txt.textContent = info.shiftName + ' (' + info.startTime + ' - ' + info.endTime + ')';
+        box.style.display = 'block';
+    } else {
+        txt.textContent = 'Is employee ko koi shift assign nahi hai';
+        checkIn.value = '';
+        checkOut.value = '';
+        box.style.display = 'block';
+    }
+}
+
+function submitPunch(){
+    var empId = document.getElementById('employeeId').value;
+    if(!empId){ if(typeof showToast==='function') showToast('Employee select karo','error'); else alert('Employee select karo'); return; }
+    var dateVal = document.getElementById('attendanceDate').value;
+    if(!dateVal){ if(typeof showToast==='function') showToast('Date required','error'); else alert('Date required'); return; }
+
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('employeeId', empId);
+    fd.append('attendanceDate', dateVal);
+    fd.append('checkIn', document.getElementById('checkIn').value);
+    fd.append('checkOut', document.getElementById('checkOut').value);
+
+    fetch('/AttendanceProcessor/Punch', { method:'POST', body: fd })
+        .then(function(r){return r.json();})
+        .then(function(res){
+            var box = document.getElementById('resultBox');
+            box.style.display = 'block';
+            if(res.success){
+                box.innerHTML = '<div class="alert alert-success"><b>✅ ' + res.status + '</b><br>' +
+                    'Late: ' + res.lateMinutes + ' min | Early: ' + res.earlyMinutes + ' min | OT: ' + res.otHours + ' hrs<br>' +
+                    'Working: ' + res.workingMinutes + ' min' +
+                    (res.isHalfDay ? ' | <b>HALF DAY</b>' : '') + '</div>';
+                if(typeof showToast==='function') showToast('Processed: ' + res.status,'success');
+                reload_();
+            } else {
+                box.innerHTML = '<div class="alert alert-danger">❌ ' + res.message + '</div>';
+                if(typeof showToast==='function') showToast(res.message,'error');
+            }
+        });
+}
+
+function reload_(){
+    fetch('/AttendanceProcessor/GetTodayAttendance').then(function(r){return r.json();}).then(function(d){
+        var body = document.getElementById('xBody');
+        if(!d || d.length===0){
+            body.innerHTML = '';
+            document.getElementById('xTable').style.display = 'none';
+            document.getElementById('emptyState').classList.remove('d-none');
+            document.getElementById('xCount').textContent = '0';
+            document.getElementById('tableCount').textContent = '0';
+            return;
+        }
+        document.getElementById('xTable').style.display = '';
+        document.getElementById('emptyState').classList.add('d-none');
+        var h = '';
+        d.forEach(function(x){
+            var stCls = x.status === 'Present' ? 'active' : (x.status === 'Absent' ? 'inactive' : 'role');
+            h += '<tr>';
+            h += '<td><div class="row-name"><span class="avatar"><i class="bi bi-person"></i></span><div>' + x.employeeName + '<br><small>' + x.employeeCode + '</small></div></div></td>';
+            h += '<td>' + x.checkIn + '</td>';
+            h += '<td>' + x.checkOut + '</td>';
+            h += '<td>' + (x.lateMinutes > 0 ? '<span class="badge-status inactive">' + x.lateMinutes + ' min</span>' : '-') + '</td>';
+            h += '<td>' + (x.otHours > 0 ? '<span class="badge-status active">' + x.otHours + ' h</span>' : '-') + '</td>';
+            h += '<td><span class="badge-status ' + stCls + '">' + x.status + (x.isHalfDay ? ' (HD)' : '') + '</span></td>';
+            h += '</tr>';
+        });
+        body.innerHTML = h;
+        document.getElementById('xCount').textContent = d.length;
+        document.getElementById('tableCount').textContent = d.length;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    loadEmployees();
+    document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+    reload_();
+});
+</script>

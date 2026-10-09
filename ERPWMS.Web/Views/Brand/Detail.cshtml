@@ -1,0 +1,148 @@
+@model ERPWMS.Application.DTOs.Brand.BrandDto
+
+@{
+    ViewData["Title"] = "Brand Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h3 class="card-title">
+                        <i class="fas fa-trademark"></i> Brand Details
+                    </h3>
+
+                    <div class="card-tools">
+
+                        <a asp-action="Index"
+                               class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+
+                        <a asp-action="Modify"
+                               asp-route-id="@Model.BrandId"
+                               class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+
+                    </div>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        <div class="col-md-4 text-center">
+
+                            @if (!string.IsNullOrEmpty(Model.LogoURL))
+                            {
+                                <img src="@Model.LogoURL"
+                                     alt="@Model.BrandName"
+                                     style="max-height: 200px; max-width: 200px;"
+                                     class="img-fluid img-thumbnail" />
+                            }
+                            else
+                            {
+                                <div class="text-center py-5">
+                                    <i class="fas fa-image fa-5x text-muted"></i>
+                                    <p class="text-muted">Logo Not Available</p>
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="col-md-8">
+
+                            <dl class="row">
+
+                                <dt class="col-sm-4">Name:</dt>
+                                <dd class="col-sm-8">
+                                    <strong>@Model.BrandName</strong>
+                                </dd>
+
+                                <dt class="col-sm-4">Code:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if (!string.IsNullOrEmpty(Model.BrandCode))
+                                    {
+                                        <span class="badge badge-secondary">
+                                            @Model.BrandCode
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+
+                                </dd>
+
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if ((Model.IsActive == true))
+                                    {
+                                        <span class="badge badge-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger">
+                                            Inactive
+                                        </span>
+                                    }
+
+                                </dd>
+
+                                <dt class="col-sm-4">Products:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge badge-primary badge-lg">
+                                        @Model.ProductCount
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">Created Date:</dt>
+                                <dd class="col-sm-8">
+                                    @(Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "N/A")
+                                </dd>
+
+                                <dt class="col-sm-4">Created By:</dt>
+                                <dd class="col-sm-8">
+                                    @Model.CreatedBy
+                                </dd>
+
+                                <dt class="col-sm-4">Last Modified:</dt>
+                                <dd class="col-sm-8">
+                                    @(Model.UpdatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "Never")
+                                </dd>
+
+                                @if ((Model.IsDeleted == true))
+                                {
+                                    <dt class="col-sm-4">Deleted:</dt>
+                                    <dd class="col-sm-8">
+                                        <span class="badge badge-danger">
+                                            @(Model.DeletedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "N/A")
+                                        </span>
+                                    </dd>
+                                }
+
+                            </dl>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>

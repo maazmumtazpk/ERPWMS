@@ -1,0 +1,85 @@
+@model ERPWMS.Database.Models.WorkflowDefinition
+@{
+    ViewData["Title"] = "Workflow Profile";
+    Layout = "_Layout";
+}
+<style>
+.kpi-card{background:#fff;border:1px solid #edf0f4;border-radius:10px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.04);height:100%;min-height:80px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+.kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2.5px}
+.kpi-card.total::before{background:#0A1628}.kpi-card.active::before{background:#159A89}.kpi-card.month::before{background:#7167D8}
+.kpi-content{display:flex;justify-content:space-between;align-items:center;width:100%;gap:8px}
+.kpi-text-group{display:flex;flex-direction:column;flex:1}
+.kpi-label{margin:0 0 3px 0;color:#64748B;font-size:9px;font-weight:700;text-transform:uppercase}
+.kpi-number{margin:0;color:#0A1628;font-size:20px;font-weight:750;line-height:1.2}
+.kpi-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.kpi-icon.blue{background:#0A1628;color:#fff}.kpi-icon.green{background:#D7F4EE;color:#159A89}.kpi-icon.purple{background:#EAE8FF;color:#7167D8}
+.table-card{background:#fff;border:1px solid #edf0f4;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-top:16px}
+.card-header-custom{padding:10px 14px;border-bottom:2px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center}
+.card-header-custom h5{margin:0;font-size:12px;font-weight:700;color:#0A1628;display:flex;align-items:center;gap:6px}
+.card-body{padding:16px 20px}
+.badge-status{padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;text-transform:uppercase}
+.badge-status.active{background:#DDF7F1;color:#118B7B}.badge-status.inactive{background:#F1F5F9;color:#64748B}
+.btn-icon{width:32px;height:32px;border-radius:6px;border:1px solid #E8ECF1;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#64748B;background:#fff;text-decoration:none;}
+.btn-icon:hover{background:#F1F5F9;color:#0A1628;}
+</style>
+
+<div style="padding-bottom:30px;">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-0" style="color:#0A1628;">Workflow Profile</h4>
+        <small class="text-muted">Home / Workflows / #@Model.WorkflowDefId</small>
+    </div>
+    <a href="/WorkflowDefinition/Index" class="btn-icon"><i class="bi bi-arrow-left"></i></a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="table-card" style="margin-top:0;">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-diagram-3" style="color:#F5A623;"></i> Workflow Details</h5>
+                <span class="badge-status @((Model.IsActive == true) ? "active" : "inactive")">
+                    @((Model.IsActive == true) ? "Active" : "Inactive")
+                </span>
+            </div>
+            <div class="card-body">
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                    <span style="color:#64748B;">Workflow ID</span><strong>#@Model.WorkflowDefId</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                    <span style="color:#64748B;">Name</span><strong>@Model.WorkflowName</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                    <span style="color:#64748B;">Module Type</span><strong>@(Model.ModuleType ?? "-")</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                    <span style="color:#64748B;">Created</span><strong>@(Model.CreatedDate?.ToString("dd MMM yyyy") ?? "-")</strong>
+                </div>
+                <div style="padding:8px 0;font-size:12px;">
+                    <div style="color:#64748B;margin-bottom:4px;">Description</div>
+                    <div style="color:#0A1628;line-height:1.6;">@(Model.Description ?? "No description")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="row g-3">
+            <div class="col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Stages</p><h2 class="kpi-number">@(ViewBag.StageCount ?? 0)</h2></div><div class="kpi-icon blue"><i class="bi bi-list-ol"></i></div></div></div></div>
+            <div class="col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Running Instances</p><h2 class="kpi-number">@(ViewBag.InstanceCount ?? 0)</h2></div><div class="kpi-icon green"><i class="bi bi-play-circle"></i></div></div></div></div>
+        </div>
+        <div class="table-card">
+            <div class="card-header-custom"><h5><i class="bi bi-gear" style="color:#F5A623;"></i> Quick Actions</h5></div>
+            <div class="card-body" style="display:flex;flex-wrap:wrap;gap:8px;">
+                <a href="/WorkflowStage/Index?workflowDefId=@Model.WorkflowDefId" class="btn-icon" style="width:auto;padding:0 14px;gap:6px;text-decoration:none;font-size:11px;font-weight:600;">
+                    <i class="bi bi-list-ol"></i> Manage Stages
+                </a>
+                <a href="/WorkflowTransition/Index?workflowDefId=@Model.WorkflowDefId" class="btn-icon" style="width:auto;padding:0 14px;gap:6px;text-decoration:none;font-size:11px;font-weight:600;">
+                    <i class="bi bi-arrow-left-right"></i> Transitions
+                </a>
+                <a href="/WorkflowCondition/Index?workflowDefId=@Model.WorkflowDefId" class="btn-icon" style="width:auto;padding:0 14px;gap:6px;text-decoration:none;font-size:11px;font-weight:600;">
+                    <i class="bi bi-funnel"></i> Conditions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

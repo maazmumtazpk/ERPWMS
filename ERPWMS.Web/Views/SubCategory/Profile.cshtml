@@ -1,0 +1,63 @@
+@model ERPWMS.Database.Models.SubCategory
+@{
+    ViewData["Title"] = "Sub Category - " + Model.SubCategoryName;
+    Layout = "_Layout";
+    int pCount = (int)(ViewBag.ProductCount ?? 0);
+    var ini = Model.SubCategoryName.Length >= 2 ? Model.SubCategoryName.Substring(0,2).ToUpper() : Model.SubCategoryName.ToUpper();
+}
+<style>
+.bp-wrap{max-width:1100px;margin:0 auto;padding:16px 20px 40px}
+.bp-hero{background:linear-gradient(135deg,#0A1628 0%,#1a2a4a 100%);border-radius:14px;padding:22px 26px;color:#fff;position:relative;overflow:hidden;margin-bottom:20px}
+.bp-hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(245,166,35,.12)}
+.bp-hero-inner{display:flex;align-items:center;gap:18px;position:relative;z-index:2;flex-wrap:wrap}
+.bp-avatar{width:68px;height:68px;border-radius:14px;background:#F5A623;color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex-shrink:0}
+.bp-hero-info{flex:1;min-width:240px}
+.bp-hero-info h2{font-size:20px;font-weight:800;margin:0 0 6px}
+.bp-hero-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;opacity:.9;align-items:center}
+.bp-hero-meta i{color:#F5A623;margin-right:4px}
+.bp-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;text-transform:uppercase}
+.bp-status.active{background:rgba(16,185,129,.2);color:#6ee7b7}
+.bp-status.inactive{background:rgba(239,68,68,.2);color:#fca5a5}
+.bp-btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:8px;font-size:11.5px;font-weight:600;text-decoration:none;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22)}
+.bp-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+.bp-card{background:#fff;border:1px solid #e8edf3;border-radius:12px;overflow:hidden;margin-bottom:16px}
+.bp-card-header{padding:13px 20px;border-bottom:1px solid #eef2f6;background:#fafbfc}
+.bp-card-header h6{font-size:13px;font-weight:700;color:#0A1628;margin:0}
+.bp-card-header h6 i{color:#F5A623;margin-right:6px}
+.bp-card-body{padding:18px 24px}
+.bp-info{display:grid;grid-template-columns:repeat(2,1fr);gap:20px 40px}
+.bp-info-full{grid-column:1/-1}
+.bp-info-lbl{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8;margin-bottom:5px}
+.bp-info-val{font-size:13px;color:#0A1628;font-weight:500;line-height:1.5}
+</style>
+<div class="bp-wrap">
+<div class="bp-hero">
+<div class="bp-hero-inner">
+<div class="bp-avatar">@ini</div>
+<div class="bp-hero-info">
+<h2>@Model.SubCategoryName</h2>
+<div class="bp-hero-meta">
+<span><i class="bi bi-hash"></i>ID: @Model.SubCategoryId</span>
+@if(!string.IsNullOrEmpty(Model.SubCategoryCode)){<span><i class="bi bi-tag"></i>@Model.SubCategoryCode</span>}
+<span><i class="bi bi-diagram-3"></i>@(Model.Category != null ? Model.Category.CategoryName : "-")</span>
+<span><i class="bi bi-box"></i>@pCount Products</span>
+<span class="bp-status @((Model.IsActive == true) ? "active" : "inactive")">@((Model.IsActive == true) ? "Active" : "Inactive")</span>
+</div>
+</div>
+<a href="/SubCategory" class="bp-btn"><i class="bi bi-arrow-left"></i>Back to List</a>
+</div>
+</div>
+<div class="bp-card">
+<div class="bp-card-header"><h6><i class="bi bi-info-circle"></i>Sub Category Information</h6></div>
+<div class="bp-card-body">
+<div class="bp-info">
+<div><div class="bp-info-lbl">Sub Category Name</div><div class="bp-info-val">@Model.SubCategoryName</div></div>
+<div><div class="bp-info-lbl">Sub Category Code</div><div class="bp-info-val">@(string.IsNullOrEmpty(Model.SubCategoryCode) ? "-" : Model.SubCategoryCode)</div></div>
+<div><div class="bp-info-lbl">Category</div><div class="bp-info-val">@(Model.Category != null ? Model.Category.CategoryName : "-")</div></div>
+<div><div class="bp-info-lbl">Total Products</div><div class="bp-info-val">@pCount</div></div>
+<div class="bp-info-full"><div class="bp-info-lbl">Description</div><div class="bp-info-val">@(string.IsNullOrEmpty(Model.Description) ? "-" : Model.Description)</div></div>
+<div><div class="bp-info-lbl">Created Date</div><div class="bp-info-val">@(Model.CreatedDate?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</div></div>
+</div>
+</div>
+</div>
+</div>

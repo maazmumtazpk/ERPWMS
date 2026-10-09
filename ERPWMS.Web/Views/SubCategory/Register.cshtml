@@ -1,0 +1,171 @@
+@model ERPWMS.Application.DTOs.SubCategory.RegisterSubCategoryDto
+
+@{
+    ViewData["Title"] = "Add New Sub Category";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <div class="col-md-8 offset-md-2">
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h3 class="card-title">
+                        <i class="fas fa-plus-circle"></i> Add New Sub Category
+                    </h3>
+
+                    <div class="card-tools">
+
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <form asp-action="Register" method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger">
+                        </div>
+
+                        <div class="form-group">
+
+                            <label asp-for="CategoryId"
+                                   class="control-label required">
+                                Select Category
+                            </label>
+
+                            <select asp-for="CategoryId"
+                                    class="form-control"
+                                    asp-items="ViewBag.CategoryList">
+
+                                <option value="">-- Select Category --</option>
+
+                            </select>
+
+                            <span asp-validation-for="CategoryId"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label asp-for="SubCategoryName"
+                                   class="control-label required">
+                                Sub Category Name
+                            </label>
+
+                            <input asp-for="SubCategoryName"
+                                   class="form-control"
+                                   placeholder="Enter sub category name" />
+
+                            <span asp-validation-for="SubCategoryName"
+                                  class="text-danger">
+                            </span>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label asp-for="SubCategoryCode"
+                                   class="control-label">
+                                Sub Category Code
+                            </label>
+
+                            <input asp-for="SubCategoryCode"
+                                   class="form-control"
+                                   placeholder="Enter sub category code (optional)" />
+
+                            <span asp-validation-for="SubCategoryCode"
+                                  class="text-danger">
+                            </span>
+
+                            <small class="form-text text-muted">
+                                Code can contain only uppercase letters, numbers, and hyphens.
+                            </small>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label asp-for="Description"
+                                   class="control-label">
+                                Description
+                            </label>
+
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="3"
+                                          placeholder="Enter description (optional)">
+                            </textarea>
+
+                                <span asp-validation-for="Description"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <div class="custom-control custom-switch">
+
+                                    <input asp-for="IsActive"
+                                           class="custom-control-input"
+                                           checked="@(Model.IsActive ?? true)" />
+
+                                    <label asp-for="IsActive"
+                                           class="custom-control-label">
+                                        Active
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <button type="submit"
+                                        class="btn btn-primary">
+
+                                    <i class="fas fa-save"></i> Save
+
+                                </button>
+
+                                <a asp-action="Index"
+                                       class="btn btn-secondary">
+                                    Cancel
+                                </a>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    @section Scripts {
+
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+
+    }

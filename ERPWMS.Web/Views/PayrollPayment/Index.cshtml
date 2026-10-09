@@ -1,0 +1,335 @@
+﻿@{
+    ViewData["Title"] = "Payroll Payments";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+
+<style>
+.pay-topbar{background:#fff;border-radius:12px;padding:14px 20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.pay-topbar-left{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.pay-topbar-right{display:flex;gap:8px;}
+
+.pay-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.pay-kpi{background:#fff;border-radius:10px;padding:12px 16px;border-left:4px solid #F5A623;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.pay-kpi.blue{border-left-color:#3B82F6;}
+.pay-kpi.green{border-left-color:#10B981;}
+.pay-kpi.red{border-left-color:#EF4444;}
+.pay-kpi-lbl{font-size:10px;color:#64748B;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.pay-kpi-val{font-size:18px;font-weight:900;color:#0A1628;}
+
+.pay-panel{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.pay-table-wrap{overflow-x:auto;}
+.pay-table{width:100%;border-collapse:collapse;font-size:12px;}
+.pay-table th{background:#0A1628;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:11px 12px;text-align:left;white-space:nowrap;}
+.pay-table td{padding:11px 12px;border-bottom:1px solid #F1F5F9;vertical-align:middle;}
+.pay-table tr:hover td{background:#F8FAFC;}
+.pay-table tr.paid td{background:#F0FDF4;}
+.pay-table tr.nobank td{background:#FEF2F2;}
+.pay-table .emp-name{font-weight:700;color:#0A1628;font-size:12.5px;}
+.pay-table .emp-code{font-size:10px;color:#64748B;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.pay-table .bank-name{font-weight:600;color:#0A1628;font-size:12px;}
+.pay-table .bank-sub{font-size:10px;color:#64748B;margin-top:2px;}
+.pay-table .bank-acc{font-size:11px;color:#475569;font-family:monospace;}
+.pay-table .bank-empty{color:#DC2626;font-style:italic;font-size:10.5px;}
+.pay-table .amount{font-weight:800;color:#0A1628;font-size:13px;font-variant-numeric:tabular-nums;}
+
+.pay-btn{padding:5px 12px;border-radius:6px;font-size:10.5px;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.pay-btn-pay{background:#10B981;color:#fff;}
+.pay-btn-pay:hover{background:#059669;}
+.pay-btn-view{background:#F1F5F9;color:#0A1628;}
+.pay-btn-disabled{background:#FEE2E2;color:#991B1B;cursor:not-allowed;}
+
+.pay-status{padding:3px 10px;border-radius:12px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;display:inline-block;}
+.pay-status.paid{background:#DCFCE7;color:#166534;}
+.pay-status.pending{background:#FEF3C7;color:#92400E;}
+.pay-status.nobank{background:#FEE2E2;color:#991B1B;}
+
+.pay-modal .modal-dialog{max-width:620px;}
+.pay-modal-head{background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;padding:16px 20px;border-radius:12px 12px 0 0;}
+.pay-modal-head h5{margin:0;font-weight:800;font-size:15px;}
+.pay-modal-head .sub{font-size:11px;opacity:.75;margin-top:3px;}
+.pay-info-grid{padding:14px 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;}
+.pay-info-row{display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px dashed #E2E8F0;}
+.pay-info-row:last-child{border-bottom:none;}
+.pay-info-row .lbl{color:#64748B;font-weight:600;}
+.pay-info-row .val{color:#0A1628;font-weight:800;font-family:monospace;font-size:11.5px;max-width:60%;text-align:right;word-break:break-all;}
+.pay-info-row .val.big{font-size:17px;color:#059669;font-family:inherit;}
+.pay-form{padding:14px 20px;}
+.pay-form label{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;display:block;}
+.pay-form input, .pay-form select{width:100%;padding:9px 11px;border:1.5px solid #E2E8F0;border-radius:7px;font-size:12.5px;font-family:inherit;}
+.pay-form input:focus, .pay-form select:focus{outline:none;border-color:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.1);}
+.pay-modal-actions{padding:12px 20px;background:#F8FAFC;border-top:1px solid #E2E8F0;display:flex;justify-content:flex-end;gap:8px;border-radius:0 0 12px 12px;}
+.pay-action-btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;}
+.pay-action-primary{background:#10B981;color:#fff;}
+.pay-action-primary:hover{background:#059669;}
+.pay-action-secondary{background:#fff;color:#64748B;border:1.5px solid #E2E8F0;}
+</style>
+
+<div style="padding-bottom:30px;">
+
+<div class="pay-topbar">
+    <div class="pay-topbar-left">
+        <label style="font-size:12px;font-weight:700;color:#475569;margin:0;">Payroll Run:</label>
+        <select id="runId" class="form-control" style="width:300px;" onchange="loadEmployees()">
+            <option value="">-- Select Payroll Run --</option>
+        </select>
+    </div>
+    <div class="pay-topbar-right">
+        <button type="button" class="btn-gold" onclick="payAllPending()" id="payAllBtn" disabled>
+            <i class="bi bi-lightning-charge"></i> Pay All Pending
+        </button>
+        <button type="button" class="btn-icon" onclick="loadEmployees()"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+</div>
+
+<div class="pay-kpis" id="payKpis" style="display:none;">
+    <div class="pay-kpi blue"><div class="pay-kpi-lbl">Total</div><div class="pay-kpi-val" id="kpiTotal">0</div></div>
+    <div class="pay-kpi green"><div class="pay-kpi-lbl">Paid</div><div class="pay-kpi-val" id="kpiPaid">0</div></div>
+    <div class="pay-kpi"><div class="pay-kpi-lbl">Pending</div><div class="pay-kpi-val" id="kpiPending">0</div></div>
+    <div class="pay-kpi red"><div class="pay-kpi-lbl">No Bank Account</div><div class="pay-kpi-val" id="kpiNoBank">0</div></div>
+</div>
+
+<div class="pay-panel">
+    <div class="pay-table-wrap">
+        <table class="pay-table" id="empTable">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Bank Name</th>
+                    <th>Account No</th>
+                    <th>IBAN</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th style="text-align:right;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="empBody">
+                <tr><td colspan="7" class="text-center py-5 text-muted">Select a payroll run</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</div>
+
+<div class="modal fade pay-modal" id="payModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border:none;border-radius:12px;overflow:hidden;">
+            <div class="pay-modal-head">
+                <div style="display:flex;justify-content:space-between;align-items:start;">
+                    <div>
+                        <h5><i class="bi bi-credit-card-2-front"></i> Process Payment</h5>
+                        <div class="sub" id="modalSub">Review and confirm</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="pay-info-grid" id="modalInfo"></div>
+            <div class="pay-form">
+                <div style="margin-bottom:12px;">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod" onchange="toggleChequeField()">
+                        <option value="BankTransfer">Bank Transfer</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Cheque">Cheque</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Reference No (Optional)</label>
+                    <input type="text" id="referenceNo" placeholder="e.g. TRX-2026-10-001" />
+                </div>
+                <div id="chequeField" style="display:none;">
+                    <label>Cheque No</label>
+                    <input type="text" id="chequeNo" placeholder="e.g. CHQ-123456" />
+                </div>
+            </div>
+            <div class="pay-modal-actions">
+                <button type="button" class="pay-action-btn pay-action-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cancel
+                </button>
+                <button type="button" class="pay-action-btn pay-action-primary" onclick="confirmPay()">
+                    <i class="bi bi-check-circle-fill"></i> Confirm Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+function fmt(n){ return (n||0).toLocaleString('en-PK', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+var currentRunId = 0;
+var currentEmployees = [];
+var currentSelected = null;
+
+(function loadRuns(){
+    fetch('/PayrollPayment/GetApprovedRuns').then(function(r){return r.json();}).then(function(d){
+        var s = document.getElementById('runId');
+        s.innerHTML = '<option value="">-- Select Payroll Run --</option>';
+        d.forEach(function(r){
+            var o = document.createElement('option');
+            o.value = r.runId;
+            var months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            o.textContent = r.runNo + ' — ' + months[r.month] + ' ' + r.year + ' [' + r.status + ']';
+            s.appendChild(o);
+        });
+        if(d.length >= 1){ s.selectedIndex = 1; loadEmployees(); }
+    });
+})();
+
+function toggleChequeField(){
+    document.getElementById('chequeField').style.display = document.getElementById('paymentMethod').value === 'Cheque' ? 'block' : 'none';
+}
+
+function loadEmployees(){
+    var runId = document.getElementById('runId').value;
+    if(!runId){
+        document.getElementById('empBody').innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">Select a payroll run</td></tr>';
+        document.getElementById('payKpis').style.display = 'none';
+        document.getElementById('payAllBtn').disabled = true;
+        return;
+    }
+    currentRunId = parseInt(runId);
+    document.getElementById('empBody').innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+    fetch('/PayrollPayment/GetRunEmployees?runId=' + runId)
+        .then(function(r){return r.json();})
+        .then(function(d){
+            if(!d.success){
+                document.getElementById('empBody').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">' + d.message + '</td></tr>';
+                return;
+            }
+            currentEmployees = d.employees;
+            renderEmployees(d.employees);
+            renderKpis(d.employees);
+            document.getElementById('payKpis').style.display = 'grid';
+            var payable = d.employees.filter(function(e){ return !e.isPaid && e.hasBankAccount; }).length;
+            document.getElementById('payAllBtn').disabled = payable === 0;
+        });
+}
+
+function renderEmployees(list){
+    var b = document.getElementById('empBody');
+    if(!list || list.length === 0){
+        b.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No employees in this payroll</td></tr>';
+        return;
+    }
+    var h = '';
+    list.forEach(function(e){
+        var cls = e.isPaid ? 'paid' : (!e.hasBankAccount ? 'nobank' : '');
+        h += '<tr class="' + cls + '">';
+        h += '<td><div class="emp-name">' + e.employeeName + '</div><div class="emp-code">' + e.employeeCode + '</div></td>';
+
+        if(e.hasBankAccount){
+            h += '<td><div class="bank-name">' + (e.bankName || '-') + '</div>' + (e.accountType ? '<div class="bank-sub">' + e.accountType + '</div>' : '') + '</td>';
+            h += '<td><div class="bank-acc">' + (e.accountNumber || '-') + '</div></td>';
+            h += '<td><div class="bank-acc" style="font-size:10px;">' + (e.iban || '-') + '</div></td>';
+        } else {
+            h += '<td colspan="3"><span class="bank-empty"><i class="bi bi-exclamation-triangle-fill"></i> No bank account linked</span></td>';
+        }
+
+        h += '<td><div class="amount">' + fmt(e.netPay) + '</div></td>';
+
+        if(e.isPaid){
+            h += '<td><span class="pay-status paid">✓ PAID</span><div style="font-size:9.5px;color:#64748B;margin-top:2px;">' + (e.paymentDate || '') + '</div></td>';
+        } else if(!e.hasBankAccount){
+            h += '<td><span class="pay-status nobank">⚠ NO BANK</span></td>';
+        } else {
+            h += '<td><span class="pay-status pending">PENDING</span></td>';
+        }
+
+        h += '<td style="text-align:right;">';
+        if(e.isPaid){
+            h += '<button class="pay-btn pay-btn-view" onclick="viewPayment(' + e.employeeId + ')"><i class="bi bi-eye"></i></button>';
+        } else if(!e.hasBankAccount){
+            h += '<button class="pay-btn pay-btn-disabled" disabled title="Bank account required"><i class="bi bi-slash-circle"></i> Blocked</button>';
+        } else {
+            h += '<button class="pay-btn pay-btn-pay" onclick="openPayModal(' + e.employeeId + ')"><i class="bi bi-lightning-charge-fill"></i> Pay Now</button>';
+        }
+        h += '</td></tr>';
+    });
+    b.innerHTML = h;
+}
+
+function renderKpis(list){
+    document.getElementById('kpiTotal').textContent = list.length;
+    document.getElementById('kpiPaid').textContent = list.filter(function(e){ return e.isPaid; }).length;
+    document.getElementById('kpiPending').textContent = list.filter(function(e){ return !e.isPaid; }).length;
+    document.getElementById('kpiNoBank').textContent = list.filter(function(e){ return !e.hasBankAccount; }).length;
+}
+
+function openPayModal(employeeId){
+    var e = currentEmployees.find(function(x){ return x.employeeId === employeeId; });
+    if(!e) return;
+    currentSelected = e;
+
+    document.getElementById('modalSub').textContent = e.employeeCode + ' — ' + e.employeeName;
+    var h = '';
+    h += '<div class="pay-info-row"><span class="lbl">Employee</span><span class="val" style="font-family:inherit;">' + e.employeeName + '</span></div>';
+    h += '<div class="pay-info-row"><span class="lbl">Bank Name</span><span class="val" style="font-family:inherit;">' + (e.bankName || '-') + '</span></div>';
+    h += '<div class="pay-info-row"><span class="lbl">Account No</span><span class="val">' + (e.accountNumber || '-') + '</span></div>';
+    h += '<div class="pay-info-row"><span class="lbl">IBAN</span><span class="val">' + (e.iban || '-') + '</span></div>';
+    h += '<div class="pay-info-row"><span class="lbl">Amount to Pay</span><span class="val big">PKR ' + fmt(e.netPay) + '</span></div>';
+    document.getElementById('modalInfo').innerHTML = h;
+
+    document.getElementById('referenceNo').value = '';
+    document.getElementById('chequeNo').value = '';
+    document.getElementById('paymentMethod').value = 'BankTransfer';
+    document.getElementById('chequeField').style.display = 'none';
+
+    new bootstrap.Modal(document.getElementById('payModal')).show();
+}
+
+function confirmPay(){
+    if(!currentSelected) return;
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('runId', currentRunId);
+    fd.append('registerId', currentSelected.registerId);
+    fd.append('employeeId', currentSelected.employeeId);
+    fd.append('paymentMethod', document.getElementById('paymentMethod').value);
+    fd.append('referenceNo', document.getElementById('referenceNo').value);
+    fd.append('chequeNo', document.getElementById('chequeNo').value);
+
+    fetch('/PayrollPayment/PayIndividual', { method:'POST', body: fd })
+        .then(function(r){return r.json();})
+        .then(function(res){
+            if(res.success){
+                showToast('Paid: PKR ' + fmt(res.amount), 'success');
+                bootstrap.Modal.getInstance(document.getElementById('payModal')).hide();
+                loadEmployees();
+            } else showToast(res.message, 'error');
+        });
+}
+
+function payAllPending(){
+    if(!currentRunId){ showToast('Select run', 'error'); return; }
+    if(!confirm('Process payments for all PENDING employees (only those with bank account)?')) return;
+    var method = prompt('Payment Method (BankTransfer / Cash / Cheque):', 'BankTransfer');
+    if(method === null) return;
+    var refNo = prompt('Reference No (optional):', '') || '';
+
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('runId', currentRunId);
+    fd.append('paymentMethod', method);
+    fd.append('referenceNo', refNo);
+
+    fetch('/PayrollPayment/PayAllPending', { method:'POST', body: fd })
+        .then(function(r){return r.json();})
+        .then(function(res){
+            if(res.success){ showToast(res.message, 'success'); loadEmployees(); }
+            else showToast(res.message, 'error');
+        });
+}
+
+function viewPayment(employeeId){
+    var e = currentEmployees.find(function(x){ return x.employeeId === employeeId; });
+    if(!e) return;
+    alert('Payment: ' + e.paymentNo + '\nAmount: PKR ' + fmt(e.netPay) + '\nMethod: ' + e.paymentMethod + '\nDate: ' + e.paymentDate + '\nRef: ' + (e.referenceNo || '-'));
+}
+</script>

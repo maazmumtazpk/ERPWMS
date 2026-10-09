@@ -1,0 +1,188 @@
+@model ERPWMS.Database.Models.Product
+@{
+    ViewData["Title"] = "Product Profile";
+    Layout = "_Layout";
+}
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">Product Profile</h4>
+            <small class="text-muted" style="font-size:11px;">Home / Products / Profile</small>
+        </div>
+        <a href="/Product/Index" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+    </div>
+
+    <!-- Header Card -->
+    <div class="table-card" style="margin-top:0;">
+        <div style="padding:20px 24px;background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div style="width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;flex-shrink:0;">
+                    @(Model.ProductName != null && Model.ProductName.Length > 0 ? Model.ProductName.Substring(0, Math.Min(2, Model.ProductName.Length)).ToUpper() : "PR")
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:19px;font-weight:800;">@Model.ProductName</h3>
+                    <div style="color:rgba(255,255,255,.7);font-size:11.5px;margin-top:5px;display:flex;gap:14px;flex-wrap:wrap;">
+                        <span><i class="bi bi-hash"></i> @(Model.Sku ?? "-")</span>
+                        <span><i class="bi bi-upc"></i> @(Model.Barcode ?? "-")</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                @if ((Model.IsActive == true))
+                {
+                    <span class="badge-status active" style="padding:6px 14px;font-size:10.5px;">ACTIVE</span>
+                }
+                else
+                {
+                    <span class="badge-status inactive" style="padding:6px 14px;font-size:10.5px;">INACTIVE</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3" style="margin-top:16px;">
+
+        <!-- Product Details -->
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-box-seam-fill" style="color:#F5A623;"></i> Product Details</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Product Name</span>
+                        <strong style="text-align:right;max-width:60%;">@(Model.ProductName ?? "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">SKU</span>
+                        <strong style="font-family:monospace;">@(Model.Sku ?? "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Barcode</span>
+                        <strong style="font-family:monospace;">@(Model.Barcode ?? "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;">
+                        <span style="color:#64748B;">Description</span>
+                        <strong style="text-align:right;max-width:60%;">@(Model.Description ?? "-")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classification -->
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-diagram-3-fill" style="color:#F5A623;"></i> Classification</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Category</span>
+                        <strong>@(Model.Category != null ? Model.Category.CategoryName : "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Sub Category</span>
+                        <strong>@(Model.SubCategory != null ? Model.SubCategory.SubCategoryName : "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Brand</span>
+                        <strong>@(Model.Brand != null ? Model.Brand.BrandName : "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;">
+                        <span style="color:#64748B;">Unit</span>
+                        <strong>@(Model.Unit != null ? Model.Unit.UnitName : "-")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dimensions & Weight -->
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-rulers" style="color:#F5A623;"></i> Dimensions & Weight</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Weight (kg)</span>
+                        <strong>@(Model.Weight.HasValue ? Model.Weight.Value.ToString("N2") + " kg" : "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Length (cm)</span>
+                        <strong>@(Model.Length.HasValue ? Model.Length.Value.ToString("N2") + " cm" : "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Width (cm)</span>
+                        <strong>@(Model.Width.HasValue ? Model.Width.Value.ToString("N2") + " cm" : "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;">
+                        <span style="color:#64748B;">Height (cm)</span>
+                        <strong>@(Model.Height.HasValue ? Model.Height.Value.ToString("N2") + " cm" : "-")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Levels -->
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-bar-chart-fill" style="color:#F5A623;"></i> Stock Levels</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Reorder Level</span>
+                        <strong>@(Model.ReorderLevel?.ToString() ?? "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;">
+                        <span style="color:#64748B;">Min Stock Level</span>
+                        <strong>@(Model.MinStockLevel?.ToString() ?? "-")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;">
+                        <span style="color:#64748B;">Max Stock Level</span>
+                        <strong>@(Model.MaxStockLevel?.ToString() ?? "-")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracking Options -->
+        <div class="col-md-12">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-gear-fill" style="color:#F5A623;"></i> Tracking & Status</h5></div>
+                <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+                    <div>
+                        <div style="font-size:10px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:6px;">Serialized</div>
+                        @if ((Model.IsSerialized == true))
+                        {
+                            <span class="badge-status active" style="padding:5px 12px;font-size:10.5px;"><i class="bi bi-check-circle"></i> Yes</span>
+                        }
+                        else
+                        {
+                            <span class="badge-status inactive" style="padding:5px 12px;font-size:10.5px;"><i class="bi bi-x-circle"></i> No</span>
+                        }
+                    </div>
+                    <div>
+                        <div style="font-size:10px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:6px;">Batch Managed</div>
+                        @if ((Model.IsBatchManaged == true))
+                        {
+                            <span class="badge-status active" style="padding:5px 12px;font-size:10.5px;"><i class="bi bi-check-circle"></i> Yes</span>
+                        }
+                        else
+                        {
+                            <span class="badge-status inactive" style="padding:5px 12px;font-size:10.5px;"><i class="bi bi-x-circle"></i> No</span>
+                        }
+                    </div>
+                    <div>
+                        <div style="font-size:10px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:6px;">Status</div>
+                        @if ((Model.IsActive == true))
+                        {
+                            <span class="badge-status active" style="padding:5px 12px;font-size:10.5px;">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge-status inactive" style="padding:5px 12px;font-size:10.5px;">Inactive</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+

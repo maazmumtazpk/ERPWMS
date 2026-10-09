@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "Late Policy";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+
+<div class="table-card">
+    <div class="card-header-custom">
+        <h5><i class="bi bi-clock-history" style="color:#F5A623;"></i> Late / Early Policy Evaluation</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Employee <span class="text-danger">*</span></label>
+                <select id="employeeId" class="form-control"></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Year <span class="text-danger">*</span></label>
+                <select id="year" class="form-control"></select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Month <span class="text-danger">*</span></label>
+                <select id="month" class="form-control">
+                    <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                    <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                    <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                    <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                </select>
+            </div>
+            <div class="col-md-3" style="padding-top:22px;">
+                <button type="button" class="btn-gold w-100" onclick="evaluate()">
+                    <i class="bi bi-search"></i> Evaluate
+                </button>
+            </div>
+        </div>
+
+        <div id="resultBox" class="mt-4" style="display:none;">
+            <div class="row g-3">
+                <div class="col-md-3"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Late Days</p><h2 class="kpi-number" id="rLateDays">0</h2></div></div></div></div>
+                <div class="col-md-3"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Early Days</p><h2 class="kpi-number" id="rEarlyDays">0</h2></div></div></div></div>
+                <div class="col-md-3"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Deduction Days</p><h2 class="kpi-number" id="rDeduct">0</h2></div></div></div></div>
+                <div class="col-md-3"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Warning</p><h2 class="kpi-number" id="rWarning" style="font-size:16px;">-</h2></div></div></div></div>
+            </div>
+            <div class="alert alert-info mt-3" id="rSummary"></div>
+        </div>
+    </div>
+</div>
+</div>
+
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+
+var employeesLoaded = false;
+
+function loadEmployees(){
+    if(employeesLoaded) return Promise.resolve();
+    return fetch('/LatePolicy/GetEmployees').then(function(r){return r.json();}).then(function(d){
+        var s = document.getElementById('employeeId');
+        s.innerHTML = '<option value="">-- Select --</option>';
+        d.forEach(function(e){
+            var o = document.createElement('option');
+            o.value = e.employeeId;
+            o.textContent = e.employeeCode + ' - ' + e.fullName;
+            s.appendChild(o);
+        });
+        employeesLoaded = true;
+    });
+}
+
+function evaluate(){
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('employeeId', document.getElementById('employeeId').value);
+    fd.append('year', document.getElementById('year').value);
+    fd.append('month', document.getElementById('month').value);
+
+    fetch('/LatePolicy/Evaluate', { method:'POST', body: fd }).then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('rLateDays').textContent = res.totalLateDays;
+            document.getElementById('rEarlyDays').textContent = res.totalEarlyDays;
+            document.getElementById('rDeduct').textContent = res.totalDeductionDays;
+            document.getElementById('rWarning').textContent = res.warningLevel;
+            document.getElementById('rSummary').textContent = res.summary;
+        } else {
+            if(typeof showToast==='function') showToast(res.message,'error'); else alert(res.message);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    loadEmployees();
+    var y = new Date().getFullYear();
+    var s = document.getElementById('year');
+    for(var i=y-1; i<=y+1; i++){
+        var o = document.createElement('option');
+        o.value = i; o.textContent = i;
+        if(i===y) o.selected = true;
+        s.appendChild(o);
+    }
+    document.getElementById('month').value = (new Date().getMonth() + 1);
+});
+</script>

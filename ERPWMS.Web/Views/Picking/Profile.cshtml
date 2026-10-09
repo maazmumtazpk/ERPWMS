@@ -1,0 +1,102 @@
+@model ERPWMS.Database.Models.PickingList
+@{
+    ViewData["Title"] = "Picking Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var details = ViewBag.Details as List<ERPWMS.Database.Models.PickingDetail>;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0">Picking Details</h3>
+            <small class="text-muted">Home / Picking / @Model.PickingNo</small>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="bg-dark text-white p-3 rounded me-3" style="font-size:1.5rem;">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">@Model.PickingNo</h4>
+                        <small>@Model.PickingDate?.ToString("dd MMM yyyy") | SO: @ViewBag.SalesOrderNo</small>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge bg-info text-dark">@Model.Status</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold"><i class="bi bi-person"></i> Customer & Address</h6>
+                    <p class="mb-1 fw-bold">@ViewBag.CustomerName</p>
+                    <p class="mb-1"><i class="bi bi-telephone"></i> @ViewBag.CustomerPhone</p>
+                    <p class="mb-0"><i class="bi bi-geo-alt"></i> @ViewBag.CustomerAddress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold"><i class="bi bi-box-seam"></i> Picking Info</h6>
+                    <table class="table table-sm mb-0">
+                        <tr><td>Warehouse</td><td class="text-end fw-bold">@ViewBag.WarehouseName</td></tr>
+                        <tr><td>Picking Date</td><td class="text-end fw-bold">@Model.PickingDate?.ToString("dd MMM yyyy")</td></tr>
+                        <tr><td>Status</td><td class="text-end fw-bold">@Model.Status</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">Picked Items (@(details?.Count ?? 0))</h6>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>PRODUCT</th>
+                        <th>QTY</th>
+                        <th>BATCH NO</th>
+                        <th>SERIAL NUMBERS</th>
+                        <th>BIN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (details != null && details.Any())
+                    {
+                        int i = 1;
+                        foreach (var d in details)
+                        {
+                            <tr>
+                                <td>@(i++)</td>
+                                <td>@(d.Product != null ? d.Product.ProductName : "Product #" + d.ProductId)</td>
+                                <td>@d.PickedQty</td>
+                                <td>@(string.IsNullOrEmpty(d.BatchNo) ? "-" : d.BatchNo)</td>
+                                <td>@(string.IsNullOrEmpty(d.SerialNumbers) ? "-" : d.SerialNumbers)</td>
+                                <td>@d.BinId</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="6" class="text-center text-muted">No items found.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

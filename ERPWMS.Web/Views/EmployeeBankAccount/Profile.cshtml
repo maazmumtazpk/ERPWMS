@@ -1,0 +1,79 @@
+@model ERPWMS.Database.Models.EmployeeBankAccount
+@{
+    ViewData["Title"] = "Bank Account Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string statusColor = (Model.IsActive == true) ? "#159A89" : "#94A3B8";
+    string statusText = (Model.IsActive == true) ? "ACTIVE" : "INACTIVE";
+    string primaryColor = (Model.IsPrimary == true) ? "#F5A623" : "#94A3B8";
+    string primaryText = (Model.IsPrimary == true) ? "PRIMARY" : "SECONDARY";
+}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0 fw-bold" style="color:#0A1628;">Bank Account Details</h3>
+            <small class="text-muted">Home / Employee Bank Accounts / @Model.AccountNumber</small>
+        </div>
+        <div>
+            <a href="/EmployeeBankAccount/Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        </div>
+    </div>
+
+    <!-- Header Card -->
+    <div class="card shadow-sm mb-3" style="background:#0A1628;color:#fff;border:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div style="background:#F5A623;color:#0A1628;padding:14px;border-radius:10px;font-size:1.6rem;margin-right:16px;"><i class="bi bi-bank"></i></div>
+                    <div>
+                        <h3 class="mb-1 fw-bold" style="color:#fff;">@Model.BankName</h3>
+                        <div style="font-size:12px;color:#94A3B8;">
+                            <i class="bi bi-person"></i> @(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "N/A")
+                            &nbsp;|&nbsp; A/C: @Model.AccountNumber
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span style="background:@primaryColor;color:#fff;padding:4px 12px;border-radius:12px;font-size:10px;font-weight:700;margin-right:6px;">@primaryText</span>
+                    <span style="background:@statusColor;color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;">@statusText</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-person" style="color:#F5A623;"></i> Employee Information</h6>
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <tr><td style="color:#64748B;border:none;">Employee Name</td><td class="text-end fw-bold" style="border:none;">@(Model.Employee != null ? Model.Employee.FirstName + " " + Model.Employee.LastName : "-")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Employee Code</td><td class="text-end fw-bold" style="border:none;font-family:monospace;">@(Model.Employee?.EmployeeCode ?? "-")</td></tr>
+                </table>
+            </div></div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-bank" style="color:#F5A623;"></i> Account Information</h6>
+                <table class="table table-sm mb-0" style="font-size:12px;">
+                    <tr><td style="color:#64748B;border:none;">Bank Name</td><td class="text-end fw-bold" style="border:none;">@Model.BankName</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Account Number</td><td class="text-end fw-bold" style="border:none;font-family:monospace;">@Model.AccountNumber</td></tr>
+                    <tr><td style="color:#64748B;border:none;">IBAN</td><td class="text-end fw-bold" style="border:none;font-family:monospace;font-size:11px;">@(string.IsNullOrEmpty(Model.Iban) ? "-" : Model.Iban)</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Account Type</td><td class="text-end fw-bold" style="border:none;">@(string.IsNullOrEmpty(Model.AccountType) ? "-" : Model.AccountType)</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Is Primary?</td><td class="text-end fw-bold" style="border:none;">@((Model.IsPrimary == true) ? "Yes" : "No")</td></tr>
+                    <tr><td style="color:#64748B;border:none;">Status</td><td class="text-end fw-bold" style="border:none;color:@statusColor;">@statusText</td></tr>
+                </table>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Audit Info -->
+    <div class="card shadow-sm"><div class="card-body">
+        <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-people" style="color:#F5A623;"></i> Audit Information</h6>
+        <div class="row" style="font-size:12px;">
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedByName ?? "N/A")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created Date:</span> <strong>@(Model.CreatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedByName ?? "-")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated Date:</span> <strong>@(Model.UpdatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
+        </div>
+    </div></div>
+</div>

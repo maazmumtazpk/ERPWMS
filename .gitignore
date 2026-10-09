@@ -1,0 +1,114 @@
+﻿# ============================================================
+# .NET / Visual Studio
+# ============================================================
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+.vscode/
+.idea/
+
+# ============================================================
+# NuGet Packages
+# ============================================================
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+!packages/**/build/
+!packages/**/buildTransitive/
+*.nuget.props
+*.nuget.targets
+
+# ============================================================
+# MSBuild / Build Artifacts
+# ============================================================
+*.dll
+*.pdb
+*.exe
+*.cache
+*.log
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ============================================================
+# Test Results
+# ============================================================
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+
+# ============================================================
+# Application Specific
+# ============================================================
+# Connection strings (agar sensitive ho toh — commented)
+# appsettings.Production.json
+# appsettings.Development.json
+# appsettings.Local.json
+*.mdf
+*.ldf
+*.ndf
+
+# ============================================================
+# Publish / Deployment
+# ============================================================
+publish/
+*.publishproj
+PublishScripts/
+
+# ============================================================
+# Node (in case frontend)
+# ============================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================
+# Backup / Junk Folders (Aapke Project Specific)
+# ============================================================
+OfflinePackages/
+_BACKUP_*/
+_BROKEN_BACKUP/
+_DISABLED_FILES/
+*.bak
+*.bak_*
+*.disabled
+*.old
+*.tmp
+
+# ============================================================
+# OS Files
+# ============================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ============================================================
+# ReSharper / Rider
+# ============================================================
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# ============================================================
+# User-Specific
+# ============================================================
+*.rsuser
+*.svclog
+*.sbr
+*.svc

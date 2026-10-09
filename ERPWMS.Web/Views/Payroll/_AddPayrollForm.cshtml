@@ -1,0 +1,70 @@
+﻿@{ Layout = null; }
+<form id="addPayrollForm" method="post" action="/Payroll/Register">
+    @Html.AntiForgeryToken()
+    <div id="addPayrollAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Employee *</label>
+            <select name="employeeId" id="addEmp" class="form-select form-select-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;">
+                <option value="">-- Select --</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Month *</label>
+            <input type="date" name="monthYear" id="addMonth" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Gross Pay (Rs) *</label>
+            <input type="number" name="grossPay" id="addGross" class="form-control form-control-sm" step="0.01" value="0" required readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;font-weight:700;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Deductions (Rs)</label>
+            <input type="number" name="totalDeductions" id="addDed" class="form-control form-control-sm" step="0.01" value="0" readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Net Pay (Rs) *</label>
+            <input type="number" name="netPay" id="addNet" class="form-control form-control-sm" step="0.01" value="0" required readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f0fdf4;font-weight:700;color:#059669;" />
+        </div>
+    </div>
+
+    <div style="background:#F8FAFC;padding:10px 14px;border-radius:8px;margin-top:14px;font-size:11px;color:#64748B;border-left:3px solid #F5A623;">
+        <i class="bi bi-info-circle"></i> Salary is automatically fetched from the employee's Salary Record. Net Pay = Gross Pay - Deductions.
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:11px;padding:6px 16px;border-radius:6px;">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;font-size:11px;padding:6px 16px;border-radius:6px;border:none;">Save</button>
+    </div>
+</form>
+<script>
+    // Load employees
+    fetch("/Payroll/GetEmployees").then(r=>r.json()).then(d=>{
+        var s=document.getElementById("addEmp");
+        s.innerHTML="<option value=''>-- Select --</option>";
+        (d||[]).forEach(function(x){ var o=document.createElement("option"); o.value=x.employeeId; o.textContent=x.employeeName; s.appendChild(o); });
+    });
+
+    // Jab employee select ho, salary auto-load karo
+    document.getElementById("addEmp").addEventListener("change", function(){
+        var empId = this.value;
+        if (!empId) {
+            document.getElementById("addGross").value = 0;
+            document.getElementById("addDed").value = 0;
+            document.getElementById("addNet").value = 0;
+            return;
+        }
+        fetch("/Payroll/GetEmployeeSalary?employeeId=" + empId)
+            .then(r=>r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("addGross").value = data.grossPay || 0;
+                    document.getElementById("addDed").value = data.totalDeductions || 0;
+                    document.getElementById("addNet").value = data.netPay || 0;
+                }
+            })
+            .catch(err => console.error("Salary load error:", err));
+    });
+</script>
+
+

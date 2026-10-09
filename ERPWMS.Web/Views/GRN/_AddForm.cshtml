@@ -1,0 +1,164 @@
+﻿@{
+    Layout = null;
+}
+<style>
+    .grn-f .form-label { font-size: 11px; font-weight: 600; color: #1e293b; margin-bottom: 3px; display: block; }
+    .grn-f .form-control, .grn-f .form-select { font-size: 12px; padding: 6px 10px; min-height: 34px; border-radius: 6px; border: 1px solid #cbd5e1; }
+    .grn-f .form-control[readonly] { background: #f1f5f9; }
+    .grn-f .row.g-2 { --bs-gutter-y: 8px; --bs-gutter-x: 10px; }
+    .grn-f .item-row { padding: 10px 12px; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+    .grn-f .btn-gold { background:#F5A623;color:#0A1628;border:none;font-weight:700;padding:6px 16px;border-radius:6px;font-size:12px; }
+    .grn-f .btn-ghost { background:#fff;color:#475569;border:1px solid #cbd5e1;padding:6px 16px;border-radius:6px;font-size:12px;font-weight:600; }
+</style>
+
+<form id="addForm" method="post" action="/GRN/Register" autocomplete="off" class="grn-f">
+    @Html.AntiForgeryToken()
+    <div id="addAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Purchase Order *</label>
+            <select name="PurchaseId" id="poSelect" class="form-select" required>
+                <option value="">-- Select Purchase Order --</option>
+                @if(ViewBag.Purchases != null) { foreach(var p in ViewBag.Purchases) {
+                    <option value="@p.purchaseId">@p.purchaseOrderNo</option>
+                } }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Warehouse *</label>
+            <select name="WarehouseId" class="form-select" required>
+                <option value="">-- Select Warehouse --</option>
+                @if(ViewBag.Warehouses != null) { foreach(var w in ViewBag.Warehouses) {
+                    <option value="@w.warehouseId">@w.warehouseName</option>
+                } }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">GRN No *</label>
+            <input type="text" name="GRNNo" class="form-control" readonly value="@(ViewBag.NextGRNNo ?? "")" style="font-family:monospace;font-weight:700;" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Receipt Date</label>
+            <input type="date" name="ReceiptDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;">
+        <span style="font-size:12px;font-weight:700;color:#0A1628;">Items</span>
+        <button type="button" class="btn btn-sm btn-gold" id="addItemBtn"><i class="bi bi-plus"></i> Add Item</button>
+    </div>
+
+    <div id="itemsContainer">
+        <div class="item-row">
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <label class="form-label">Product *</label>
+                    <select name="GRNDetails[0].ProductId" class="form-select product-select" required>
+                        <option value="">-- Select Product --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Received *</label>
+                    <input type="number" name="GRNDetails[0].ReceivedQty" class="form-control received-qty" min="0" value="0" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Accepted *</label>
+                    <input type="number" name="GRNDetails[0].AcceptedQty" class="form-control accepted-qty" min="0" value="0" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Rejected</label>
+                    <input type="number" name="GRNDetails[0].RejectedQty" class="form-control rejected-qty" min="0" value="0" readonly />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger remove-item w-100" style="font-size:11px;"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Bin ID *</label>
+                    <select name="GRNDetails[0].BinId" class="form-select bin-dropdown" required>
+                        <option value="">-- Select Bin --</option>
+                        @if(ViewBag.Bins != null) { foreach(var b in ViewBag.Bins) {
+                            <option value="@b.binId">@b.binName @(string.IsNullOrEmpty(b.binCode) ? "" : "(" + b.binCode + ")")</option>
+                        } }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Batch No</label>
+                    <input type="text" name="GRNDetails[0].BatchNo" class="form-control" maxlength="50" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Mfg Date</label>
+                    <input type="date" name="GRNDetails[0].MfgDate" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Expiry Date</label>
+                    <input type="date" name="GRNDetails[0].ExpiryDate" class="form-control" />
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Rejection Reason</label>
+                    <input type="text" name="GRNDetails[0].RejectionReason" class="form-control" maxlength="200" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-check-lg"></i> Register GRN</button>
+    </div>
+</form>
+
+<script>
+(function(){
+    var form = document.getElementById('addForm'); if(!form) return;
+    var idx = 1;
+
+    function calcRej(row){
+        var r = parseInt(row.querySelector('.received-qty')?.value||0)||0;
+        var a = parseInt(row.querySelector('.accepted-qty')?.value||0)||0;
+        var rej = row.querySelector('.rejected-qty');
+        if(rej) rej.value = Math.max(0, r - a);
+    }
+    form.addEventListener('input', function(e){
+        if(e.target.classList.contains('received-qty') || e.target.classList.contains('accepted-qty'))
+            calcRej(e.target.closest('.item-row'));
+    });
+
+    var poSel = document.getElementById('poSelect');
+    if(poSel) poSel.addEventListener('change', function(){
+        var pid = this.value; if(!pid) return;
+        fetch('/GRN/GetPurchaseItems?purchaseId='+pid).then(r=>r.json()).then(function(items){
+            form.querySelectorAll('.product-select').forEach(function(sel){
+                sel.innerHTML = '<option value="">-- Select Product --</option>';
+                (items||[]).forEach(function(it){
+                    var o = document.createElement('option');
+                    o.value = it.productId;
+                    o.textContent = (it.productName||'Product') + (it.quantity ? ' (Qty: '+it.quantity+')' : '');
+                    sel.appendChild(o);
+                });
+            });
+        });
+    });
+
+    document.getElementById('addItemBtn').addEventListener('click', function(){
+        var cont = document.getElementById('itemsContainer');
+        var clone = cont.querySelector('.item-row').cloneNode(true);
+        clone.querySelectorAll('[name]').forEach(function(el){
+            var nm = el.getAttribute('name');
+            el.setAttribute('name', nm.replace(/GRNDetails\[\d+\]/, 'GRNDetails['+idx+']'));
+        });
+        clone.querySelectorAll('input[type=number]').forEach(function(i){ i.value=0; });
+        clone.querySelectorAll('input[type=text], input[type=date]').forEach(function(i){ i.value=''; });
+        clone.querySelectorAll('select').forEach(function(s){ s.value=''; });
+        cont.appendChild(clone); idx++;
+    });
+
+    form.addEventListener('click', function(e){
+        if(e.target.closest('.remove-item')){
+            var rows = form.querySelectorAll('.item-row');
+            if(rows.length > 1) e.target.closest('.item-row').remove();
+            else alert('At least one item required.');
+        }
+    });
+})();
+</script>

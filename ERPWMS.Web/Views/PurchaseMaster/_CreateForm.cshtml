@@ -1,0 +1,188 @@
+﻿@{
+    Layout = null;
+}
+<form id="createForm" method="post" action="/PurchaseMaster/CreateAjax">
+    @Html.AntiForgeryToken()
+    <div id="createAlert" style="display:none;padding:9px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <!-- ═══ HEADER FIELDS ═══ -->
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Supplier *</label>
+            <select name="SupplierId" class="form-select" required>
+                <option value="">-- Select Supplier --</option>
+                @if(ViewBag.Suppliers != null) { foreach(var s in ViewBag.Suppliers) { <option value="@s.SupplierId">@s.SupplierName</option> } }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Warehouse *</label>
+            <select name="WarehouseId" class="form-select" required>
+                <option value="">-- Select Warehouse --</option>
+                @if(ViewBag.Warehouses != null) { foreach(var w in ViewBag.Warehouses) { <option value="@w.WarehouseId">@w.WarehouseName</option> } }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">PO Number *</label>
+            <input type="text" name="PurchaseOrderNo" class="form-control" value="PO-@DateTime.Now.ToString("yyyyMMdd-HHmmss")" required />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Order Date</label>
+            <input type="date" name="OrderDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Expected Delivery</label>
+            <input type="date" name="ExpectedDeliveryDate" class="form-control" value="@DateTime.Now.AddDays(7).ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Discount</label>
+            <input type="number" step="0.01" name="Discount" class="form-control po-discount" value="0" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Tax</label>
+            <input type="number" step="0.01" name="TaxAmount" class="form-control po-tax" value="0" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Net Amount</label>
+            <input type="number" step="0.01" name="NetAmount" class="form-control" id="createNetAmount" value="0" readonly style="background:#F8FAFC;font-weight:700;" />
+        </div>
+    </div>
+
+    <!-- ═══ ITEMS SECTION ═══ -->
+    <hr style="margin:16px 0 12px;" />
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <h6 class="fw-bold m-0" style="font-size:13px;"><i class="bi bi-list-ul" style="color:#F5A623;"></i> Items</h6>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="addItemBtn" style="font-size:11px;"><i class="bi bi-plus"></i> Add Item</button>
+    </div>
+
+    <div id="itemsContainer">
+        <div class="item-row" style="padding:10px;background:#FAFBFC;border:1px solid #EEF2F6;border-radius:8px;margin-bottom:8px;">
+            <div class="row g-2">
+                <div class="col-md-3"><label class="form-label" style="font-size:10px;font-weight:700;">Product *</label>
+                    <select name="PurchaseDetails[0].ProductId" class="form-select form-select-sm" required>
+                        <option value="">-- Select --</option>
+                        @if(ViewBag.Products != null) { foreach(var pr in ViewBag.Products) { <option value="@pr.ProductId">@pr.ProductName</option> } }
+                    </select>
+                </div>
+                <div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;">Qty *</label><input type="number" name="PurchaseDetails[0].Quantity" class="form-control form-control-sm qty-input" min="1" value="1" required /></div>
+                <div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;">Price *</label><input type="number" step="0.01" name="PurchaseDetails[0].UnitPrice" class="form-control form-control-sm price-input" min="0.01" value="0" required /></div>
+                <div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;">Disc %</label><input type="number" step="0.01" name="PurchaseDetails[0].DiscountPercent" class="form-control form-control-sm disc-input" value="0" /></div>
+                <div class="col-md-2"><label class="form-label" style="font-size:10px;font-weight:700;">Line Total</label><input type="text" class="form-control form-control-sm line-total" value="Rs 0.00" readonly style="background:#F1F5F9;font-weight:700;" /></div>
+                <div class="col-md-1 d-flex align-items-end"><button type="button" class="btn btn-sm btn-danger remove-item w-100" title="Remove"><i class="bi bi-trash3"></i></button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ LIVE CALCULATOR / SUMMARY ═══ -->
+    <div id="po-summary" style="margin-top:14px;padding:14px 18px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;">
+        <div style="display:flex;justify-content:flex-end;gap:40px;flex-wrap:wrap;">
+            <div style="text-align:right;">
+                <div style="font-size:10px;color:#64748B;text-transform:uppercase;font-weight:700;">Sub Total</div>
+                <div id="po-subtotal" style="font-size:15px;font-weight:800;color:#0A1628;">Rs 0.00</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:10px;color:#64748B;text-transform:uppercase;font-weight:700;">Discount</div>
+                <div id="po-discount-display" style="font-size:15px;font-weight:800;color:#DC2626;">- Rs 0.00</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:10px;color:#64748B;text-transform:uppercase;font-weight:700;">Tax</div>
+                <div id="po-tax-display" style="font-size:15px;font-weight:800;color:#334155;">+ Rs 0.00</div>
+            </div>
+            <div style="text-align:right;border-left:2px solid #E2E8F0;padding-left:24px;">
+                <div style="font-size:10px;color:#0A1628;text-transform:uppercase;font-weight:800;">Grand Total</div>
+                <div id="po-grandtotal" style="font-size:20px;font-weight:900;color:#F5A623;">Rs 0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ BUTTONS ═══ -->
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm"><i class="bi bi-check-lg"></i> Register PO</button>
+    </div>
+</form>
+
+<script>
+(function(){
+    var form = document.getElementById('createForm');
+    if(!form) return;
+    var idx = 1;
+
+    function fmt(n){ return "Rs " + (Number(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+    function reindex(){
+        var rows = form.querySelectorAll('#itemsContainer .item-row');
+        rows.forEach(function(row, i){
+            row.querySelectorAll('[name]').forEach(function(el){
+                var nm = el.getAttribute('name');
+                el.setAttribute('name', nm.replace(/PurchaseDetails\[\d+\]/, 'PurchaseDetails['+i+']'));
+            });
+        });
+        idx = rows.length;
+    }
+
+    function calc(){
+        var rows = form.querySelectorAll('#itemsContainer .item-row');
+        var sub = 0;
+        rows.forEach(function(row){
+            var qty = parseFloat(row.querySelector('.qty-input')?.value || 0) || 0;
+            var price = parseFloat(row.querySelector('.price-input')?.value || 0) || 0;
+            var disc = parseFloat(row.querySelector('.disc-input')?.value || 0) || 0;
+            var line = qty * price;
+            var netLine = line * (1 - disc/100);
+            sub += netLine;
+            var lt = row.querySelector('.line-total');
+            if(lt) lt.value = fmt(netLine);
+        });
+        var d = parseFloat(form.querySelector('.po-discount')?.value || 0) || 0;
+        var t = parseFloat(form.querySelector('.po-tax')?.value || 0) || 0;
+        var grand = sub - d + t;
+
+        document.getElementById('po-subtotal').textContent = fmt(sub);
+        document.getElementById('po-discount-display').textContent = "- " + fmt(d);
+        document.getElementById('po-tax-display').textContent = "+ " + fmt(t);
+        document.getElementById('po-grandtotal').textContent = fmt(grand);
+        var net = document.getElementById('createNetAmount');
+        if(net) net.value = grand.toFixed(2);
+    }
+
+    // Add Item
+    document.getElementById('addItemBtn').addEventListener('click', function(){
+        var cont = document.getElementById('itemsContainer');
+        var clone = cont.querySelector('.item-row').cloneNode(true);
+        clone.querySelectorAll('input').forEach(function(inp){
+            if(inp.classList.contains('qty-input')) inp.value = 1;
+            else if(inp.classList.contains('price-input')) inp.value = 0;
+            else if(inp.classList.contains('disc-input')) inp.value = 0;
+            else if(inp.classList.contains('line-total')) inp.value = 'Rs 0.00';
+        });
+        clone.querySelectorAll('select').forEach(function(s){ s.value = ''; });
+        cont.appendChild(clone);
+        reindex();
+        calc();
+    });
+
+    // Remove Item
+    form.addEventListener('click', function(e){
+        if(e.target.closest('.remove-item')){
+            var rows = form.querySelectorAll('#itemsContainer .item-row');
+            if(rows.length > 1){
+                e.target.closest('.item-row').remove();
+                reindex();
+                calc();
+            } else {
+                alert('At least one item required.');
+            }
+        }
+    });
+
+    // Recalc on input
+    form.addEventListener('input', calc);
+    form.addEventListener('change', calc);
+
+    // Initial
+    setTimeout(calc, 300);
+    console.log("✓ Create form ready");
+})();
+</script>
+
+

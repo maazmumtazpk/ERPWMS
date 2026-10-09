@@ -1,0 +1,74 @@
+﻿@{
+    ViewData["Title"] = "Roles";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="row g-3">
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Roles</p><h2 class="kpi-number" id="kpiTotal">0</h2></div><div class="kpi-icon blue"><i class="bi bi-shield-lock"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Active</p><h2 class="kpi-number" id="kpiActive">0</h2></div><div class="kpi-icon green"><i class="bi bi-check-circle"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Inactive</p><h2 class="kpi-number" id="kpiInactive">0</h2></div><div class="kpi-icon orange"><i class="bi bi-x-circle"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Users Assigned</p><h2 class="kpi-number" id="kpiUsers">0</h2></div><div class="kpi-icon purple"><i class="bi bi-people"></i></div></div></div></div>
+</div>
+<div class="table-card">
+<div class="card-header-custom">
+<h5><i class="bi bi-shield-lock" style="color:#F5A623;"></i> All Roles <span class="badge-count" id="xCount">0</span></h5>
+<div style="display:flex;gap:4px;align-items:center;">
+<input type="text" id="tSearch" class="search-input" placeholder="Search..." onkeyup="filterRows()" />
+<button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+<button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+</div>
+</div>
+<div class="card-body">
+<table class="table-premium" id="xTable">
+<thead><tr><th>Role</th><th>Normalized Name</th><th>Users</th><th style="text-align:right;">Actions</th></tr></thead>
+<tbody id="xBody"><tr><td colspan="4" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+</table>
+<div id="emptyState" class="empty-state d-none"><i class="bi bi-shield-lock empty-icon"></i><h4>No Roles Yet</h4><button class="btn-gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i> Register Role</button></div>
+</div>
+<div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> roles</span></div>
+</div>
+</div>
+<div class="modal fade pm-modal" id="addModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-shield-plus"></i> New Role</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="addModalBody"></div></div></div></div>
+<div class="modal fade pm-modal" id="editModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-pencil-square"></i> Edit Role</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="editModalBody"></div></div></div></div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function openAdd(){var el=document.getElementById("addModal");var b=document.getElementById("addModalBody");b.innerHTML="<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";new bootstrap.Modal(el).show();fetch("/Role/AddPartial").then(function(r){return r.text();}).then(function(h){b.innerHTML=h;execScripts(b);});}
+function openEdit(id){var el=document.getElementById("editModal");var b=document.getElementById("editModalBody");b.innerHTML="<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";new bootstrap.Modal(el).show();fetch("/Role/EditPartial?id="+id).then(function(r){return r.text();}).then(function(h){b.innerHTML=h;execScripts(b);});}
+function reload_(){
+  fetch("/Role/GetStatistics").then(function(r){return r.json();}).then(function(d){
+    document.getElementById("kpiTotal").textContent=d.total||0;
+    document.getElementById("kpiActive").textContent=d.active||0;
+    document.getElementById("kpiInactive").textContent=d.inactive||0;
+    document.getElementById("kpiUsers").textContent=d.userCount||0;
+  });
+  fetch("/Role/GetAll").then(function(r){return r.json();}).then(function(d){
+    if(!d||d.length===0){
+      document.getElementById("xBody").innerHTML="";
+      document.getElementById("xTable").style.display="none";
+      document.getElementById("emptyState").classList.remove("d-none");
+      document.getElementById("xCount").textContent="0";
+      document.getElementById("tableCount").textContent="0";
+      return;
+    }
+    document.getElementById("xTable").style.display="";
+    document.getElementById("emptyState").classList.add("d-none");
+    var h="";
+    d.forEach(function(x){
+      h+="<tr>";
+      h+="<td><div class='row-name'><span class='avatar' style='background:linear-gradient(135deg,#EDE9FE,#DDD6FE);color:#6D28D9;'><i class='bi bi-shield-fill'></i></span><div>"+(x.roleName||"-")+"</div></div></td>";
+      h+="<td style='font-family:monospace;font-size:10.5px;color:#64748B;'>"+(x.normalizedName||"-")+"</td>";
+      h+="<td><span class='badge-status role'>"+(x.userCount||0)+" users</span></td>";
+      h+="<td style='text-align:right;'><div class='act-wrap'><button class='btn-icon' onclick='toggleMenu("+x.roleId+",event)'><i class='bi bi-three-dots-vertical'></i></button><div class='act-menu' id='menu-"+x.roleId+"'><button onclick='openEdit("+x.roleId+")'><i class='bi bi-pencil'></i> Edit</button><a href='/Role/Permissions/"+x.roleId+"'><i class='bi bi-key'></i> Permissions</a><div class='sep'></div><button class='danger' onclick='delRow("+x.roleId+")'><i class='bi bi-trash3'></i> Delete</button></div></div></td>";
+      h+="</tr>";
+    });
+    document.getElementById("xBody").innerHTML=h;
+    document.getElementById("xCount").textContent=d.length;
+    document.getElementById("tableCount").textContent=d.length;
+  });
+}
+function delRow(id){if(!confirm("Delete this role?"))return;var fd=new FormData();fd.append("__RequestVerificationToken",tk());fetch("/Role/QuickDelete/"+id,{method:"POST",body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message||"Deleted","success");reload_();}else{showToast(res.message||"Failed","error");}});}
+document.addEventListener("DOMContentLoaded",reload_);
+</script>

@@ -1,0 +1,27 @@
+@model ERPWMS.Database.Models.WorkflowAssignment
+@{ Layout = null; }
+<form id="editAssignForm" method="post" action="/WorkflowAssignment/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="assignmentId" value="@Model.AssignmentId" />
+    <div id="editAssignAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Role</label><select name="roleId" id="editRole" class="form-select form-select-sm"><option value="">-- Select Role --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">User</label><select name="userId" id="editUser" class="form-select form-select-sm"><option value="">-- Select User --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Status</label><select name="isActive" class="form-select form-select-sm">@if((Model.IsActive == true)){<option value="true" selected>Active</option><option value="false">Inactive</option>}else{<option value="true">Active</option><option value="false" selected>Inactive</option>}</select></div>
+        <div class="col-md-12"><label class="form-label fw-bold">Permissions</label><div style="display:flex;flex-wrap:wrap;gap:8px;padding-top:6px;">
+            <label><input type="checkbox" name="canApprove" value="true" @((Model.CanApprove == true) ? "checked" : "") /> Approve</label>
+            <label><input type="checkbox" name="canReject" value="true" @((Model.CanReject == true) ? "checked" : "") /> Reject</label>
+            <label><input type="checkbox" name="canHold" value="true" @((Model.CanHold == true) ? "checked" : "") /> Hold</label>
+            <label><input type="checkbox" name="canSendBack" value="true" @((Model.CanSendBack == true) ? "checked" : "") /> SendBack</label>
+        </div></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </div>
+</form>
+<script>
+(function(){var rid=@(Model.RoleId ?? 0);var uid=@(Model.UserId ?? 0);
+fetch("/WorkflowAssignment/GetRoles").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("editRole");s.innerHTML="<option value=''>-- Select Role --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.roleId;o.textContent=x.roleName;if(x.roleId===rid)o.selected=true;s.appendChild(o);});});
+fetch("/WorkflowAssignment/GetUsers").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("editUser");s.innerHTML="<option value=''>-- Select User --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.userId;o.textContent=x.userName;if(x.userId===uid)o.selected=true;s.appendChild(o);});});})();
+</script>

@@ -1,0 +1,93 @@
+@model ERPWMS.Application.DTOs.Finance.BankAccount.BankAccountResponse
+
+@{
+    ViewData["Title"] = "Bank Account Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">??? Bank Account Details</h2>
+        <div>
+            <span class="badge bg-primary fs-6 me-2">
+                ?? @ViewBag.CompanyName
+            </span>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light w-50">Bank Account ID</th>
+                            <td>@Model.BankAccountId</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Bank Name</th>
+                            <td><strong>@Model.BankName</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Account Title</th>
+                            <td>@Model.AccountTitle</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Account Number</th>
+                            <td><code>@Model.AccountNo</code></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">IBAN</th>
+                            <td>@(Model.Iban ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Branch Code</th>
+                            <td>@(Model.BranchCode ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Account Type</th>
+                            <td>
+                                <span class="badge bg-info">@(Model.AccountType ?? "N/A")</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Opening Balance</th>
+                            <td><strong>@Model.OpeningBalance.ToString("N2")</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>
+                                @if ((Model.IsActive == true))
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>@(Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Updated Date</th>
+                            <td>@(Model.UpdatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "-")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <a asp-action="Edit" asp-route-id="@Model.BankAccountId" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+</div>

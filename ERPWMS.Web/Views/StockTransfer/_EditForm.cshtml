@@ -1,0 +1,25 @@
+@model ERPWMS.Database.Models.StockTransfer
+@{ Layout = null; }
+<form id="editForm" method="post" action="/StockTransfer/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="transferId" value="@Model.TransferId" />
+    <div id="editAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Quantity *</label>
+            <input type="number" name="quantity" class="form-control" value="@Model.Quantity" min="1" required />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Status *</label>
+            <select name="status" class="form-select" required>
+                <option value="Pending" selected="@(Model.Status=="Pending")">Pending</option>
+                <option value="Completed" selected="@(Model.Status=="Completed")">Completed</option>
+                <option value="Received" selected="@(Model.Status=="Received")">Received</option>
+            </select>
+        </div>
+    </div>
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;border:none;">Update</button>
+    </div>
+</form>

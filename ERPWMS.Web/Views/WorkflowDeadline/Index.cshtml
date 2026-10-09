@@ -1,0 +1,109 @@
+﻿@{
+    ViewData["Title"] = "Workflow Deadlines";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+<style>
+.kpi-card{background:#fff;border:1px solid #edf0f4;border-radius:10px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.04);height:100%;min-height:80px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+.kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2.5px}
+.kpi-card.total::before{background:#0A1628}.kpi-card.active::before{background:#159A89}.kpi-card.inactive::before{background:#F5A623}.kpi-card.month::before{background:#7167D8}
+.kpi-content{display:flex;justify-content:space-between;align-items:center;width:100%;gap:8px}
+.kpi-text-group{display:flex;flex-direction:column;flex:1}
+.kpi-label{margin:0 0 3px 0;color:#64748B;font-size:9px;font-weight:700;text-transform:uppercase}
+.kpi-number{margin:0;color:#0A1628;font-size:20px;font-weight:750;line-height:1.2}
+.kpi-trend{display:inline-flex;align-items:center;gap:3px;margin-top:4px;padding:2px 7px;border-radius:12px;font-size:8px;font-weight:600}
+.kpi-trend.up{background:#DDF7F1;color:#128B7B}.kpi-trend.neutral{background:#F1F5F9;color:#64748B}
+.kpi-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.kpi-icon.blue{background:#0A1628;color:#fff}.kpi-icon.green{background:#D7F4EE;color:#159A89}.kpi-icon.orange{background:#FFF1D7;color:#E39A19}.kpi-icon.purple{background:#EAE8FF;color:#7167D8}
+.table-card{background:#fff;border:1px solid #edf0f4;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:visible;margin-top:16px}
+.card-header-custom{padding:10px 14px;border-bottom:2px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-header-custom h5{margin:0;font-size:12px;font-weight:700;color:#0A1628;display:flex;align-items:center;gap:6px}
+.badge-count{background:#F1F5F9;color:#64748B;font-size:9px;font-weight:700;padding:1px 8px;border-radius:12px}
+.card-body{padding:0;overflow-x:auto}
+table.table-premium{margin:0;font-size:11px;width:100%;border-collapse:collapse}
+table.table-premium thead{background:#F8FAFC;border-bottom:2px solid #E2E8F0}
+table.table-premium thead th{padding:8px 14px;font-weight:700;font-size:9px;text-transform:uppercase;color:#64748B;border:none;text-align:left}
+table.table-premium tbody td{padding:8px 14px;vertical-align:middle;border-bottom:1px solid #F1F5F9;color:#0A1628;font-size:11px}
+table.table-premium tbody tr:hover{background:#FEFBF5}
+.row-name{font-weight:600;display:flex;align-items:center;gap:8px}
+.row-name .avatar{width:28px;height:28px;border-radius:6px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;color:#1D4ED8}
+.badge-status{padding:2px 8px;border-radius:12px;font-size:8px;font-weight:700;text-transform:uppercase}
+.badge-status.active{background:#DDF7F1;color:#118B7B}.badge-status.inactive{background:#F1F5F9;color:#64748B}
+.btn-icon{width:26px;height:26px;border-radius:6px;border:1px solid #E8ECF1;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#64748B;background:#fff;cursor:pointer}
+.btn-icon:hover{background:#F1F5F9}.btn-icon.gold{background:#F5A623;color:#fff;border-color:#F5A623}
+.table-footer{padding:8px 14px;border-top:2px solid #F1F5F9;display:flex;justify-content:space-between;font-size:10px;color:#64748B;background:#F8FAFC}
+.search-input{border:1px solid #E2E8F0;border-radius:6px;padding:4px 10px;font-size:10px;width:160px;background:#FAFBFC}
+.empty-state{padding:30px 16px;text-align:center}
+.empty-state .empty-icon{font-size:35px;color:#E2E8F0;display:block;margin-bottom:8px}
+.empty-state h4{font-size:13px;font-weight:700;color:#0A1628;margin-bottom:4px}
+.empty-state p{color:#64748B;font-size:10px;margin:0 auto 12px auto}
+.btn-gold{background:#F5A623;color:#0A1628;border:none;padding:6px 14px;border-radius:6px;font-weight:700;font-size:10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.act-wrap{position:relative;display:inline-block}
+.act-menu{position:fixed;background:#fff;border:1px solid #E8ECF1;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.14);min-width:180px;padding:5px;z-index:99999;display:none;text-align:left}
+.act-menu.show{display:block}
+.act-menu a,.act-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 11px;border:none;background:transparent;font-size:11.5px;color:#334155;border-radius:6px;text-decoration:none;cursor:pointer;text-align:left;font-weight:500}
+.act-menu a:hover,.act-menu button:hover{background:#F8FAFC}
+.act-menu a i,.act-menu button i{width:14px;color:#64748B}
+.act-menu .sep{height:1px;background:#F1F5F9;margin:3px 5px}
+.act-menu .danger{color:#DC2626}.act-menu .danger i{color:#DC2626}
+.pm-modal .modal-content{border:0;border-radius:12px;overflow:hidden}
+.pm-modal .modal-header{background:#0A1628;color:#fff;padding:14px 20px;border:0}
+.pm-modal .modal-header h5{font-size:14px;font-weight:700;margin:0}
+.pm-modal .modal-header h5 i{color:#F5A623;margin-right:8px}
+.pm-modal .modal-header .btn-close{filter:invert(1);opacity:.7}
+.pm-modal .modal-body{padding:16px 20px}
+.pm-modal .form-label{font-size:10px;font-weight:600;color:#475569;margin-bottom:3px;display:block}
+.pm-modal .form-control,.pm-modal .form-select{font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;width:100%}
+.pm-modal .btn-gold{background:#F5A623;border-color:#F5A623;color:#0A1628;font-weight:700;font-size:11px}
+.toast-holder{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px}
+.toast-item{background:#fff;border-left:4px solid #10b981;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.15);padding:12px 16px;min-width:280px;display:flex;align-items:center;gap:10px;font-size:12px}
+.toast-item.error{border-left-color:#ef4444}
+.toast-item i{color:#10b981}.toast-item.error i{color:#ef4444}
+.toast-item .msg{font-weight:600;color:#0A1628}
+</style>
+<div style="padding-bottom:30px;">
+<div class="row g-3">
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Deadlines</p><h2 class="kpi-number" id="kpiTotal">0</h2></div><div class="kpi-icon blue"><i class="bi bi-hourglass-split"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Met</p><h2 class="kpi-number" id="kpiActive">0</h2></div><div class="kpi-icon green"><i class="bi bi-check-circle"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Unmet</p><h2 class="kpi-number" id="kpiInactive">0</h2></div><div class="kpi-icon orange"><i class="bi bi-hourglass"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">This Month</p><h2 class="kpi-number" id="kpiMonth">0</h2></div><div class="kpi-icon purple"><i class="bi bi-calendar-plus"></i></div></div></div></div>
+</div>
+<div class="table-card">
+<div class="card-header-custom">
+<h5><i class="bi bi-clock-history" style="color:#F5A623;"></i> All Deadlines <span class="badge-count" id="xCount">0</span></h5>
+<div style="display:flex;gap:4px;align-items:center;">
+<input type="text" id="tSearch" class="search-input" placeholder="Search..." onkeyup="filterRows()" />
+<button type="button" class="btn-icon gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i></button>
+<button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+</div>
+</div>
+<div class="card-body">
+<table class="table-premium" id="xTable">
+<thead><tr><th>Instance</th><th>Stage</th><th>Due Date</th><th>Escalated</th><th>Met</th><th style="text-align:right;">Actions</th></tr></thead>
+<tbody id="xBody"><tr><td colspan="6" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+</table>
+<div id="emptyState" class="empty-state d-none"><i class="bi bi-hourglass-split empty-icon"></i><h4>No Deadlines Yet</h4><button class="btn-gold" onclick="openAdd()"><i class="bi bi-plus-circle"></i> Register Deadline</button></div>
+</div>
+<div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> deadlines</span></div>
+</div>
+</div>
+<div class="modal fade pm-modal" id="addModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-hourglass-split"></i> New Deadline</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="addModalBody"></div></div></div></div>
+<div class="modal fade pm-modal" id="editModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5><i class="bi bi-pencil-square"></i> Edit Deadline</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="editModalBody"></div></div></div></div>
+<script>
+function tk(){var e=document.querySelector("input[name=__RequestVerificationToken]");return e?e.value:"";}
+function showToast(m,t){var h=document.getElementById("toastHolder");if(!h)return;var d=document.createElement("div");d.className="toast-item "+(t||"success");var i=t==="error"?"bi-x-circle-fill":"bi-check-circle-fill";d.innerHTML='<i class="bi '+i+'"></i><span class="msg">'+m+'</span>';h.appendChild(d);setTimeout(function(){d.style.transition="opacity .4s";d.style.opacity="0";setTimeout(function(){d.remove();},400);},3500);}
+function toggleMenu(id,e){e.stopPropagation();document.querySelectorAll(".act-menu").forEach(function(m){if(m.id!=="menu-"+id)m.classList.remove("show");});var el=document.getElementById("menu-"+id);if(!el)return;if(el.classList.contains("show")){el.classList.remove("show");return;}var b=e.currentTarget||e.target;var r=b.getBoundingClientRect();el.style.top=(r.bottom+4)+"px";el.style.right=(window.innerWidth-r.right)+"px";el.style.left="auto";el.classList.add("show");}
+document.addEventListener("click",function(){document.querySelectorAll(".act-menu").forEach(function(m){m.classList.remove("show");});});
+function execScripts(c){c.querySelectorAll("script").forEach(function(s){var n=document.createElement("script");n.textContent=s.textContent;document.body.appendChild(n);});}
+function filterRows(){var f=document.getElementById("tSearch").value.toLowerCase();var rows=document.querySelectorAll("#xBody tr");var n=0;rows.forEach(function(r){var t=(r.textContent||"").toLowerCase();if(t.indexOf(f)>-1){r.style.display="";n++;}else{r.style.display="none";}});document.getElementById("xCount").textContent=n;document.getElementById("tableCount").textContent=n;}
+document.addEventListener("submit",function(e){var f=e.target;if(!f||!f.id||f.id.indexOf("Form")<0)return;e.preventDefault();var ab=document.getElementById(f.id.replace("Form","Alert"));if(ab)ab.style.display="none";var b=f.querySelector("button[type=submit]");var o=b?b.textContent:"";if(b){b.disabled=true;b.textContent="Saving...";}fetch(f.action,{method:"POST",body:new FormData(f)}).then(function(r){return r.json();}).then(function(res){if(res.success){var m=bootstrap.Modal.getInstance(f.closest(".modal"));if(m)m.hide();showToast(res.message||"Saved","success");if(window.reload_)reload_();}else{if(ab){ab.textContent=res.message||"Failed";ab.style.display="block";}}}).catch(function(){if(ab){ab.textContent="Network error";ab.style.display="block";}}).finally(function(){if(b){b.disabled=false;b.textContent=o;}});});
+</script>
+<script>
+function openAdd(){var el=document.getElementById("addModal");var b=document.getElementById("addModalBody");b.innerHTML="<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";new bootstrap.Modal(el).show();fetch("/WorkflowDeadline/AddPartial").then(function(r){return r.text();}).then(function(h){b.innerHTML=h;execScripts(b);});}
+function openEdit(id){var el=document.getElementById("editModal");var b=document.getElementById("editModalBody");b.innerHTML="<div class='text-center py-4'><div class='spinner-border text-primary'></div></div>";new bootstrap.Modal(el).show();fetch("/WorkflowDeadline/EditPartial?id="+id).then(function(r){return r.text();}).then(function(h){b.innerHTML=h;execScripts(b);});}
+function reload_(){fetch("/WorkflowDeadline/GetStatistics").then(function(r){return r.json();}).then(function(d){document.getElementById("kpiTotal").textContent=d.total||0;document.getElementById("kpiActive").textContent=d.active||0;document.getElementById("kpiInactive").textContent=d.inactive||0;document.getElementById("kpiMonth").textContent=d.addedThisMonth||0;});fetch("/WorkflowDeadline/GetAll").then(function(r){return r.json();}).then(function(d){if(!d||d.length===0){document.getElementById("xBody").innerHTML="";document.getElementById("xTable").style.display="none";document.getElementById("emptyState").classList.remove("d-none");document.getElementById("xCount").textContent="0";document.getElementById("tableCount").textContent="0";return;}document.getElementById("xTable").style.display="";document.getElementById("emptyState").classList.add("d-none");var h="";d.forEach(function(x){var st=x.isMet?"active":"inactive";var dt=x.dueDate?new Date(x.dueDate).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"-";var et=x.escalatedAt?new Date(x.escalatedAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"-";h+="<tr>";h+="<td><div class='row-name'><span class='avatar'><i class='bi bi-hourglass'></i></span><div>Instance #"+(x.workflowInstId||"-")+"</div></div></td>";h+="<td>"+(x.stageName||"-")+"</td>";h+="<td><span style='font-size:11px;'><i class='bi bi-calendar3 me-1'></i>"+dt+"</span></td>";h+="<td style='font-size:11px;'>"+et+"</td>";h+="<td><span class='badge-status "+st+"'>"+(x.isMet?"Met":"Pending")+"</span></td>";h+="<td style='text-align:right;'><div class='act-wrap'><button class='btn-icon' onclick='toggleMenu("+x.deadlineId+",event)'><i class='bi bi-three-dots-vertical'></i></button><div class='act-menu' id='menu-"+x.deadlineId+"'><button onclick='openEdit("+x.deadlineId+")'><i class='bi bi-pencil'></i> Edit</button><button onclick='toggleActive("+x.deadlineId+")'><i class='bi bi-power'></i> Mark Met</button><div class='sep'></div><button class='danger' onclick='delRow("+x.deadlineId+")'><i class='bi bi-trash3'></i> Delete</button></div></div></td>";h+="</tr>";});document.getElementById("xBody").innerHTML=h;document.getElementById("xCount").textContent=d.length;document.getElementById("tableCount").textContent=d.length;});}
+function delRow(id){if(!confirm("Delete this deadline?"))return;var fd=new FormData();fd.append("__RequestVerificationToken",tk());fetch("/WorkflowDeadline/Delete/"+id,{method:"POST",body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message||"Deleted","success");reload_();}else{showToast(res.message||"Failed","error");}});}
+function toggleActive(id){var fd=new FormData();fd.append("__RequestVerificationToken",tk());fetch("/WorkflowDeadline/Toggle/"+id,{method:"POST",body:fd}).then(function(r){return r.json();}).then(function(res){if(res.success){showToast(res.message||"Updated","success");reload_();}});}
+document.addEventListener("DOMContentLoaded",reload_);
+</script>

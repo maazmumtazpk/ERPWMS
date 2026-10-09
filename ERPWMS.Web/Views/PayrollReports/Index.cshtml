@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "Payroll Reports";
+    Layout = "_Layout";
+}
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="table-card">
+    <div class="card-header-custom"><h5><i class="bi bi-file-earmark-bar-graph"></i> Payroll Reports</h5></div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Report Type</label>
+                <select id="reportType" class="form-control">
+                    <option value="attendance">Attendance Summary</option>
+                    <option value="salary">Salary Report</option>
+                    <option value="leave">Leave Report</option>
+                    <option value="loan">Loan Report</option>
+                    <option value="overtime">Overtime Report</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Year</label>
+                <select id="yearSel" class="form-control"></select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Month</label>
+                <select id="monthSel" class="form-control"></select>
+            </div>
+            <div class="col-md-12">
+                <button class="btn-gold" onclick="loadReport()"><i class="bi bi-search"></i> Load Report</button>
+                <button class="btn btn-outline-secondary" onclick="exportCSV()"><i class="bi bi-file-earmark-excel"></i> Export CSV</button>
+            </div>
+        </div>
+        <div id="reportOutput" class="mt-3"><div class="text-muted">Choose a report type and click Load</div></div>
+    </div>
+</div>
+</div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+function fmt(n){return (n||0).toFixed(2);}
+var lastData = [];
+var lastCols = [];
+
+(function init(){
+    var y = new Date().getFullYear(), m = new Date().getMonth() + 1;
+    var ys = document.getElementById('yearSel');
+    for(var i=y-2; i<=y+1; i++){ var o=document.createElement('option'); o.value=i; o.textContent=i; if(i===y)o.selected=true; ys.appendChild(o); }
+    var ms = document.getElementById('monthSel');
+    for(var i=1; i<=12; i++){ var o=document.createElement('option'); o.value=i; o.textContent=i; if(i===m)o.selected=true; ms.appendChild(o); }
+})();
+
+function loadReport(){
+    var t = document.getElementById('reportType').value;
+    var y = document.getElementById('yearSel').value;
+    var m = document.getElementById('monthSel').value;
+    var url = '';
+    if(t==='attendance') url = '/PayrollReports/AttendanceSummary?year=' + y + '&month=' + m;
+    else if(t==='salary') url = '/PayrollReports/SalaryReport';
+    else if(t==='leave') url = '/PayrollReports/LeaveReport?year=' + y;
+    else if(t==='loan') url = '/PayrollReports/LoanReport';
+    else if(t==='overtime') url = '/PayrollReports/OvertimeReport?year=' + y + '&month=' + m;
+
+    fetch(url).then(function(r){return r.json();}).then(function(d){
+        renderTable(d);
+    });
+}
+
+function renderTable(data){
+    lastData = data;
+    var out = document.getElementById('reportOutput');
+    if(!data || data.length === 0){
+        out.innerHTML = '<div class="alert alert-info">No data available for this period.</div>';
+        return;
+    }
+    var cols = Object.keys(data[0]);
+    lastCols = cols;
+    var h = '<table class="table-premium"><thead><tr>';
+    cols.forEach(function(c){ h += '<th>' + c.replace(/([A-Z])/g,' $1') + '</th>'; });
+    h += '</tr></thead><tbody>';
+    data.forEach(function(row){
+        h += '<tr>';
+        cols.forEach(function(c){
+            var v = row[c];
+            if(typeof v === 'number') v = v.toFixed(2);
+            h += '<td>' + (v==null?'':v) + '</td>';
+        });
+        h += '</tr>';
+    });
+    h += '</tbody></table>';
+    h += '<div class="text-muted mt-2">Total Records: ' + data.length + '</div>';
+    out.innerHTML = h;
+}
+
+function exportCSV(){
+    if(!lastData || lastData.length===0){ alert('No data to export'); return; }
+    var csv = lastCols.join(',') + '\n';
+    lastData.forEach(function(row){
+        csv += lastCols.map(function(c){ return '"' + (row[c]||'') + '"'; }).join(',') + '\n';
+    });
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'report_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+}
+</script>

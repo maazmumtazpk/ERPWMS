@@ -1,0 +1,45 @@
+@model ERPWMS.Application.DTOs.EmployeeBankAccount.CreateEmployeeBankAccountRequest
+@{
+    ViewData["Title"] = "Create Bank Account";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-success text-white"><h5 class="mb-0"><i class="fas fa-plus-circle"></i> Create Bank Account</h5></div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3"><label>Employee</label><select asp-for="EmployeeId" class="form-control" id="empSelect"><option value="">Select</option></select><span asp-validation-for="EmployeeId" class="text-danger"></span></div>
+                        <div class="mb-3"><label asp-for="BankName" class="form-label">Bank Name *</label><input asp-for="BankName" class="form-control" /><span asp-validation-for="BankName" class="text-danger"></span></div>
+                        <div class="mb-3"><label asp-for="AccountNumber" class="form-label">Account Number *</label><input asp-for="AccountNumber" class="form-control" /><span asp-validation-for="AccountNumber" class="text-danger"></span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3"><label asp-for="Iban" class="form-label">IBAN</label><input asp-for="Iban" class="form-control" /><span asp-validation-for="Iban" class="text-danger"></span></div>
+                        <div class="mb-3"><label asp-for="AccountType" class="form-label">Account Type</label><input asp-for="AccountType" class="form-control" /><span asp-validation-for="AccountType" class="text-danger"></span></div>
+                        <div class="mb-3 form-check"><input asp-for="IsPrimary" class="form-check-input" /><label class="form-check-label" asp-for="IsPrimary">Set as Primary</label></div>
+                    </div>
+                </div>
+                <div class="mt-3 border-top pt-3">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Create</button>
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function(){
+            $.get('/api/hr/employees/dropdown', function(data){
+                var sel = $('#empSelect');
+                sel.empty().append('<option value="">Select Employee</option>');
+                data.forEach(function(e){ sel.append('<option value="'+e.employeeId+'">'+e.fullName+'</option>'); });
+            });
+        });
+    </script>
+}

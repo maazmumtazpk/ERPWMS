@@ -1,0 +1,47 @@
+@model IEnumerable<ERPWMS.Application.DTOs.Company.CompanySummaryResponse>
+
+@if (Model != null && Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Registration</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var company in Model)
+                {
+                    <tr>
+                        <td><a href="@Url.Action("Profile", "Company", new { id = company.CompanyId })">@company.CompanyName</a></td>
+                        <td>@(string.IsNullOrEmpty(company.RegistrationNumber) ? "N/A" : company.RegistrationNumber)</td>
+                        <td>
+                            <span class="badge @(company.IsActive ? "badge-success" : "badge-secondary")">
+                                @(company.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td>@company.CreatedDate.ToString("dd-MMM-yyyy")</td>
+                        <td>
+                            <a href="@Url.Action("Profile", "Company", new { id = company.CompanyId })" class="btn btn-sm btn-info" title="View Profile">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="@Url.Action("Edit", "Company", new { id = company.CompanyId })" class="btn btn-sm btn-warning" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No companies found.
+    </div>
+}

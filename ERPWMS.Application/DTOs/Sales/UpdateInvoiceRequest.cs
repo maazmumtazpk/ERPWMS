@@ -1,0 +1,32 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace ERPWMS.Application.DTOs.Sales
+{
+    public class UpdateInvoiceRequest
+    {
+        public int InvoiceId { get; set; }
+
+        [Required(ErrorMessage = "Sales Order is required.")]
+        public int SalesId { get; set; }
+
+        [Required(ErrorMessage = "Invoice Number is required.")]
+        [StringLength(50)]
+        public string InvoiceNo { get; set; } = string.Empty;
+
+        public DateTime? InvoiceDate { get; set; }
+
+        public decimal? Discount { get; set; }
+
+        public decimal? TaxAmount { get; set; }
+
+        public DateOnly DueDate { get; set; }
+
+        public string? Remarks { get; set; }
+
+        public string? Status { get; set; }
+
+        public List<CreateInvoiceDetailRequest> InvoiceDetails { get; set; } = new();
+    }
+}

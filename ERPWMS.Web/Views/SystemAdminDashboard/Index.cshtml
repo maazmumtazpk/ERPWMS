@@ -1,0 +1,201 @@
+﻿@{
+    ViewData["Title"] = "System Admin Dashboard";
+    Layout = "_Layout";
+}
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:20px;">System Admin Dashboard</h4>
+        <small class="text-muted" style="font-size:11px;">Home / System Admin Dashboard</small>
+    </div>
+</div>
+
+<!-- ═══ KPI CARDS ROW ═══ -->
+<div class="row g-3">
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card total">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Total Users</p>
+                    <h2 class="kpi-number" id="kpiUsers">0</h2>
+                </div>
+                <div class="kpi-icon blue"><i class="bi bi-people-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card active">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Active Sessions</p>
+                    <h2 class="kpi-number" id="kpiSessions">0</h2>
+                </div>
+                <div class="kpi-icon green"><i class="bi bi-wifi"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card inactive">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Unread Notifications</p>
+                    <h2 class="kpi-number" id="kpiNotif">0</h2>
+                </div>
+                <div class="kpi-icon orange"><i class="bi bi-bell-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card month">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Total Backups</p>
+                    <h2 class="kpi-number" id="kpiBackups">0</h2>
+                </div>
+                <div class="kpi-icon purple"><i class="bi bi-database-fill"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3" style="margin-top:8px;">
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card total">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Roles & Modules</p>
+                    <h2 class="kpi-number" id="kpiRoles">0</h2>
+                </div>
+                <div class="kpi-icon blue"><i class="bi bi-shield-lock-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card active">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Audit Events</p>
+                    <h2 class="kpi-number" id="kpiAudit">0</h2>
+                </div>
+                <div class="kpi-icon green"><i class="bi bi-clipboard-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card inactive">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Failed Backups</p>
+                    <h2 class="kpi-number" id="kpiFailed">0</h2>
+                </div>
+                <div class="kpi-icon orange"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="kpi-card month">
+            <div class="kpi-content">
+                <div class="kpi-text-group">
+                    <p class="kpi-label">Login Today</p>
+                    <h2 class="kpi-number" id="kpiLogins">0</h2>
+                </div>
+                <div class="kpi-icon purple"><i class="bi bi-box-arrow-in-right"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ RECENT AUDIT + ACTIVE SESSIONS ═══ -->
+<div class="row g-3" style="margin-top:16px;">
+    <div class="col-lg-7">
+        <div class="table-card" style="margin-top:0;">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-clock-history" style="color:#F5A623;"></i> Recent Audit Events</h5>
+                <a href="/SystemAdminDashboard/AuditLogs" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;font-size:11px;font-weight:600;">View All</a>
+            </div>
+            <div class="card-body">
+                <table class="table-premium">
+                    <thead><tr><th>User</th><th>Action</th><th>Record</th><th>Time</th></tr></thead>
+                    <tbody id="auditBody">
+                        <tr><td colspan="4" class="text-center py-3"><div class="spinner-border text-primary" style="width:18px;height:18px;"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="table-card" style="margin-top:0;">
+            <div class="card-header-custom">
+                <h5><i class="bi bi-person-badge" style="color:#F5A623;"></i> Active Sessions</h5>
+                <a href="/SystemAdminDashboard/ActiveSessions" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;font-size:11px;font-weight:600;">Manage</a>
+            </div>
+            <div class="card-body">
+                <table class="table-premium">
+                    <thead><tr><th>User</th><th>Duration</th></tr></thead>
+                    <tbody id="sessionBody">
+                        <tr><td colspan="2" class="text-center py-3"><div class="spinner-border text-primary" style="width:18px;height:18px;"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    fetch("/SystemAdminDashboard/GetDashboardStats")
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if(!d) return;
+            document.getElementById("kpiUsers").textContent = d.totalUsers || 0;
+            document.getElementById("kpiSessions").textContent = d.activeSessions || 0;
+            document.getElementById("kpiNotif").textContent = d.unreadNotifications || 0;
+            document.getElementById("kpiBackups").textContent = d.totalBackups || 0;
+            document.getElementById("kpiRoles").textContent = d.totalRoles || 0;
+            document.getElementById("kpiAudit").textContent = d.totalAuditLogs || 0;
+            document.getElementById("kpiFailed").textContent = d.failedBackups || 0;
+            document.getElementById("kpiLogins").textContent = d.loginsToday || 0;
+        });
+
+    fetch("/SystemAdminDashboard/GetRecentAudits")
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            var h = "";
+            if(!d || d.length === 0){
+                h = "<tr><td colspan='4' class='text-center py-3' style='color:#94A3B8;font-size:11px;'>No recent audits</td></tr>";
+            } else {
+                d.slice(0,6).forEach(function(x){
+                    var dt = x.timestamp ? new Date(x.timestamp).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}) : "-";
+                    h += "<tr>";
+                    h += "<td style='font-weight:600;'>" + (x.username || "System") + "</td>";
+                    h += "<td><span class='badge-status role'>" + (x.action || "-") + "</span></td>";
+                    h += "<td style='font-size:11px;color:#64748B;'>" + (x.recordType || "") + " #" + (x.recordId || "") + "</td>";
+                    h += "<td style='font-size:10.5px;color:#64748B;'>" + dt + "</td>";
+                    h += "</tr>";
+                });
+            }
+            document.getElementById("auditBody").innerHTML = h;
+        });
+
+    fetch("/SystemAdminDashboard/GetActiveSessionsList")
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            var h = "";
+            if(!d || d.length === 0){
+                h = "<tr><td colspan='2' class='text-center py-3' style='color:#94A3B8;font-size:11px;'>No active sessions</td></tr>";
+            } else {
+                d.slice(0,6).forEach(function(x){
+                    var mins = x.durationMinutes || 0;
+                    var dur = mins < 60 ? (mins + "m") : (Math.floor(mins/60) + "h " + (mins%60) + "m");
+                    h += "<tr>";
+                    h += "<td style='font-weight:600;'>" + (x.username || "-") + "</td>";
+                    h += "<td><span class='badge-status active'>" + dur + "</span></td>";
+                    h += "</tr>";
+                });
+            }
+            document.getElementById("sessionBody").innerHTML = h;
+        });
+});
+</script>

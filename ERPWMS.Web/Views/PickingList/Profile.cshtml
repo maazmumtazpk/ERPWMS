@@ -1,0 +1,147 @@
+@model ERPWMS.Database.Models.PickingList
+@{
+    ViewData["Title"] = "Picking Details";
+    Layout = "_Layout";
+    var details = ViewBag.Details as List<ERPWMS.Database.Models.PickingDetail>;
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0 fw-bold" style="color:#0A1628;">Picking Details</h3>
+            <small class="text-muted">Home / Picking / @Model.PickingNo</small>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Header Card (Dark) -->
+    <div class="card shadow-sm mb-3" style="background:#0A1628;color:#fff;border:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div style="background:#F5A623;color:#0A1628;padding:14px;border-radius:10px;font-size:1.6rem;margin-right:16px;">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1 fw-bold" style="color:#fff;">@Model.PickingNo</h3>
+                        <div style="font-size:12px;color:#94A3B8;">
+                            <i class="bi bi-calendar3"></i> @(Model.PickingDate?.ToString("dd MMM yyyy") ?? "-")
+                            &nbsp;|&nbsp;
+                            SO: @(ViewBag.SalesOrderNo ?? "-")
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    @{
+                        var statusColor = Model.Status == "Verified" ? "#159A89" : Model.Status == "Completed" ? "#0EA5E9" : "#F5A623";
+                    }
+                    <span style="background:@statusColor;color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">
+                        @Model.Status
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer & Info Cards -->
+    <div class="row mb-3">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card shadow-sm h-100" style="border:1px solid #edf0f4;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3" style="color:#0A1628;">
+                        <i class="bi bi-person" style="color:#F5A623;"></i> Customer & Address
+                    </h6>
+                    <p class="mb-1 fw-bold" style="color:#0A1628;font-size:14px;">@(ViewBag.CustomerName ?? "-")</p>
+                    <p class="mb-1" style="font-size:12px;color:#64748B;">
+                        <i class="bi bi-telephone" style="color:#94A3B8;"></i> @(ViewBag.CustomerPhone ?? "-")
+                    </p>
+                    <p class="mb-0" style="font-size:12px;color:#64748B;">
+                        <i class="bi bi-geo-alt" style="color:#94A3B8;"></i> @(ViewBag.CustomerAddress ?? "-")
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100" style="border:1px solid #edf0f4;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3" style="color:#0A1628;">
+                        <i class="bi bi-info-circle" style="color:#F5A623;"></i> Picking Info
+                    </h6>
+                    <table class="table table-sm mb-0" style="font-size:12px;">
+                        <tr>
+                            <td style="color:#64748B;border:none;">Warehouse</td>
+                            <td class="text-end fw-bold" style="color:#0A1628;border:none;">@(ViewBag.WarehouseName ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B;border:none;">Picking Date</td>
+                            <td class="text-end fw-bold" style="color:#0A1628;border:none;">@(Model.PickingDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B;border:none;">Status</td>
+                            <td class="text-end fw-bold" style="color:#0A1628;border:none;">@Model.Status</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="card shadow-sm" style="border:1px solid #edf0f4;">
+        <div class="card-body p-0">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom:2px solid #F1F5F9;">
+                <h6 class="mb-0 fw-bold" style="color:#0A1628;font-size:13px;">
+                    <i class="bi bi-list-check" style="color:#F5A623;"></i> Picked Items (@(details?.Count ?? 0))
+                </h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size:12px;">
+                    <thead style="background:#F8FAFC;">
+                        <tr>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">#</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Product</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;text-align:center;">Qty</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Batch No</th>
+                            <th style="font-size:10px;text-transform:uppercase;color:#64748B;font-weight:700;padding:10px 16px;border:none;">Serial Numbers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (details != null && details.Any())
+                        {
+                            int i = 1;
+                            foreach (var d in details)
+                            {
+                                <tr style="border-bottom:1px solid #F1F5F9;">
+                                    <td style="padding:10px 16px;color:#64748B;font-weight:600;">@i</td>
+                                    <td style="padding:10px 16px;color:#0A1628;font-weight:500;">
+                                        @(d.Product != null ? d.Product.ProductName : ("Product #" + d.ProductId))
+                                    </td>
+                                    <td style="padding:10px 16px;color:#0A1628;font-weight:700;text-align:center;">@d.PickedQty</td>
+                                    <td style="padding:10px 16px;color:#64748B;font-family:monospace;font-size:11px;">@(string.IsNullOrEmpty(d.BatchNo) ? "-" : d.BatchNo)</td>
+                                    <td style="padding:10px 16px;color:#64748B;font-size:11px;max-width:300px;word-break:break-all;">@(string.IsNullOrEmpty(d.SerialNumbers) ? "-" : d.SerialNumbers)</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4" style="color:#94A3B8;">
+                                    <i class="bi bi-inbox" style="font-size:24px;display:block;margin-bottom:6px;"></i>
+                                    No items found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

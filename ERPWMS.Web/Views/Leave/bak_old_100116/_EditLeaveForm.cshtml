@@ -1,0 +1,19 @@
+@model ERPWMS.Database.Models.EmployeeLeave
+@{ Layout = null; }
+<form id="editLeaveForm" method="post" action="/Leave/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="leaveId" value="@Model.LeaveId" />
+    <div id="editLeaveAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Leave Type</label><select name="leaveType" class="form-select form-select-sm">@foreach(var t in new[]{"Casual","Sick","Annual","Unpaid","Maternity"}){if(Model.LeaveType==t){<option value="@t" selected>@t</option>}else{<option value="@t">@t</option>}}</select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Total Days</label><input type="number" name="totalDays" class="form-control form-control-sm" value="@Model.TotalDays" min="1" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">From Date</label><input type="date" name="fromDate" class="form-control form-control-sm" value="@Model.FromDate.ToString("yyyy-MM-dd")" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">To Date</label><input type="date" name="toDate" class="form-control form-control-sm" value="@Model.ToDate.ToString("yyyy-MM-dd")" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Status</label><select name="status" class="form-select form-select-sm">@foreach(var s in new[]{"Pending","Approved","Rejected","Cancelled"}){if(Model.Status==s){<option value="@s" selected>@s</option>}else{<option value="@s">@s</option>}}</select></div>
+        <div class="col-12"><label class="form-label fw-bold">Reason</label><textarea name="reason" class="form-control form-control-sm" rows="2">@Model.Reason</textarea></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </div>
+</form>

@@ -1,0 +1,134 @@
+@model ERPWMS.Application.DTOs.Payroll.PayrollDetailDto
+
+@{
+    ViewData["Title"] = "Payroll Details";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between mb-4">
+
+        <div>
+            <h2>Payroll Details</h2>
+            <p class="text-muted">
+                Payroll #@Model.PayrollId
+            </p>
+        </div>
+
+        <span class="badge bg-secondary align-self-center">
+            @Model.Status
+        </span>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            Employee Information
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+                    <strong>Employee</strong>
+                    <div>@Model.EmployeeName</div>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Payroll Month</strong>
+                    <div>@Model.MonthYear</div>
+                </div>
+
+                <div class="col-md-4">
+                    <strong>Status</strong>
+                    <div>@Model.Status</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header">
+            Payroll Summary
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+                    <small>Gross Pay</small>
+                    <h4>@Model.GrossPay.ToString("N2")</h4>
+                </div>
+
+                <div class="col-md-4">
+                    <small>Deductions</small>
+                    <h4>@Model.TotalDeductions.ToString("N2")</h4>
+                </div>
+
+                <div class="col-md-4">
+                    <small>Net Pay</small>
+                    <h4>@Model.NetPay.ToString("N2")</h4>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="d-flex gap-2">
+
+        @if (Model.Status == "Submitted")
+        {
+            <form asp-action="Approve"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="PayrollId"
+                       value="@Model.PayrollId" />
+
+                <button class="btn btn-success">
+                    Approve Payroll
+                </button>
+
+            </form>
+        }
+
+        @if (Model.Status == "Approved")
+        {
+            <form asp-action="MarkPaid"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="PayrollId"
+                       value="@Model.PayrollId" />
+
+                <input type="hidden"
+                       name="PaymentDate"
+                       value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+
+                <button class="btn btn-primary">
+                    Mark Paid
+                </button>
+
+            </form>
+        }
+
+    </div>
+
+</div>

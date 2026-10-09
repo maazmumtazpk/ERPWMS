@@ -1,0 +1,18 @@
+﻿@{ Layout = null; }
+<form id="addDeadForm" method="post" action="/WorkflowDeadline/Register">
+    @Html.AntiForgeryToken()
+    <div id="addDeadAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Instance *</label><select name="workflowInstId" id="addInst" class="form-select form-select-sm" required><option value="">Loading...</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Stage *</label><select name="stageId" id="addStage" class="form-select form-select-sm" required><option value="">Loading...</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Due Date *</label><input type="date" name="dueDate" class="form-control form-control-sm" value="@DateTime.Now.AddDays(3).ToString("yyyy-MM-dd")" required /></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Create</button>
+    </div>
+</form>
+<script>
+fetch("/WorkflowDeadline/GetInstances").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addInst");if(!s)return;s.innerHTML="<option value=''>-- Select --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.workflowInstId;o.textContent=x.display;s.appendChild(o);});});
+fetch("/WorkflowDeadline/GetStages").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addStage");if(!s)return;s.innerHTML="<option value=''>-- Select --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.stageId;o.textContent=x.stageName;s.appendChild(o);});});
+</script>

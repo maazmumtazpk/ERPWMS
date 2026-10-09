@@ -1,0 +1,20 @@
+﻿@{
+    Layout = null;
+}
+<form id="addSubCategoryForm" method="post" action="/SubCategory/Register">
+    @Html.AntiForgeryToken()
+    <div id="addSubCategoryAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-12"><label class="form-label fw-bold" style="font-size:10px;">Category *</label><select name="categoryId" id="addCat" class="form-select form-select-sm" required style="font-size:11px;"><option value="">Loading...</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Sub Category Name *</label><input type="text" name="subCategoryName" class="form-control form-control-sm" required maxlength="200" style="font-size:11px;" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Sub Category Code</label><input type="text" name="subCategoryCode" class="form-control form-control-sm" maxlength="20" style="font-size:11px;" placeholder="SUBCAT-001" /></div>
+        <div class="col-12"><label class="form-label fw-bold" style="font-size:10px;">Description</label><textarea name="description" class="form-control form-control-sm" rows="2" maxlength="500" style="font-size:11px;"></textarea></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:10px;padding:4px 12px;">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="font-size:10px;padding:4px 12px;">Register</button>
+    </div>
+</form>
+<script>
+fetch("/SubCategory/GetCategories").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addCat");if(!s)return;s.innerHTML="<option value=''>-- Select Category --</option>";(d||[]).forEach(function(c){var o=document.createElement("option");o.value=c.categoryId;o.textContent=c.categoryName;s.appendChild(o);});});
+</script>

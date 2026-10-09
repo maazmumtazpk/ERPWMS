@@ -1,0 +1,50 @@
+﻿@{ Layout = null; }
+<form id="addBankAccountForm" method="post" action="/EmployeeBankAccount/Register">
+    @Html.AntiForgeryToken()
+    <div id="addBankAccountAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Employee *</label>
+            <select name="employeeId" id="addEmp" class="form-select form-select-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Bank Name *</label>
+            <input type="text" name="bankName" class="form-control form-control-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Account Number *</label>
+            <input type="text" name="accountNumber" class="form-control form-control-sm" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">IBAN</label>
+            <input type="text" name="iban" class="form-control form-control-sm" placeholder="PK00XXXX0000000000000000" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Account Type</label>
+            <select name="accountType" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;">
+                <option value="Salary">Salary</option>
+                <option value="Savings">Savings</option>
+                <option value="Current">Current</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Primary Account?</label>
+            <div style="display:flex;align-items:center;gap:8px;padding-top:4px;">
+                <input type="checkbox" name="isPrimary" value="true" id="addPrimary" style="width:18px;height:18px;" />
+                <label for="addPrimary" style="font-size:11px;color:#475569;margin:0;">Mark as primary account</label>
+            </div>
+        </div>
+    </div>
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:11px;padding:6px 16px;border-radius:6px;">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;font-size:11px;padding:6px 16px;border-radius:6px;border:none;">Save</button>
+    </div>
+</form>
+<script>
+    fetch("/EmployeeBankAccount/GetEmployees").then(r=>r.json()).then(d=>{
+        var s=document.getElementById("addEmp");
+        s.innerHTML="<option value=''>-- Select Employee --</option>";
+        (d||[]).forEach(function(x){ var o=document.createElement("option"); o.value=x.employeeId; o.textContent=x.employeeName; s.appendChild(o); });
+    });
+</script>

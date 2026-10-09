@@ -1,0 +1,283 @@
+@model ERPWMS.Web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Warehouse Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var dashboard = Model.Dashboard;
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>
+                <i class="fas fa-chart-line me-2"></i>
+                Warehouse Dashboard
+            </h2>
+
+            <p class="text-muted mb-0">
+                Warehouse storage overview.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+               class="btn btn-secondary">
+
+            <i class="fas fa-warehouse me-1"></i>
+            Warehouses
+
+        </a>
+
+    </div>
+
+
+    <!-- DASHBOARD CARDS -->
+
+    <div class="row g-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small class="text-muted">
+                                Warehouses
+                            </small>
+
+                            <h2 class="mb-0">
+                                @dashboard.TotalWarehouses
+                            </h2>
+
+                        </div>
+
+                        <i class="fas fa-warehouse fa-2x"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small class="text-muted">
+                                Zones
+                            </small>
+
+                            <h2 class="mb-0">
+                                @dashboard.TotalZones
+                            </h2>
+
+                        </div>
+
+                        <i class="fas fa-layer-group fa-2x"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small class="text-muted">
+                                Racks
+                            </small>
+
+                            <h2 class="mb-0">
+                                @dashboard.TotalRacks
+                            </h2>
+
+                        </div>
+
+                        <i class="fas fa-th-large fa-2x"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small class="text-muted">
+                                Bins
+                            </small>
+
+                            <h2 class="mb-0">
+                                @dashboard.TotalBins
+                            </h2>
+
+                        </div>
+
+                        <i class="fas fa-box fa-2x"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- OCCUPANCY -->
+
+    <div class="row g-4 mt-1">
+
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        Bin Occupancy
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row text-center">
+
+                        <div class="col-6">
+
+                            <h3>
+                                @dashboard.OccupiedBins
+                            </h3>
+
+                            <span class="text-danger">
+                                Occupied
+                            </span>
+
+                        </div>
+
+                        <div class="col-6">
+
+                            <h3>
+                                @dashboard.AvailableBins
+                            </h3>
+
+                            <span class="text-success">
+                                Available
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        Quick Actions
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a asp-action="Index"
+                               class="btn btn-primary">
+
+                            <i class="fas fa-warehouse me-1"></i>
+                            Warehouses
+
+                        </a>
+
+                        @if (User.HasClaim("Permission", "ZoneView"))
+                        {
+                            <a asp-action="Zones"
+                                   class="btn btn-info">
+
+                                <i class="fas fa-layer-group me-1"></i>
+                                Zones
+
+                            </a>
+                        }
+
+                        @if (User.HasClaim("Permission", "RackView"))
+                        {
+                            <a asp-action="Racks"
+                                   class="btn btn-secondary">
+
+                                <i class="fas fa-th-large me-1"></i>
+                                Racks
+
+                            </a>
+                        }
+
+                        @if (User.HasClaim("Permission", "BinView"))
+                        {
+                            <a asp-action="Bins"
+                                   class="btn btn-success">
+
+                                <i class="fas fa-box me-1"></i>
+                                Bins
+
+                            </a>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+

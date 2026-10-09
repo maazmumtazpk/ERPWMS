@@ -1,0 +1,76 @@
+@model ERPWMS.Application.Queries.Supplier.SupplierContact.GetSupplierContacts.GetSupplierContactsResult
+
+@if (Model.Contacts.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Mobile</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Primary</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var contact in Model.Contacts)
+                {
+                    <tr>
+                        <td>@contact.ContactName</td>
+                        <td>@contact.Phone</td>
+                        <td>@contact.Mobile</td>
+                        <td>@contact.Email</td>
+                        <td>@contact.Department</td>
+                        <td>
+                            @if (contact.IsPrimary == true)
+                            {
+                                <span class="badge bg-primary">Primary</span>
+                            }
+                            else
+                            {
+                                <button onclick="setPrimaryContact(@contact.ContactId)" class="btn btn-sm btn-outline-primary">
+                                    Set Primary
+                                </button>
+                            }
+                        </td>
+                        <td>
+                            @if (contact.IsActive == true)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <button onclick="showEditContact(@contact.ContactId)" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            @if (contact.IsActive == true)
+                            {
+                                <button onclick="deactivateContact(@contact.ContactId)" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <button onclick="activateContact(@contact.ContactId)" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No contacts found for this supplier.</div>
+}

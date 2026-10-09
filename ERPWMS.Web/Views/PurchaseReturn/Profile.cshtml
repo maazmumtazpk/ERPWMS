@@ -1,0 +1,119 @@
+@model ERPWMS.Database.Models.PurchaseReturn
+@{
+    ViewData["Title"] = "Purchase Return Details";
+    Layout = "_Layout";
+    var details = ViewBag.Details as System.Collections.Generic.List<ERPWMS.Database.Models.PurchaseReturnDetail>
+                  ?? new System.Collections.Generic.List<ERPWMS.Database.Models.PurchaseReturnDetail>();
+    var st = Model.Status ?? "Pending";
+    var stClass = (st == "Completed" || st == "Approved") ? "active" : "inactive";
+}
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">Purchase Return Details</h4>
+            <small class="text-muted" style="font-size:11px;">Home / Purchase Returns / @Model.ReturnNo</small>
+        </div>
+        <a href="/PurchaseReturn/Index" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+    </div>
+
+    <div class="table-card" style="margin-top:0;">
+        <div style="padding:18px 22px;background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:26px;">
+                    <i class="bi bi-arrow-return-left"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:18px;font-weight:800;">@Model.ReturnNo</h3>
+                    <div style="color:rgba(255,255,255,.7);font-size:11px;margin-top:4px;">
+                        <i class="bi bi-calendar3"></i> @(Model.ReturnDate?.ToString("dd MMM yyyy") ?? "-")
+                        <span> • @(ViewBag.PurchaseOrderNo ?? "-")</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <span class="badge-status @stClass" style="padding:6px 14px;font-size:10.5px;">@st.ToUpper()</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3" style="margin-top:16px;">
+        <div class="col-md-4">
+            <div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Amount</p><h2 class="kpi-number">Rs @Model.TotalAmount.ToString("N0")</h2></div><div class="kpi-icon blue"><i class="bi bi-cash-stack"></i></div></div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Items</p><h2 class="kpi-number">@details.Count</h2></div><div class="kpi-icon purple"><i class="bi bi-list-ul"></i></div></div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Qty</p><h2 class="kpi-number">@details.Sum(d => d.Quantity)</h2></div><div class="kpi-icon green"><i class="bi bi-box"></i></div></div></div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-info-circle-fill" style="color:#F5A623;"></i> Return Information</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Return No</span><strong style="font-family:monospace;">@Model.ReturnNo</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Return Date</span><strong>@(Model.ReturnDate?.ToString("dd MMM yyyy") ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Reason</span><strong style="text-align:right;max-width:60%;">@(Model.ReturnReason ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Created</span><strong>@(Model.CreatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-truck" style="color:#F5A623;"></i> Purchase & GRN</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Purchase Order</span><strong>@(ViewBag.PurchaseOrderNo ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">GRN</span><strong>@(ViewBag.GRNNo ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Return ID</span><strong style="font-family:monospace;">#@Model.ReturnId</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-list-ul" style="color:#F5A623;"></i> Returned Items <span class="badge-count">@details.Count</span></h5></div>
+                <div style="overflow-x:auto;">
+                    <table class="table-premium">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product ID</th>
+                                <th style="text-align:right;">Qty</th>
+                                <th style="text-align:right;">Unit Price</th>
+                                <th style="text-align:right;">Total</th>
+                                <th>Batch No</th>
+                                <th>Expiry Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (details.Count == 0)
+                        {
+                            <tr><td colspan="7" style="text-align:center;padding:20px;color:#94A3B8;">No items</td></tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var d in details)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;color:#64748B;">@i</td>
+                                    <td>Product #@d.ProductId</td>
+                                    <td style="text-align:right;font-weight:700;">@d.Quantity</td>
+                                    <td style="text-align:right;">@d.UnitPrice.ToString("N2")</td>
+                                    <td style="text-align:right;font-weight:700;color:#159A89;">@d.TotalPrice.ToString("N2")</td>
+                                    <td style="font-family:monospace;font-size:11px;">@(d.BatchNo ?? "-")</td>
+                                    <td style="font-size:11px;">@(d.ExpiryDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

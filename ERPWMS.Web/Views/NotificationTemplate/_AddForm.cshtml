@@ -1,0 +1,17 @@
+﻿@{ Layout = null; }
+<form id="addTempForm" method="post" action="/NotificationTemplate/QuickAdd">
+    @Html.AntiForgeryToken()
+    <div id="addTempAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Template Name *</label><input type="text" name="templateName" class="form-control form-control-sm" required maxlength="100" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Template Code *</label><input type="text" name="templateCode" class="form-control form-control-sm" required maxlength="50" style="font-family:monospace;" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Type</label><select name="type" class="form-select form-select-sm"><option value="Email">Email</option><option value="SMS">SMS</option><option value="Push">Push</option><option value="InApp">InApp</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Status</label><select name="isActive" class="form-select form-select-sm"><option value="true" selected>Active</option><option value="false">Inactive</option></select></div>
+        <div class="col-12"><label class="form-label fw-bold">Subject *</label><input type="text" name="subject" class="form-control form-control-sm" required maxlength="200" /></div>
+        <div class="col-12"><label class="form-label fw-bold">Body *</label><textarea name="body" class="form-control form-control-sm" rows="6" required maxlength="5000" style="font-family:monospace;font-size:11px;"></textarea><div style="font-size:9.5px;color:#94A3B8;margin-top:3px;">Use @@UserName, @@ReferenceNo, @@CompanyName for dynamic values</div></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Create</button>
+    </div>
+</form>

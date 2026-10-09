@@ -1,0 +1,24 @@
+﻿@{ Layout = null; }
+<form id="addStageForm" method="post" action="/WorkflowStage/QuickAdd">
+    @Html.AntiForgeryToken()
+    <div id="addStageAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-12"><label class="form-label fw-bold">Workflow *</label><select name="workflowDefId" id="addWh" class="form-select form-select-sm" required><option value="">-- Select Workflow --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Stage Name *</label><input type="text" name="stageName" class="form-control form-control-sm" required maxlength="200" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Stage Code</label><input type="text" name="stageCode" class="form-control form-control-sm" maxlength="50" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Order</label><input type="number" name="stageOrder" class="form-control form-control-sm" value="1" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">SLA Hours</label><input type="number" name="slaDeadlineHours" class="form-control form-control-sm" value="0" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Flags</label><div style="display:flex;gap:8px;padding-top:5px;"><label><input type="checkbox" name="isStart" value="true" /> Start</label><label><input type="checkbox" name="isEnd" value="true" /> End</label></div></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Create</button>
+    </div>
+</form>
+<script>
+fetch("/WorkflowStage/GetWorkflows").then(function(r){return r.json();}).then(function(d){
+    var s=document.getElementById("addWh");if(!s)return;
+    s.innerHTML="<option value=''>-- Select Workflow --</option>";
+    (d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.workflowDefId;o.textContent=x.workflowName;s.appendChild(o);});
+}).catch(function(){});
+</script>

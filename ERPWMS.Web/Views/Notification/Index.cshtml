@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Notifications";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="row g-3">
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Notifications</p><h2 class="kpi-number" id="kpiTotal">0</h2></div><div class="kpi-icon blue"><i class="bi bi-bell"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Unread</p><h2 class="kpi-number" id="kpiUnread">0</h2></div><div class="kpi-icon orange"><i class="bi bi-envelope-fill"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Read</p><h2 class="kpi-number" id="kpiRead">0</h2></div><div class="kpi-icon green"><i class="bi bi-envelope-open"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Today</p><h2 class="kpi-number" id="kpiToday">0</h2></div><div class="kpi-icon purple"><i class="bi bi-calendar-event"></i></div></div></div></div>
+</div>
+<div class="table-card">
+<div class="card-header-custom">
+<h5><i class="bi bi-bell" style="color:#F5A623;"></i> All Notifications <span class="badge-count" id="xCount">0</span></h5>
+<div style="display:flex;gap:4px;align-items:center;">
+<input type="text" id="tSearch" class="search-input" placeholder="Search..." onkeyup="filterRows()" />
+<button type="button" class="btn-icon gold" onclick="markAllRead()" title="Mark all as read"><i class="bi bi-check-all"></i></button>
+<button type="button" class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button>
+</div>
+</div>
+<div class="card-body">
+<table class="table-premium" id="xTable">
+<thead><tr><th>Status</th><th>Subject</th><th>Message</th><th>Type</th><th>Date</th><th style="text-align:right;">Actions</th></tr></thead>
+<tbody id="xBody"><tr><td colspan="6" class="text-center py-3"><div class="spinner-border text-primary" style="width:20px;height:20px;"></div></td></tr></tbody>
+</table>
+<div id="emptyState" class="empty-state d-none"><i class="bi bi-bell-slash empty-icon"></i><h4>No Notifications</h4><p>You're all caught up!</p></div>
+</div>
+<div class="table-footer"><span><i class="bi bi-info-circle"></i> Showing <span id="tableCount">0</span> notifications</span></div>
+</div>
+</div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function reload_(){
+  fetch("/Notification/GetAllNotifications").then(function(r){return r.json();}).then(function(d){
+    if(!d||d.length===0){
+      document.getElementById("xBody").innerHTML="";
+      document.getElementById("xTable").style.display="none";
+      document.getElementById("emptyState").classList.remove("d-none");
+      document.getElementById("xCount").textContent="0";
+      document.getElementById("tableCount").textContent="0";
+      document.getElementById("kpiTotal").textContent="0";
+      document.getElementById("kpiUnread").textContent="0";
+      document.getElementById("kpiRead").textContent="0";
+      document.getElementById("kpiToday").textContent="0";
+      return;
+    }
+    document.getElementById("xTable").style.display="";
+    document.getElementById("emptyState").classList.add("d-none");
+    var unread=0, read=0, today=0;
+    var todayStr = new Date().toDateString();
+    var h="";
+    d.forEach(function(x){
+      var isRead = x.isRead === true;
+      if(isRead) read++; else unread++;
+      if(x.sentDate && new Date(x.sentDate).toDateString() === todayStr) today++;
+      var st = isRead ? "active" : "inactive";
+      var stTxt = isRead ? "Read" : "Unread";
+      var stIcon = isRead ? "bi-envelope-open" : "bi-envelope-fill";
+      var dt = x.sentDate ? new Date(x.sentDate).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "-";
+      var bg = !isRead ? "style='background:#FFFDF7;'" : "";
+      h+="<tr "+bg+">";
+      h+="<td><span class='badge-status "+st+"'><i class='bi "+stIcon+"'></i> "+stTxt+"</span></td>";
+      h+="<td><div class='row-name'><span class='avatar' style='"+(isRead?"":"background:#FEF3C7;color:#B45309;")+"'><i class='bi bi-bell'></i></span><div>"+(x.subject||"(No Subject)")+"</div></div></td>";
+      h+="<td style='font-size:10.5px;color:#64748B;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+(x.message||"-")+"</td>";
+      h+="<td><span class='badge-status role'>"+(x.type||"Info")+"</span></td>";
+      h+="<td style='font-size:10px;color:#64748B;'><i class='bi bi-calendar3 me-1'></i>"+dt+"</td>";
+      h+="<td style='text-align:right;'><div class='act-wrap'><button class='btn-icon' onclick='toggleMenu("+x.notificationId+",event)'><i class='bi bi-three-dots-vertical'></i></button><div class='act-menu' id='menu-"+x.notificationId+"'><a href='/Notification/Details/"+x.notificationId+"'><i class='bi bi-eye'></i> View Details</a>";
+      if(!isRead){ h+="<button onclick='markRead("+x.notificationId+")'><i class='bi bi-check2'></i> Mark as Read</button>"; }
+      h+="<div class='sep'></div><button class='danger' onclick='delRow("+x.notificationId+")'><i class='bi bi-trash3'></i> Delete</button></div></div></td>";
+      h+="</tr>";
+    });
+    document.getElementById("xBody").innerHTML=h;
+    document.getElementById("xCount").textContent=d.length;
+    document.getElementById("tableCount").textContent=d.length;
+    document.getElementById("kpiTotal").textContent=d.length;
+    document.getElementById("kpiUnread").textContent=unread;
+    document.getElementById("kpiRead").textContent=read;
+    document.getElementById("kpiToday").textContent=today;
+  });
+}
+function markRead(id){var fd=new FormData();fd.append("__RequestVerificationToken",tk());fetch("/Notification/MarkAsRead/"+id,{method:"POST",body:fd}).then(function(r){if(r.ok){showToast("Marked as read","success");reload_();}});}
+function markAllRead(){if(!confirm("Mark all as read?"))return;var fd=new FormData();fd.append("__RequestVerificationToken",tk());fetch("/Notification/MarkAllAsRead",{method:"POST",body:fd}).then(function(r){if(r.ok){showToast("All marked as read","success");reload_();}});}
+function delRow(id){if(!confirm("Delete this notification?"))return;var fd=new FormData();fd.append("__RequestVerificationToken",tk());fetch("/Notification/Delete/"+id,{method:"POST",body:fd}).then(function(r){if(r.ok){showToast("Deleted","success");reload_();}});}
+document.addEventListener("DOMContentLoaded",reload_);
+</script>

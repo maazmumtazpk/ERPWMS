@@ -1,0 +1,52 @@
+@using ERPWMS.Application.DTOs.Designation
+@model IEnumerable<DesignationSummaryResponse>
+
+@if (Model != null && Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Rank</th>
+                    <th>Department</th>
+                    <th>Company</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var desig in Model)
+                {
+                    <tr>
+                        <td><a href="@Url.Action("Profile", "Designation", new { id = desig.DesignationId })">@desig.DesignationName</a></td>
+                        <td>@(desig.RankLevel.HasValue? desig.RankLevel.Value.ToString() : "N/A")</td>
+                        <td>@desig.DepartmentName</td>
+                        <td>@desig.CompanyName</td>
+                        <td>
+                            <span class="badge @(desig.IsActive ? "badge-success" : "badge-secondary")">
+                                @(desig.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td>@desig.CreatedDate.ToString("dd-MMM-yyyy")</td>
+                        <td>
+                            <a href="@Url.Action("Profile", "Designation", new { id = desig.DesignationId })" class="btn btn-sm btn-info" title="View Profile">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="@Url.Action("Edit", "Designation", new { id = desig.DesignationId })" class="btn btn-sm btn-warning" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No designations found.
+    </div>
+}

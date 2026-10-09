@@ -1,0 +1,37 @@
+﻿@{
+    Layout = null;
+}
+<form id="addProductForm" method="post" action="/Product/Register">
+    @Html.AntiForgeryToken()
+    <div id="addProductAlert" style="display:none;padding:9px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-3">
+        <div class="col-md-8"><label class="form-label fw-bold">Product Name *</label><input type="text" name="productName" class="form-control" required maxlength="200" placeholder="Enter product name" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">SKU</label><input type="text" name="sku" class="form-control" maxlength="50" placeholder="SKU-001" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Barcode</label><input type="text" name="barcode" class="form-control" maxlength="50" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Category *</label><select name="categoryId" id="addCategory" class="form-select" required><option value="">Loading...</option></select></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Sub Category</label><select name="subCategoryId" id="addSubCategory" class="form-select"><option value="">-- Select --</option></select></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Brand</label><select name="brandId" id="addBrand" class="form-select"><option value="">Loading...</option></select></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Unit</label><select name="unitId" id="addUnit" class="form-select"><option value="">Loading...</option></select></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Weight (kg)</label><input type="number" step="0.01" name="weight" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Length (cm)</label><input type="number" step="0.01" name="length" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Width (cm)</label><input type="number" step="0.01" name="width" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Height (cm)</label><input type="number" step="0.01" name="height" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Min Stock Level</label><input type="number" name="minStockLevel" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Max Stock Level</label><input type="number" name="maxStockLevel" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Reorder Level</label><input type="number" name="reorderLevel" class="form-control" /></div>
+        <div class="col-12"><label class="form-label fw-bold">Description</label><textarea name="description" class="form-control" rows="2" maxlength="1000"></textarea></div>
+        <div class="col-md-6"><div class="form-check form-switch"><input type="checkbox" name="isSerialized" value="true" class="form-check-input" /><label class="form-check-label" style="font-size:11.5px;">Is Serialized</label></div></div>
+        <div class="col-md-6"><div class="form-check form-switch"><input type="checkbox" name="isBatchManaged" value="true" class="form-check-input" /><label class="form-check-label" style="font-size:11.5px;">Is Batch Managed</label></div></div>
+    </div>
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Register</button>
+    </div>
+</form>
+<script>
+fetch("/Product/GetCategories").then(r=>r.json()).then(d=>{var s=document.getElementById("addCategory");s.innerHTML="<option value=''>-- Select Category --</option>";(d||[]).forEach(c=>{var o=document.createElement("option");o.value=c.categoryId;o.textContent=c.categoryName;s.appendChild(o);});});
+fetch("/Product/GetBrands").then(r=>r.json()).then(d=>{var s=document.getElementById("addBrand");s.innerHTML="<option value=''>-- Select Brand --</option>";(d||[]).forEach(b=>{var o=document.createElement("option");o.value=b.brandId;o.textContent=b.brandName;s.appendChild(o);});});
+fetch("/Product/GetUnits").then(r=>r.json()).then(d=>{var s=document.getElementById("addUnit");s.innerHTML="<option value=''>-- Select Unit --</option>";(d||[]).forEach(u=>{var o=document.createElement("option");o.value=u.unitId;o.textContent=u.unitName;s.appendChild(o);});});
+document.getElementById("addCategory").addEventListener("change",function(){var cid=this.value;var s=document.getElementById("addSubCategory");s.innerHTML="<option value=''>-- Select --</option>";if(!cid)return;fetch("/Product/GetSubCategories?categoryId="+cid).then(r=>r.json()).then(d=>{(d||[]).forEach(x=>{var o=document.createElement("option");o.value=x.subCategoryId;o.textContent=x.subCategoryName;s.appendChild(o);});});});
+</script>
+

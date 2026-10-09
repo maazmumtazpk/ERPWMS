@@ -1,0 +1,154 @@
+@model ERPWMS.Database.Models.PurchaseMaster
+@{
+    ViewData["Title"] = "Purchase Order Details";
+    Layout = "_Layout";
+    var details = ViewBag.Details as System.Collections.Generic.List<ERPWMS.Database.Models.PurchaseDetail>
+                  ?? new System.Collections.Generic.List<ERPWMS.Database.Models.PurchaseDetail>();
+
+    decimal subTotal = 0;
+    foreach (var d in details.Where(x => x.IsDeleted != true))
+    {
+        decimal line = d.Quantity * d.UnitPrice;
+        decimal disc = line * ((d.DiscountPercent ?? 0) / 100m);
+        subTotal += line - disc;
+    }
+
+    decimal discount = Model.Discount ?? 0;
+    decimal tax = Model.TaxAmount ?? 0;
+    decimal grandTotal = subTotal - discount + tax;
+
+    var st = Model.Status ?? "Draft";
+    var stClass = (st == "Approved") ? "active" : (st == "Rejected" ? "inactive" : "role");
+}
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">Purchase Order Details</h4>
+            <small class="text-muted" style="font-size:11px;">Home / Purchase Orders / @Model.PurchaseOrderNo</small>
+        </div>
+        <a href="/PurchaseMaster/Index" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+    </div>
+
+    <!-- Header -->
+    <div class="table-card" style="margin-top:0;">
+        <div style="padding:18px 22px;background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:26px;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:18px;font-weight:800;">@Model.PurchaseOrderNo</h3>
+                    <div style="color:rgba(255,255,255,.7);font-size:11px;margin-top:3px;">
+                        <i class="bi bi-calendar3"></i> @(Model.OrderDate?.ToString("dd MMM yyyy") ?? "-")
+                        @if (Model.Supplier != null) { <span> • @Model.Supplier.SupplierName</span> }
+                    </div>
+                </div>
+            </div>
+            <div>
+                <span class="badge-status @stClass" style="padding:6px 14px;font-size:10.5px;">@st.ToUpper()</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3" style="margin-top:16px;">
+        <!-- Order Info -->
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-info-circle-fill" style="color:#F5A623;"></i> Order Information</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">PO Number</span><strong style="font-family:monospace;">@Model.PurchaseOrderNo</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Order Date</span><strong>@(Model.OrderDate?.ToString("dd MMM yyyy") ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Expected Delivery</span><strong>@(Model.ExpectedDeliveryDate?.ToString("dd MMM yyyy") ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Created By</span><strong>@(Model.CreatedByNavigation?.UserName ?? "-")</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supplier & Warehouse -->
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-truck" style="color:#F5A623;"></i> Supplier & Warehouse</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Supplier</span><strong>@(Model.Supplier?.SupplierName ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Phone</span><strong>@(Model.Supplier?.Phone ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Warehouse</span><strong>@(Model.Warehouse?.WarehouseName ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Approval</span><strong>@(string.IsNullOrEmpty(Model.ApprovalStatus) ? (Model.Status ?? "-") : Model.ApprovalStatus)</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="col-md-12">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom">
+                    <h5><i class="bi bi-list-ul" style="color:#F5A623;"></i> Items <span class="badge-count">@details.Count</span></h5>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="table-premium">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th style="text-align:right;">Qty</th>
+                                <th style="text-align:right;">Unit Price</th>
+                                <th style="text-align:right;">Disc %</th>
+                                <th style="text-align:right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (details.Count == 0)
+                        {
+                            <tr><td colspan="6" style="text-align:center;padding:20px;color:#94A3B8;">No items</td></tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var d in details.Where(x => x.IsDeleted != true))
+                            {
+                                <tr>
+                                    <td style="font-weight:600;color:#64748B;">@i</td>
+                                    <td>@(d.Product?.ProductName ?? "-")</td>
+                                    <td style="text-align:right;">@d.Quantity</td>
+                                    <td style="text-align:right;">@d.UnitPrice.ToString("N2")</td>
+                                    <td style="text-align:right;">@((d.DiscountPercent ?? 0).ToString("N2"))</td>
+                                    <td style="text-align:right;font-weight:700;">@((d.Quantity * d.UnitPrice * (1 - ((d.DiscountPercent ?? 0) / 100m))).ToString("N2"))</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="col-md-6"></div>
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-calculator-fill" style="color:#F5A623;"></i> Summary</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                        <span style="color:#64748B;">Sub Total</span><strong>Rs @subTotal.ToString("N2")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                        <span style="color:#64748B;">Discount</span><strong style="color:#DC2626;">- Rs @discount.ToString("N2")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F1F5F9;font-size:12px;">
+                        <span style="color:#64748B;">Tax</span><strong>+ Rs @tax.ToString("N2")</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:14px;font-weight:800;border-top:2px solid #0A1628;margin-top:6px;">
+                        <span style="color:#0A1628;">Grand Total</span>
+                        <span style="color:#F5A623;">Rs @grandTotal.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+

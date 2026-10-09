@@ -1,0 +1,234 @@
+@model ERPWMS.Web.ViewModels.Warehouse.RegisterRackViewModel
+
+@{
+    ViewData["Title"] = "Register Rack";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-th-large me-2"></i>
+                Register Rack
+            </h2>
+
+            <p class="text-muted mb-0">
+                Add a new rack to the warehouse.
+            </p>
+        </div>
+
+        <div>
+            <a asp-action="Racks"
+                   asp-route-WarehouseId="@Model.WarehouseId"
+                   asp-route-ZoneId="@Model.ZoneId"
+                   class="btn btn-secondary">
+
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Racks
+
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- FORM CARD -->
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+
+            <h5 class="mb-0">
+                <i class="fas fa-plus-circle me-2"></i>
+                Rack Information
+            </h5>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <form asp-controller="Warehouse"
+                  asp-action="RegisterRack"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+
+                <!-- VALIDATION -->
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"
+                     role="alert">
+                </div>
+
+
+                <div class="row g-3">
+
+
+                    <!-- WAREHOUSE -->
+                    <div class="col-md-6">
+
+                        <label asp-for="WarehouseId"
+                               class="form-label">
+
+                            Warehouse
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <input asp-for="WarehouseId"
+                               type="number"
+                               class="form-control"
+                               readonly />
+
+                        <span asp-validation-for="WarehouseId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <!-- ZONE DROPDOWN -->
+                    <div class="col-md-6">
+
+                        <label asp-for="ZoneId"
+                               class="form-label">
+
+                            Zone
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <select asp-for="ZoneId"
+                                class="form-select">
+
+                            <option value="">
+                                -- Select Zone --
+                            </option>
+
+                            @if (Model.Zones != null && Model.Zones.Any())
+                            {
+                                foreach (var zone in Model.Zones)
+                                {
+                                    if (Model.ZoneId == zone.ZoneId)
+                                    {
+                                        <option value="@zone.ZoneId"
+                                                selected>
+                                            @zone.ZoneName
+                                        </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@zone.ZoneId">
+                                            @zone.ZoneName
+                                        </option>
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                <option value="" disabled>
+                                    No active zones found
+                                </option>
+                            }
+
+                        </select>
+
+                        <span asp-validation-for="ZoneId"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <!-- RACK NAME -->
+                    <div class="col-md-6">
+
+                        <label asp-for="RackName"
+                               class="form-label">
+
+                            Rack Name
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <input asp-for="RackName"
+                               class="form-control"
+                               placeholder="Enter rack name"
+                               autocomplete="off" />
+
+                        <span asp-validation-for="RackName"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <!-- RACK CODE -->
+                    <div class="col-md-6">
+
+                        <label asp-for="RackCode"
+                               class="form-label">
+
+                            Rack Code
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <input asp-for="RackCode"
+                               class="form-control"
+                               placeholder="Enter rack code"
+                               autocomplete="off" />
+
+                        <span asp-validation-for="RackCode"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BUTTONS -->
+                <div class="mt-4 d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="fas fa-save me-1"></i>
+                        Save Rack
+
+                    </button>
+
+
+                    <a asp-action="Racks"
+                           asp-route-WarehouseId="@Model.WarehouseId"
+                           asp-route-ZoneId="@Model.ZoneId"
+                           class="btn btn-secondary">
+
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+}

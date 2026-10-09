@@ -1,0 +1,412 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WMS Enterprise</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- ICONS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+
+    <!-- SITE CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+        :root{
+            --wms-sidebar-width:250px;
+            --wms-navy:#0A1628;
+            --wms-gold:#F5A623;
+            --wms-bg:#F1F5F9;
+            --wms-border:#E2E8F0;
+            --wms-text:#0A1628;
+            --wms-muted:#64748B;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{min-height:100%;}
+        body{
+            font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            background:var(--wms-bg);
+            color:var(--wms-text);
+            line-height:1.6;
+            overflow-x:hidden;
+            min-height:100vh;
+        }
+
+        /* ========= MAIN CONTENT AREA (sidebar fixed hai) ========= */
+        .wms-main{
+            margin-left:var(--wms-sidebar-width);
+            min-height:100vh;
+            transition:margin-left .25s;
+        }
+
+        /* ========= TOPBAR ========= */
+        .wms-topbar{
+            background:#fff;
+            padding:14px 28px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            border-bottom:1px solid var(--wms-border);
+            position:sticky;
+            top:0;
+            z-index:1040;
+            box-shadow:0 2px 8px rgba(0,0,0,.04);
+            min-height:68px;
+            gap:16px;
+        }
+        .wms-topbar-left{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            min-width:0;
+        }
+        .wms-topbar-title{
+            font-size:20px;
+            font-weight:700;
+            color:var(--wms-text);
+            margin:0;
+            line-height:1.2;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .wms-topbar-title .accent{color:var(--wms-gold);}
+        .wms-crumb{
+            font-size:12.5px;
+            color:var(--wms-muted);
+            margin-top:2px;
+        }
+        .wms-crumb a{color:var(--wms-muted);text-decoration:none;transition:color .15s;}
+        .wms-crumb a:hover{color:var(--wms-gold);}
+        .wms-crumb .sep{margin:0 6px;color:#CBD5E1;}
+        .wms-crumb .current{color:var(--wms-text);font-weight:600;}
+
+        .wms-topbar-actions{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-shrink:0;
+        }
+        .wms-search{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 14px;
+            background:var(--wms-bg);
+            border:1px solid transparent;
+            border-radius:10px;
+            transition:all .15s;
+            min-width:260px;
+        }
+        .wms-search:focus-within{
+            background:#fff;
+            border-color:var(--wms-gold);
+            box-shadow:0 0 0 4px rgba(245,166,35,.10);
+        }
+        .wms-search i{color:var(--wms-muted);font-size:14px;}
+        .wms-search input{
+            border:none;
+            background:transparent;
+            outline:none;
+            font-size:13px;
+            color:var(--wms-text);
+            flex:1;
+            font-family:inherit;
+        }
+        .wms-search input::placeholder{color:var(--wms-muted);}
+        .wms-kbd{
+            font-size:10px;
+            color:var(--wms-muted);
+            background:#fff;
+            border:1px solid var(--wms-border);
+            padding:2px 8px;
+            border-radius:5px;
+            font-weight:600;
+            white-space:nowrap;
+        }
+        .wms-notif-btn{
+            position:relative;
+            background:none;
+            border:none;
+            font-size:20px;
+            color:var(--wms-muted);
+            cursor:pointer;
+            padding:6px;
+            border-radius:8px;
+            transition:all .15s;
+        }
+        .wms-notif-btn:hover{background:var(--wms-bg);color:var(--wms-text);}
+        .wms-notif-badge{
+            position:absolute;
+            top:2px;
+            right:2px;
+            min-width:16px;
+            height:16px;
+            padding:0 4px;
+            background:#EF4444;
+            color:#fff;
+            font-size:9px;
+            font-weight:800;
+            border-radius:10px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border:2px solid #fff;
+        }
+        .wms-mobile-toggle{
+            display:none;
+            background:none;
+            border:none;
+            font-size:22px;
+            color:var(--wms-text);
+            cursor:pointer;
+            padding:4px;
+        }
+
+        /* ========= CONTENT ========= */
+        .wms-content{
+            padding:24px 28px 40px;
+            min-height:calc(100vh - 68px);
+        }
+
+        /* ========= TOAST ========= */
+        .wms-toast-wrap{
+            position:fixed;
+            top:80px;
+            right:24px;
+            z-index:9999;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            max-width:380px;
+            width:calc(100% - 48px);
+        }
+
+        /* ========= RESPONSIVE ========= */
+        @@media (max-width:991px){
+            .wms-main{margin-left:0;}
+            .wms-mobile-toggle{display:block;}
+            .wms-topbar{padding:12px 16px;}
+            .wms-search{display:none;}
+            .wms-content{padding:16px 16px 32px;}
+            .wms-topbar-title{font-size:17px;}
+        }
+    </style>    <style>
+        /* Reports aur Viewer page par topbar hide */
+        body.reports-page .wms-topbar,
+        body.viewer-page .wms-topbar { 
+            display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; 
+        }
+        body.reports-page .wms-main,
+        body.viewer-page .wms-main { 
+            padding-top: 0 !important; margin-top: 0 !important; 
+        }
+        body.reports-page .wms-content,
+        body.viewer-page .wms-content { padding: 0 !important; margin: 0 !important; }
+        body.reports-page main,
+        body.viewer-page main { padding: 0 !important; margin: 0 !important; }
+    </style>
+    <style>
+        /* Reports aur Viewer dono page par topbar hide */
+        body.reports-page .wms-topbar,
+        body.viewer-page .wms-topbar { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+        body.reports-page .wms-main,
+        body.viewer-page .wms-main { padding-top: 0 !important; margin-top: 0 !important; }
+        body.reports-page .wms-content,
+        body.viewer-page .wms-content { padding: 0 !important; margin: 0 !important; }
+        body.reports-page main,
+        body.viewer-page main { padding: 0 !important; margin: 0 !important; }
+    </style>
+
+    <style>
+        /* ========= FULL WIDTH PAGE MODE ========= */
+        body.wms-widepage .wms-content {
+            padding: 18px 22px 30px 22px;
+            min-height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════ SIDEBAR (unchanged partial) ═══════════ -->
+    @await Html.PartialAsync("_Sidebar")
+
+    <!-- ═══════════ MAIN ═══════════ -->
+    <div class="wms-main">
+
+        <!-- ═══════════ TOPBAR ═══════════ -->
+        <header class="wms-topbar">
+
+            <div class="wms-topbar-left">
+
+                <button class="wms-mobile-toggle" type="button" onclick="wmsMobileToggle()" aria-label="Toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div style="min-width:0;">
+                    @{
+                        var pageTitle = ViewData["Title"]?.ToString() ?? "Dashboard";
+                        var parts = pageTitle.Split(' ', 2);
+                        var highlight = parts.Length > 0 ? parts[0] : pageTitle;
+                        var rest = parts.Length > 1 ? parts[1] : "";
+                    }
+                    <h1 class="wms-topbar-title">
+                        <span class="accent">@highlight</span> @rest
+                    </h1>
+                    <div class="wms-crumb">
+                        <a href="/Dashboard">Home</a>
+                        <span class="sep">/</span>
+                        <span class="current">@pageTitle</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="wms-topbar-actions">
+
+                <div class="wms-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="wmsGlobalSearch" placeholder="Search..." autocomplete="off" />
+                    <span class="wms-kbd">Ctrl K</span>
+                </div>
+
+                <button type="button" class="wms-notif-btn" onclick="window.location.href='/Notification'" aria-label="Notifications">
+                    <i class="bi bi-bell"></i>
+                    <span class="wms-notif-badge">3</span>
+                </button>
+
+            </div>
+
+        </header>
+
+        <!-- ═══════════ CONTENT ═══════════ -->
+        <main class="wms-content">
+            @RenderBody()
+        </main>
+
+    </div>
+
+    <!-- Toast holder -->
+    <div class="wms-toast-wrap" id="wmsToastWrap"></div>
+
+    <!-- JQUERY -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- BOOTSTRAP -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+
+    <!-- JQUERY VALIDATION -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
+    <!-- SITE -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Mobile sidebar toggle
+        function wmsMobileToggle(){
+            var sb = document.getElementById('wmsSidebar');
+            if(!sb) return;
+            sb.classList.toggle('show');
+        }
+
+        // Global search (Ctrl+K)
+        document.addEventListener('keydown', function(e){
+            if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+                e.preventDefault();
+                var s = document.getElementById('wmsGlobalSearch');
+                if(s){ s.focus(); s.select(); }
+            }
+        });
+
+        // Simple toast
+        function showToast(msg, type, dur){
+            type = type || 'success';
+            dur = dur || 4000;
+            var wrap = document.getElementById('wmsToastWrap');
+            if(!wrap) return;
+            var colors = {success:'#10B981',error:'#EF4444',warning:'#F59E0B',info:'#3B82F6'};
+            var icons  = {success:'bi-check-circle-fill',error:'bi-x-circle-fill',warning:'bi-exclamation-triangle-fill',info:'bi-info-circle-fill'};
+            var c = colors[type] || colors.success;
+            var ic = icons[type] || icons.success;
+            var d = document.createElement('div');
+            d.style.cssText = 'background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 8px 24px rgba(15,23,42,.15);border-left:4px solid '+c+';display:flex;align-items:center;gap:12px;font-size:13px;';
+            d.innerHTML = '<i class="bi '+ic+'" style="color:'+c+';font-size:18px;"></i><span style="flex:1;color:#0A1628;font-weight:600;">'+msg+'</span>';
+            wrap.appendChild(d);
+            setTimeout(function(){
+                d.style.transition = 'opacity .3s,transform .3s';
+                d.style.opacity = '0';
+                d.style.transform = 'translateX(100px)';
+                setTimeout(function(){ d.remove(); }, 300);
+            }, dur);
+        }
+    </script>
+
+    @await Html.PartialAsync("_AdminJs")
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+
+<script>
+// ═══ Global dropdown loader (survives AJAX injection) ═══
+function loadCompaniesOnce(sel){
+    if(!sel) return;
+    if(sel.dataset.loaded === '1') return;
+    sel.dataset.loaded = '1';
+    var oldVal = sel.value;
+    sel.innerHTML = '<option value="">Loading...</option>';
+    fetch('/Branch/GetCompaniesForDropdown')
+        .then(function(r){ 
+            if(!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json(); 
+        })
+        .then(function(d){
+            sel.innerHTML = '<option value="">-- Select Company --</option>';
+            if(!d || d.length === 0){
+                sel.innerHTML = '<option value="">No companies found</option>';
+                return;
+            }
+            d.forEach(function(c){
+                var o = document.createElement('option');
+                o.value = c.companyId;
+                o.textContent = c.companyName;
+                sel.appendChild(o);
+            });
+            if(oldVal) sel.value = oldVal;
+        })
+        .catch(function(err){
+            sel.innerHTML = '<option value="">Error: ' + err.message + '</option>';
+            console.error('Company load error:', err);
+        });
+}
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,41 @@
+@model ERPWMS.Database.Models.Customer
+@{ Layout = null; }
+<form id="editCustomerForm" method="post" action="/Customer/Edit" autocomplete="off">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="customerId" value="@Model.CustomerId" />
+    <div id="editCustomerAlert" style="display:none;padding:8px 10px;border-radius:5px;font-size:10.5px;margin-bottom:10px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-3">
+        <div class="col-md-4"><label class="form-label fw-bold">Customer Name *</label><input type="text" name="customerName" class="form-control form-control-sm" value="@Model.CustomerName" required maxlength="200" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Customer Code</label><input type="text" name="customerCode" class="form-control form-control-sm" value="@Model.CustomerCode" maxlength="50" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Contact Person</label><input type="text" name="contactPerson" class="form-control form-control-sm" value="@Model.ContactPerson" maxlength="100" /></div>
+
+        <div class="col-md-4"><label class="form-label fw-bold">Phone *</label><input type="text" name="phone" class="form-control form-control-sm" value="@Model.Phone" required maxlength="20" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Mobile</label><input type="text" name="mobile" class="form-control form-control-sm" value="@Model.Mobile" maxlength="20" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Email</label><input type="email" name="email" class="form-control form-control-sm" value="@Model.Email" maxlength="100" /></div>
+
+        <div class="col-md-4"><label class="form-label fw-bold">Website</label><input type="text" name="website" class="form-control form-control-sm" value="@Model.Website" maxlength="100" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">City</label><input type="text" name="city" class="form-control form-control-sm" value="@Model.City" maxlength="50" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Country</label><input type="text" name="country" class="form-control form-control-sm" value="@Model.Country" maxlength="50" /></div>
+
+        <div class="col-md-4"><label class="form-label fw-bold">Postal Code</label><input type="text" name="postalCode" class="form-control form-control-sm" value="@Model.PostalCode" maxlength="20" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Tax ID</label><input type="text" name="taxId" class="form-control form-control-sm" value="@Model.TaxId" maxlength="50" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Payment Terms</label><input type="text" name="paymentTerms" class="form-control form-control-sm" value="@Model.PaymentTerms" maxlength="100" /></div>
+
+        <div class="col-md-4"><label class="form-label fw-bold">Credit Limit</label><input type="number" step="0.01" name="creditLimit" class="form-control form-control-sm" value="@Model.CreditLimit" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Credit Days</label><input type="number" name="creditDays" class="form-control form-control-sm" value="@Model.CreditDays" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Status</label>
+            <select name="isActive" class="form-select form-select-sm">
+                @if ((Model.IsActive == true)) { <option value="true" selected>Active</option><option value="false">Inactive</option> }
+                else { <option value="true">Active</option><option value="false" selected>Inactive</option> }
+            </select>
+        </div>
+
+        <div class="col-12"><label class="form-label fw-bold">Address *</label><textarea name="address" class="form-control form-control-sm" rows="2" required maxlength="500">@Model.Address</textarea></div>
+    </div>
+
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:11px;padding:5px 12px;">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="font-size:11px;padding:5px 14px;">Update</button>
+    </div>
+</form>

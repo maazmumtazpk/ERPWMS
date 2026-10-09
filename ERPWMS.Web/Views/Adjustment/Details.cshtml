@@ -1,0 +1,156 @@
+@model ERPWMS.Application.DTOs.Inventory.StockAdjustmentDto
+
+@{
+    ViewData["Title"] = "Adjustment Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Adjustment Details</h2>
+        <div>
+            <a asp-action="Adjustments" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light w-50">Adjustment ID</th>
+                            <td>#@Model.AdjustmentId</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Type</th>
+                            <td>
+                                <span class="badge @(Model.AdjustmentType == "Increase" ? "bg-success" : "bg-danger")">
+                                    @Model.AdjustmentType
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Product</th>
+                            <td>@Model.ProductName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Warehouse</th>
+                            <td>@Model.WarehouseName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Bin</th>
+                            <td>@Model.BinName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Quantity</th>
+                            <td><strong>@Model.Quantity</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Previous Qty</th>
+                            <td>@Model.PreviousQty</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">New Qty</th>
+                            <td><strong>@Model.NewQty</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Reason</th>
+                            <td>@Model.Reason</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>
+                                @{
+                                    var statusClass = Model.Status switch
+                                    {
+                                        "Draft" => "bg-secondary",
+                                        "Submitted" => "bg-primary",
+                                        "Approved" => "bg-success",
+                                        "Rejected" => "bg-danger",
+                                        "Posted" => "bg-info",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @statusClass">@(Model.Status ?? "Draft")</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created By</th>
+                            <td>@Model.CreatedByName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                        @if (Model.ApprovedBy.HasValue)
+                        {
+                            <tr>
+                                <th class="bg-light">Approved By</th>
+                                <td>@Model.ApprovedByName</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-light">Approved Date</th>
+                                <td>@Model.ApprovedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </div>
+
+            <hr />
+            <div class="d-flex gap-2 flex-wrap">
+                @if (Model.Status == "Draft")
+                {
+                    <form method="post" asp-action="SubmitAdjustment" asp-route-id="@Model.AdjustmentId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Submit this adjustment for approval?')">
+                            <i class="bi bi-send"></i> Submit
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "Submitted")
+                {
+                    <form method="post" asp-action="ApproveAdjustment" asp-route-id="@Model.AdjustmentId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Approve this adjustment?')">
+                            <i class="bi bi-check-circle"></i> Approve
+                        </button>
+                    </form>
+                    <form method="post" asp-action="RejectAdjustment" asp-route-id="@Model.AdjustmentId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this adjustment?')">
+                            <i class="bi bi-x-circle"></i> Reject
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "Approved")
+                {
+                    <form method="post" asp-action="PostAdjustment" asp-route-id="@Model.AdjustmentId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-info" onclick="return confirm('Post this adjustment? Stock will be updated.')">
+                            <i class="bi bi-check2"></i> Post Adjustment
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

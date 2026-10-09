@@ -1,0 +1,244 @@
+﻿<script>
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL AJAX INTERCEPTOR
+   Handles ALL forms with id ending in "Form"
+   - Prevents default submit
+   - Sends via fetch()
+   - Shows toast
+   - Closes modal
+   - Auto-refreshes list (reload_() or full page reload)
+   ═══════════════════════════════════════════════════════════ */
+
+// CSRF token getter
+function tk() {
+    var el = document.querySelector("input[name=__RequestVerificationToken]");
+    return el ? el.value : "";
+}
+
+// Toast notification
+function showToast(msg, type, duration) {
+    type = type || "success";
+    duration = duration || 3500;
+    var holder = document.getElementById("toastHolder");
+    if (!holder) {
+        holder = document.createElement("div");
+        holder.id = "toastHolder";
+        holder.className = "toast-holder";
+        document.body.appendChild(holder);
+    }
+    var d = document.createElement("div");
+    d.className = "toast-item " + (type === "error" ? "error" : "");
+    var icon = type === "error" ? "bi-x-circle-fill" : "bi-check-circle-fill";
+    d.innerHTML = '<i class="bi ' + icon + '"></i><span class="msg">' + msg + '</span>';
+    holder.appendChild(d);
+    setTimeout(function () {
+        d.style.transition = "opacity .4s, transform .4s";
+        d.style.opacity = "0";
+        d.style.transform = "translateX(100px)";
+        setTimeout(function () { d.remove(); }, 400);
+    }, duration);
+}
+
+// Menu toggle for actions
+function toggleMenu(id, e) {
+    if (!e) return;
+    e.stopPropagation();
+    document.querySelectorAll(".act-menu").forEach(function (m) {
+        if (m.id !== "menu-" + id) m.classList.remove("show");
+    });
+    var el = document.getElementById("menu-" + id);
+    if (!el) return;
+    if (el.classList.contains("show")) {
+        el.classList.remove("show");
+        return;
+    }
+    var b = e.currentTarget || e.target;
+    var r = b.getBoundingClientRect();
+    el.style.top = (r.bottom + 4) + "px";
+    el.style.right = (window.innerWidth - r.right) + "px";
+    el.style.left = "auto";
+    el.classList.add("show");
+}
+
+document.addEventListener("click", function () {
+    document.querySelectorAll(".act-menu").forEach(function (m) {
+        m.classList.remove("show");
+    });
+});
+
+// Execute scripts inside AJAX-loaded HTML
+function execScripts(container) {
+    container.querySelectorAll("script").forEach(function (oldScript) {
+        var newScript = document.createElement("script");
+        newScript.textContent = oldScript.textContent;
+        document.body.appendChild(newScript);
+    });
+}
+
+// Filter rows in table
+function filterRows() {
+    var tSearch = document.getElementById("tSearch");
+    if (!tSearch) return;
+    var f = tSearch.value.toLowerCase();
+    var rows = document.querySelectorAll("#xBody tr");
+    var n = 0;
+    rows.forEach(function (r) {
+        var t = (r.textContent || "").toLowerCase();
+        if (t.indexOf(f) > -1) {
+            r.style.display = "";
+            n++;
+        } else {
+            r.style.display = "none";
+        }
+    });
+    var c = document.getElementById("xCount");
+    if (c) c.textContent = n;
+    var tc = document.getElementById("tableCount");
+    if (tc) tc.textContent = n;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ★ THE MASTER SUBMIT INTERCEPTOR ★
+   Har form jo id="XxxForm" hai — usko handle karta hai
+   ═══════════════════════════════════════════════════════════ */
+document.addEventListener("submit", function (e) {
+    var form = e.target;
+    if (!form || !form.id || form.id.indexOf("Form") < 0) return;
+
+    // Skip main antiforgery hidden form
+    if (form.id === "__af" || form.id === "__mainAntiforgeryForm") return;
+
+    e.preventDefault();
+
+    // Hide previous alert
+    var alertBox = document.getElementById(form.id.replace("Form", "Alert"));
+    if (alertBox) alertBox.style.display = "none";
+
+    // Disable submit button
+    var submitBtn = form.querySelector("button[type=submit]");
+    var originalText = submitBtn ? submitBtn.textContent : "";
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving...";
+    }
+
+    // Send AJAX
+    fetch(form.action, {
+        method: "POST",
+        body: new FormData(form)
+    })
+        .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+        })
+        .then(function (res) {
+            if (res && res.success) {
+                // Close modal
+                var modalEl = form.closest(".modal");
+                if (modalEl) {
+                    var modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                }
+
+                // Show toast
+                showToast(res.message || "Saved successfully!", "success");
+
+                // ★ REFRESH LIST — 3-level fallback ★
+                setTimeout(function () {
+                    try {
+                        if (typeof window.reload_ === "function") {
+                            window.reload_();
+                        } else if (typeof window.refreshList === "function") {
+                            window.refreshList();
+                        } else if (typeof window.loadData === "function") {
+                            window.loadData();
+                        } else {
+                            // Last resort: full page reload
+                            window.location.reload();
+                        }
+                    } catch (ex) {
+                        console.error("Reload failed:", ex);
+                        window.location.reload();
+                    }
+                }, 350);
+            } else {
+                if (alertBox) {
+                    alertBox.textContent = (res && res.message) || "Failed to save";
+                    alertBox.style.display = "block";
+                }
+            }
+        })
+        .catch(function (err) {
+            if (alertBox) {
+                alertBox.textContent = "Error: " + err.message;
+                alertBox.style.display = "block";
+            }
+            console.error("Form submit error:", err);
+        })
+        .finally(function () {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+});
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL DELETE HANDLER
+   Any element with data-delete-url or onclick delRow(id)
+   ═══════════════════════════════════════════════════════════ */
+window.globalDelete = function (url, confirmMsg) {
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    var fd = new FormData();
+    fd.append("__RequestVerificationToken", tk());
+    fetch(url, { method: "POST", body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res && res.success) {
+                showToast(res.message || "Deleted", "success");
+                setTimeout(function () {
+                    if (typeof window.reload_ === "function") window.reload_();
+                    else window.location.reload();
+                }, 350);
+            } else {
+                showToast((res && res.message) || "Failed", "error");
+            }
+        })
+        .catch(function (err) {
+            showToast("Error: " + err.message, "error");
+        });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL TOGGLE HANDLER
+   ═══════════════════════════════════════════════════════════ */
+window.globalToggle = function (url) {
+    var fd = new FormData();
+    fd.append("__RequestVerificationToken", tk());
+    fetch(url, { method: "POST", body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            if (res && res.success) {
+                showToast(res.message || "Updated", "success");
+                setTimeout(function () {
+                    if (typeof window.reload_ === "function") window.reload_();
+                }, 350);
+            }
+        })
+        .catch(function (err) {
+            showToast("Error: " + err.message, "error");
+        });
+};
+
+/* ═══════════════════════════════════════════════════════════
+   ID COLUMN HIDE (optional visual)
+   ═══════════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", function () {
+    // Hide columns with data-hide="true" if any
+    document.querySelectorAll("th[data-hide], td[data-hide]").forEach(function (el) {
+        el.style.display = "none";
+    });
+});
+
+console.log("✓ Global AJAX interceptor active");
+</script>

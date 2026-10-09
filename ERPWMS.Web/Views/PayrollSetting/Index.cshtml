@@ -1,0 +1,992 @@
+﻿@{
+    ViewData["Title"] = "Payroll Settings";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+<script>document.body.classList.add("wms-widepage");</script>
+
+<style>
+/* ====== EXACT REFERENCE MATCH ====== */
+body.wms-widepage .wms-content{
+    padding: 18px 22px 30px 22px;
+    min-height: auto;
+}
+
+.ps-page{
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #0f172a;
+    padding-bottom: 80px;
+}
+
+/* ============ HERO HEADER ============ */
+.ps-hero{
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 55%, #3b82f6 100%);
+    border-radius: 16px;
+    padding: 22px 28px;
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -8px rgba(37,99,235,.45);
+}
+.ps-hero::before{
+    content:"";
+    position:absolute;
+    right:100px;top:-60px;
+    width:200px;height:200px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.08) 0%, transparent 70%);
+}
+.ps-hero::after{
+    content:"";
+    position:absolute;
+    right:-40px;bottom:-60px;
+    width:180px;height:180px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 70%);
+}
+.ps-hero-icon{
+    width:54px;height:54px;
+    border-radius:14px;
+    background:rgba(255,255,255,.2);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.3);
+    display:grid;place-items:center;
+    color:#fff;font-size:26px;
+    flex-shrink:0;
+    position:relative;z-index:2;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.ps-hero-text{flex:1;position:relative;z-index:2;}
+.ps-hero-text h1{
+    font-size:22px;
+    font-weight:700;
+    color:#fff;
+    margin:0 0 4px 0;
+    letter-spacing:-.3px;
+    line-height:1.2;
+}
+.ps-hero-text p{
+    font-size:13px;
+    color:rgba(255,255,255,.88);
+    margin:0;
+    font-weight:400;
+}
+.ps-hero-badge{
+    background:rgba(74,222,128,.22);
+    color:#bbf7d0;
+    padding:7px 16px;
+    border-radius:99px;
+    font-size:12px;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    border:1px solid rgba(74,222,128,.45);
+    position:relative;z-index:2;
+    backdrop-filter:blur(10px);
+}
+.ps-hero-badge::before{
+    content:"";
+    width:7px;height:7px;
+    border-radius:50%;
+    background:#4ade80;
+    box-shadow:0 0 0 3px rgba(74,222,128,.35);
+}
+
+/* ============ 2-COLUMN GRID ============ */
+.ps-main-grid{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 18px;
+    align-items: start;
+}
+.ps-col-left, .ps-col-right{
+    display:flex;
+    flex-direction:column;
+    gap: 18px;
+    min-width: 0;
+}
+
+/* ============ CARD ============ */
+.ps-card{
+    background:#fff;
+    border:1px solid #e5e9f2;
+    border-radius: 14px;
+    overflow:hidden;
+    box-shadow: 0 1px 3px rgba(15,23,42,.04), 0 1px 2px rgba(15,23,42,.03);
+    transition: box-shadow .2s;
+}
+.ps-card:hover{
+    box-shadow: 0 4px 12px rgba(15,23,42,.08);
+}
+
+.ps-card-header{
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+.ps-card-header-icon{
+    width:44px;height:44px;
+    border-radius:11px;
+    display:grid;place-items:center;
+    font-size:19px;
+    flex-shrink:0;
+    color:#fff;
+}
+.ps-card-header-icon.blue{
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    box-shadow: 0 6px 12px -4px rgba(37,99,235,.55);
+}
+.ps-card-header-icon.purple{
+    background: linear-gradient(135deg,#7c3aed,#8b5cf6);
+    box-shadow: 0 6px 12px -4px rgba(124,58,237,.55);
+}
+.ps-card-header-icon.green{
+    background: linear-gradient(135deg,#059669,#10b981);
+    box-shadow: 0 6px 12px -4px rgba(5,150,105,.55);
+}
+.ps-card-header-icon.cyan{
+    background: linear-gradient(135deg,#0891b2,#06b6d4);
+    box-shadow: 0 6px 12px -4px rgba(8,145,178,.55);
+}
+.ps-card-header-text{
+    flex:1;
+    min-width: 0;
+}
+.ps-card-header-text h3{
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 2px 0;
+    line-height: 1.3;
+    letter-spacing: -.15px;
+}
+.ps-card-header-text p{
+    font-size: 12.5px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ============ FORM ============ */
+.ps-card-body{
+    padding: 0 20px 20px 20px;
+}
+.ps-form-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 22px;
+}
+.ps-field label{
+    display:block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 7px;
+    letter-spacing: -.1px;
+}
+.ps-field label .req{color:#ef4444;margin-left:2px;}
+.ps-input-wrap{
+    position:relative;
+    display:flex;
+    align-items:center;
+}
+.ps-input-icon{
+    position:absolute;
+    left:13px;
+    color:#94a3b8;
+    font-size:15px;
+    pointer-events:none;
+    z-index: 1;
+}
+.ps-field input[type=number],
+.ps-field input[type=text],
+.ps-field select{
+    width:100%;
+    height: 42px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 0 14px 0 40px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: #0f172a;
+    background: #fff;
+    transition: all .15s;
+    -webkit-appearance: none;
+    appearance: none;
+    font-weight: 500;
+}
+.ps-field input[type=number]::-webkit-inner-spin-button,
+.ps-field input[type=number]::-webkit-outer-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
+}
+.ps-field select{
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 38px;
+    cursor: pointer;
+}
+.ps-field input:focus,
+.ps-field select:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+
+/* ============ SECTION (Early/Late Deduction) ============ */
+.ps-section{
+    padding: 0 20px 18px 20px;
+}
+.ps-toggle-row{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin-bottom:14px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+    border-radius: 10px;
+    border: 1px solid #dbeafe;
+}
+.ps-toggle-row b{
+    font-size:13.5px;
+    font-weight:600;
+    color:#1e40af;
+}
+
+/* Switch */
+.ps-switch{
+    position:relative;
+    width:44px;height:24px;
+    flex-shrink:0;
+    margin:0;
+    display:inline-block;
+}
+.ps-switch input{
+    position:absolute;
+    inset:0;opacity:0;
+    width:100%;height:100%;
+    margin:0;cursor:pointer;z-index:2;
+}
+.ps-switch span{
+    position:absolute;
+    inset:0;
+    border-radius:99px;
+    background:#cbd5e1;
+    transition:.2s;
+}
+.ps-switch span::after{
+    content:"";
+    position:absolute;
+    top:2px;left:2px;
+    width:20px;height:20px;
+    border-radius:50%;
+    background:#fff;
+    box-shadow: 0 2px 4px rgba(15,23,42,.2);
+    transition:.2s;
+}
+.ps-switch input:checked+span{
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    box-shadow: 0 2px 6px rgba(37,99,235,.4);
+}
+.ps-switch input:checked+span::after{
+    transform: translateX(20px);
+}
+
+/* ============ TABLE ============ */
+.ps-table-wrap{
+    border:1.5px solid #e5e9f2;
+    border-radius: 11px;
+    overflow: hidden;
+    background: #fff;
+}
+.ps-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+}
+.ps-table thead th{
+    text-align:left;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-bottom: 1.5px solid #e5e9f2;
+    letter-spacing: -.05px;
+}
+.ps-table tbody td{
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: 13px;
+    vertical-align: middle;
+    font-weight: 500;
+}
+.ps-table tbody tr:last-child td{border-bottom:none;}
+.ps-table tbody tr:hover{background:#fafbfc;}
+.ps-table input[type=number]{
+    width: 72px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 7px;
+    text-align: center;
+    font-weight: 600;
+    color: #0f172a;
+    background: #fff;
+}
+.ps-table input[type=number]:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+/* ============ BADGES ============ */
+.ps-badge{
+    display:inline-block;
+    padding: 4px 14px;
+    border-radius: 99px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: -.05px;
+}
+.ps-badge.warn{background:#fef3c7;color:#b45309;}
+.ps-badge.half{background:#dbeafe;color:#1e40af;}
+.ps-badge.full{background:#ede9fe;color:#6d28d9;}
+
+/* ============ PAYROLL CONTROL (collapsible) ============ */
+.ps-control-card{
+    background:#fff;
+    border:1px solid #e5e9f2;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow: 0 1px 3px rgba(15,23,42,.04);
+    transition: box-shadow .2s;
+}
+.ps-control-card:hover{
+    box-shadow: 0 4px 12px rgba(15,23,42,.08);
+}
+.ps-control-header{
+    padding: 16px 20px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    cursor:pointer;
+    user-select:none;
+    transition: background .15s;
+}
+.ps-control-header:hover{background:#f8fafc;}
+.ps-control-header-icon{
+    width:44px;height:44px;
+    border-radius:11px;
+    background: linear-gradient(135deg,#0891b2,#06b6d4);
+    box-shadow: 0 6px 12px -4px rgba(8,145,178,.55);
+    display:grid;place-items:center;
+    color:#fff;font-size:19px;
+    flex-shrink:0;
+}
+.ps-control-header-text{flex:1;min-width:0;}
+.ps-control-header-text h3{
+    font-size:16px;
+    font-weight:700;
+    color:#0f172a;
+    margin:0 0 2px 0;
+    letter-spacing:-.15px;
+}
+.ps-control-header-text p{
+    font-size:12.5px;
+    color:#64748b;
+    margin:0;
+    line-height:1.4;
+}
+.ps-control-header-arrow{
+    color:#94a3b8;
+    font-size:17px;
+    transition: transform .3s;
+    flex-shrink:0;
+}
+.ps-control-card.open .ps-control-header-arrow{
+    transform: rotate(90deg);
+}
+.ps-control-body{
+    max-height:0;
+    overflow:hidden;
+    transition: max-height .4s ease;
+    border-top:0;
+}
+.ps-control-card.open .ps-control-body{
+    max-height:900px;
+    border-top:1px solid #f1f5f9;
+}
+
+/* ============ CONTROL ROW ============ */
+.ps-ctrl-row{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding: 13px 20px;
+    border-bottom:1px solid #f8fafc;
+    transition: background .15s;
+}
+.ps-ctrl-row:last-child{border-bottom:none;}
+.ps-ctrl-row:hover{background:#fafbfc;}
+.ps-ctrl-row-icon{
+    width:36px;height:36px;
+    border-radius:9px;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    color: #334155;
+    display:grid;place-items:center;
+    font-size:13px;
+    font-weight:700;
+    flex-shrink:0;
+}
+.ps-ctrl-row-text{flex:1;min-width:0;}
+.ps-ctrl-row-text b{
+    display:block;
+    font-size:13.5px;
+    font-weight:600;
+    color:#0f172a;
+    margin-bottom:1px;
+}
+.ps-ctrl-row-text small{
+    color:#64748b;
+    font-size:12px;
+    line-height:1.35;
+}
+
+/* ============ FOOTER ============ */
+.ps-footer{
+    position: fixed;
+    left: 250px;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #e5e9f2;
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    box-shadow: 0 -4px 16px rgba(15,23,42,.06);
+}
+.ps-unsaved{
+    color: #64748b;
+    font-weight: 600;
+    font-size: 13px;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+.ps-unsaved::before{
+    content: "";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;height: 22px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 700;
+}
+.ps-unsaved.saved{color: #059669;}
+.ps-unsaved.saved::before{
+    content: "✓";
+    background: linear-gradient(135deg,#059669,#10b981);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(16,185,129,.4);
+}
+
+.ps-footer-btn{
+    height: 42px;
+    padding: 0 22px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    font: inherit;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: -.1px;
+}
+.ps-footer-btn:hover{
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+.ps-footer-btn.primary{
+    background: linear-gradient(135deg,#2563eb,#3b82f6);
+    border-color: #2563eb;
+    color: #fff;
+    box-shadow: 0 6px 14px -3px rgba(37,99,235,.5);
+}
+.ps-footer-btn.primary:hover{
+    background: linear-gradient(135deg,#1d4ed8,#2563eb);
+    box-shadow: 0 8px 20px -3px rgba(37,99,235,.6);
+    transform: translateY(-1px);
+}
+.ps-footer-btn:disabled{opacity:.6;cursor:not-allowed;}
+.ps-footer-btn i{font-size: 15px;}
+
+/* ============ RESPONSIVE ============ */
+@@media (max-width: 950px){
+    .ps-main-grid{grid-template-columns:1fr;}
+    .ps-footer{left:0;padding:12px 18px;}
+}
+@@media (max-width: 640px){
+    .ps-form-grid{grid-template-columns:1fr;}
+    .ps-hero{padding:18px 20px;gap:14px;}
+    .ps-hero-icon{width:46px;height:46px;font-size:22px;}
+    .ps-hero-text h1{font-size:18px;}
+}
+</style>
+
+<div class="ps-page">
+
+    <!-- ==================== HERO HEADER ==================== -->
+    <div class="ps-hero">
+        <div class="ps-hero-icon"><i class="bi bi-wallet2"></i></div>
+        <div class="ps-hero-text">
+            <h1>Payroll Configuration</h1>
+            <p>Configure payroll calculations and attendance policies</p>
+        </div>
+        <span class="ps-hero-badge" id="statusPill">Active</span>
+    </div>
+
+    <!-- ==================== MAIN GRID ==================== -->
+    <div class="ps-main-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="ps-col-left">
+
+            <!-- Payroll Configuration -->
+            <div class="ps-card">
+                <div class="ps-card-header">
+                    <div class="ps-card-header-icon blue"><i class="bi bi-gear-fill"></i></div>
+                    <div class="ps-card-header-text">
+                        <h3>Payroll Configuration</h3>
+                        <p>Set up payroll rules and calculation parameters for your organization.</p>
+                    </div>
+                </div>
+                <div class="ps-card-body">
+                    <div class="ps-form-grid">
+
+                        <div class="ps-field">
+                            <label>Payroll Frequency <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-calendar3 ps-input-icon"></i>
+                                <select id="frequency">
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="BiWeekly">Bi-Weekly</option>
+                                    <option value="Weekly">Weekly</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Salary Divisor (days) <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-calendar3 ps-input-icon"></i>
+                                <input type="number" id="salaryDivisor" min="1" max="31" />
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Working Days <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-calendar3 ps-input-icon"></i>
+                                <input type="number" id="workingDays" min="1" max="31" />
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Grace Period (minutes) <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-clock ps-input-icon"></i>
+                                <input type="number" id="gracePeriodMinutes" min="0" max="120" />
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Late Threshold (minutes) <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-clock-history ps-input-icon"></i>
+                                <input type="number" id="lateThresholdMinutes" min="0" max="240" />
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Early Departure (min) <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-clock ps-input-icon"></i>
+                                <input type="number" id="earlyThresholdMinutes" min="0" max="240" />
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>OT Multiplier <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-percent ps-input-icon"></i>
+                                <input type="number" id="otMultiplier" min="0.5" max="5" step="0.1" />
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Rounding Rule <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-arrow-repeat ps-input-icon"></i>
+                                <select id="roundingRule">
+                                    <option value="Nearest">Nearest</option>
+                                    <option value="Up">Up</option>
+                                    <option value="Down">Down</option>
+                                    <option value="None">None</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="ps-field">
+                            <label>Currency <span class="req">*</span></label>
+                            <div class="ps-input-wrap">
+                                <i class="bi bi-currency-exchange ps-input-icon"></i>
+                                <select id="currency">
+                                    <option value="PKR">PKR</option>
+                                    <option value="USD">USD</option>
+                                    <option value="AED">AED</option>
+                                    <option value="SAR">SAR</option>
+                                    <option value="GBP">GBP</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payroll Control (Collapsible) -->
+            <div class="ps-control-card" id="payrollControlCard">
+                <div class="ps-control-header" onclick="toggleControl()">
+                    <div class="ps-control-header-icon"><i class="bi bi-shield-check"></i></div>
+                    <div class="ps-control-header-text">
+                        <h3>Payroll Control</h3>
+                        <p>Manage payroll processing and control settings for your organization.</p>
+                    </div>
+                    <i class="bi bi-chevron-right ps-control-header-arrow"></i>
+                </div>
+                <div class="ps-control-body">
+                    <div class="ps-ctrl-row">
+                        <div class="ps-ctrl-row-icon">A</div>
+                        <div class="ps-ctrl-row-text">
+                            <b>Approval Required</b>
+                            <small>Require approval before payroll processing.</small>
+                        </div>
+                        <label class="ps-switch"><input type="checkbox" id="approvalRequired"><span></span></label>
+                    </div>
+                    <div class="ps-ctrl-row">
+                        <div class="ps-ctrl-row-icon">P</div>
+                        <div class="ps-ctrl-row-text">
+                            <b>Payroll Settings Active</b>
+                            <small>Payroll configuration is active.</small>
+                        </div>
+                        <label class="ps-switch"><input type="checkbox" id="isActive"><span></span></label>
+                    </div>
+                    <div class="ps-ctrl-row">
+                        <div class="ps-ctrl-row-icon">C</div>
+                        <div class="ps-ctrl-row-text">
+                            <b>Auto Calculate Payroll</b>
+                            <small>Automatically calculate payroll on schedule.</small>
+                        </div>
+                        <label class="ps-switch"><input type="checkbox" id="autoCalculatePayroll"><span></span></label>
+                    </div>
+                    <div class="ps-ctrl-row">
+                        <div class="ps-ctrl-row-icon">L</div>
+                        <div class="ps-ctrl-row-text">
+                            <b>Lock Payroll After Approval</b>
+                            <small>Prevent changes after final approval.</small>
+                        </div>
+                        <label class="ps-switch"><input type="checkbox" id="lockAfterApproval"><span></span></label>
+                    </div>
+                    <div class="ps-ctrl-row">
+                        <div class="ps-ctrl-row-icon">M</div>
+                        <div class="ps-ctrl-row-text">
+                            <b>Allow Manual Adjustments</b>
+                            <small>Allow admins to manually adjust payroll.</small>
+                        </div>
+                        <label class="ps-switch"><input type="checkbox" id="allowManualAdjustments"><span></span></label>
+                    </div>
+                    <div class="ps-ctrl-row">
+                        <div class="ps-ctrl-row-icon">N</div>
+                        <div class="ps-ctrl-row-text">
+                            <b>Send Payroll Notifications</b>
+                            <small>Email notifications to employees.</small>
+                        </div>
+                        <label class="ps-switch"><input type="checkbox" id="sendPayrollNotifications"><span></span></label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="ps-col-right">
+
+            <!-- Early Departure Rules -->
+            <div class="ps-card">
+                <div class="ps-card-header">
+                    <div class="ps-card-header-icon purple"><i class="bi bi-clock"></i></div>
+                    <div class="ps-card-header-text">
+                        <h3>Early Departure Rules</h3>
+                        <p>Configure rules for early departure deductions.</p>
+                    </div>
+                </div>
+                <div class="ps-section">
+                    <div class="ps-toggle-row">
+                        <label class="ps-switch"><input type="checkbox" id="enableEarlyDeduction"><span></span></label>
+                        <b>Enable Early Deduction</b>
+                    </div>
+                    <div class="ps-table-wrap">
+                        <table class="ps-table">
+                            <thead>
+                                <tr>
+                                    <th>Rule</th>
+                                    <th>Count</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Early Warning</td>
+                                    <td><input type="number" id="earlyWarningCount" min="1" max="30" /></td>
+                                    <td><span class="ps-badge warn">Warning</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Early Half-Day</td>
+                                    <td><input type="number" id="earlyHalfDayCount" min="1" max="30" /></td>
+                                    <td><span class="ps-badge half">Half Day</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Late Deduction Rules -->
+            <div class="ps-card">
+                <div class="ps-card-header">
+                    <div class="ps-card-header-icon green"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="ps-card-header-text">
+                        <h3>Late Deduction Rules</h3>
+                        <p>Configure rules for late deduction.</p>
+                    </div>
+                </div>
+                <div class="ps-section">
+                    <div class="ps-toggle-row">
+                        <label class="ps-switch"><input type="checkbox" id="enableLateDeduction"><span></span></label>
+                        <b>Enable Late Deduction</b>
+                    </div>
+                    <div class="ps-table-wrap">
+                        <table class="ps-table">
+                            <thead>
+                                <tr>
+                                    <th>Rule</th>
+                                    <th>Count</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Warning 1</td>
+                                    <td><input type="number" id="lateWarningCount1" min="1" max="30" /></td>
+                                    <td><span class="ps-badge warn">Warning</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Warning 2</td>
+                                    <td><input type="number" id="lateWarningCount2" min="1" max="30" /></td>
+                                    <td><span class="ps-badge warn">Warning</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Half Day</td>
+                                    <td><input type="number" id="lateHalfDayCount" min="1" max="30" /></td>
+                                    <td><span class="ps-badge half">Half Day</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Full Day</td>
+                                    <td><input type="number" id="lateFullDayCount" min="1" max="30" /></td>
+                                    <td><span class="ps-badge full">Full Day</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="ps-footer">
+    <span class="ps-unsaved saved" id="unsavedMsg">All changes saved</span>
+    <button class="ps-footer-btn" type="button" onclick="resetDefaults()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+    </button>
+    <button class="ps-footer-btn" type="button" onclick="reload_()">
+        <i class="bi bi-x-lg"></i> Cancel
+    </button>
+    <button class="ps-footer-btn primary" type="button" onclick="saveSettings()" id="saveBtn">
+        <i class="bi bi-check-lg"></i> Save Changes
+    </button>
+</footer>
+
+<script>
+function tk(){
+    var i = document.querySelector('#__af input[name="__RequestVerificationToken"]');
+    return i ? i.value : '';
+}
+
+function toggleControl(){
+    var card = document.getElementById('payrollControlCard');
+    card.classList.toggle('open');
+}
+
+var isDirty = false;
+
+function markDirty(){
+    isDirty = true;
+    var m = document.getElementById('unsavedMsg');
+    m.textContent = 'Changes are not saved';
+    m.classList.remove('saved');
+}
+
+document.querySelectorAll('.ps-page input, .ps-page select').forEach(function(el){
+    el.addEventListener('change', markDirty);
+    el.addEventListener('input', markDirty);
+});
+
+function reload_(){
+    isDirty = false;
+    var m = document.getElementById('unsavedMsg');
+    m.textContent = 'Loading...';
+    m.classList.remove('saved');
+
+    fetch('/PayrollSetting/GetSetting').then(function(r){ return r.json(); }).then(function(d){
+        document.getElementById('frequency').value = d.frequency || 'Monthly';
+        document.getElementById('salaryDivisor').value = d.salaryDivisor || 30;
+        document.getElementById('workingDays').value = d.workingDays || 26;
+        document.getElementById('gracePeriodMinutes').value = d.gracePeriodMinutes || 15;
+        document.getElementById('lateThresholdMinutes').value = d.lateThresholdMinutes || 30;
+        document.getElementById('earlyThresholdMinutes').value = d.earlyThresholdMinutes || 30;
+        document.getElementById('otMultiplier').value = d.otMultiplier || 1.5;
+        document.getElementById('roundingRule').value = d.roundingRule || 'Nearest';
+        document.getElementById('currency').value = d.currency || 'PKR';
+        document.getElementById('lateWarningCount1').value = d.lateWarningCount1 || 3;
+        document.getElementById('lateWarningCount2').value = d.lateWarningCount2 || 5;
+        document.getElementById('lateHalfDayCount').value = d.lateHalfDayCount || 3;
+        document.getElementById('lateFullDayCount').value = d.lateFullDayCount || 6;
+        document.getElementById('earlyWarningCount').value = d.earlyWarningCount || 3;
+        document.getElementById('earlyHalfDayCount').value = d.earlyHalfDayCount || 5;
+        document.getElementById('enableLateDeduction').checked = d.enableLateDeduction !== false;
+        document.getElementById('enableEarlyDeduction').checked = d.enableEarlyDeduction !== false;
+        document.getElementById('approvalRequired').checked = d.approvalRequired !== false;
+        document.getElementById('isActive').checked = d.isActive !== false;
+        document.getElementById('autoCalculatePayroll').checked = d.autoCalculatePayroll === true;
+        document.getElementById('lockAfterApproval').checked = d.lockAfterApproval === true;
+        document.getElementById('allowManualAdjustments').checked = d.allowManualAdjustments !== false;
+        document.getElementById('sendPayrollNotifications').checked = d.sendPayrollNotifications === true;
+
+        document.getElementById('statusPill').textContent = d.isActive !== false ? 'Active' : 'Inactive';
+
+        var m = document.getElementById('unsavedMsg');
+        m.textContent = 'All changes saved';
+        m.classList.add('saved');
+        isDirty = false;
+    }).catch(function(e){
+        document.getElementById('unsavedMsg').textContent = 'Load failed: ' + e.message;
+    });
+}
+
+function saveSettings(){
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fd.append('frequency', document.getElementById('frequency').value);
+    fd.append('salaryDivisor', document.getElementById('salaryDivisor').value);
+    fd.append('workingDays', document.getElementById('workingDays').value);
+    fd.append('gracePeriodMinutes', document.getElementById('gracePeriodMinutes').value);
+    fd.append('lateThresholdMinutes', document.getElementById('lateThresholdMinutes').value);
+    fd.append('earlyThresholdMinutes', document.getElementById('earlyThresholdMinutes').value);
+    fd.append('otMultiplier', document.getElementById('otMultiplier').value);
+    fd.append('roundingRule', document.getElementById('roundingRule').value);
+    fd.append('currency', document.getElementById('currency').value);
+    fd.append('approvalRequired', document.getElementById('approvalRequired').checked);
+    fd.append('isActive', document.getElementById('isActive').checked);
+    fd.append('lateWarningCount1', document.getElementById('lateWarningCount1').value);
+    fd.append('lateWarningCount2', document.getElementById('lateWarningCount2').value);
+    fd.append('lateHalfDayCount', document.getElementById('lateHalfDayCount').value);
+    fd.append('lateFullDayCount', document.getElementById('lateFullDayCount').value);
+    fd.append('earlyWarningCount', document.getElementById('earlyWarningCount').value);
+    fd.append('earlyHalfDayCount', document.getElementById('earlyHalfDayCount').value);
+    fd.append('enableLateDeduction', document.getElementById('enableLateDeduction').checked);
+    fd.append('enableEarlyDeduction', document.getElementById('enableEarlyDeduction').checked);
+    fd.append('autoCalculatePayroll', document.getElementById('autoCalculatePayroll').checked);
+    fd.append('lockAfterApproval', document.getElementById('lockAfterApproval').checked);
+    fd.append('allowManualAdjustments', document.getElementById('allowManualAdjustments').checked);
+    fd.append('sendPayrollNotifications', document.getElementById('sendPayrollNotifications').checked);
+
+    var btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+
+    fetch('/PayrollSetting/Save', { method:'POST', body: fd })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
+            if(res.success){
+                if(typeof showToast === 'function') showToast(res.message, 'success'); else alert(res.message);
+                reload_();
+            } else {
+                if(typeof showToast === 'function') showToast(res.message, 'error'); else alert(res.message);
+            }
+        })
+        .catch(function(e){
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
+            if(typeof showToast === 'function') showToast('Error: ' + e.message, 'error'); else alert('Error: ' + e.message);
+        });
+}
+
+function resetDefaults(){
+    if(!confirm('Reset all settings to default values?')) return;
+    var fd = new FormData();
+    fd.append('__RequestVerificationToken', tk());
+    fetch('/PayrollSetting/ResetToDefaults', { method:'POST', body: fd })
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+            if(res.success){
+                if(typeof showToast === 'function') showToast(res.message, 'success'); else alert(res.message);
+                reload_();
+            } else {
+                if(typeof showToast === 'function') showToast(res.message, 'error'); else alert(res.message);
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    reload_();
+});
+</script>

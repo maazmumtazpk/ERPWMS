@@ -1,0 +1,19 @@
+@model ERPWMS.Database.Models.SubCategory
+@{
+    Layout = null;
+}
+<form id="editSubCategoryForm" method="post" action="/SubCategory/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="subCategoryId" value="@Model.SubCategoryId" />
+    <div id="editSubCategoryAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Sub Category Name *</label><input type="text" name="subCategoryName" class="form-control form-control-sm" value="@Model.SubCategoryName" required maxlength="200" style="font-size:11px;" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Sub Category Code</label><input type="text" name="subCategoryCode" class="form-control form-control-sm" value="@Model.SubCategoryCode" maxlength="20" style="font-size:11px;" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold" style="font-size:10px;">Status</label><select name="isActive" class="form-select form-select-sm" style="font-size:11px;">@if((Model.IsActive == true)){<option value="true" selected>Active</option><option value="false">Inactive</option>}else{<option value="true">Active</option><option value="false" selected>Inactive</option>}</select></div>
+        <div class="col-12"><label class="form-label fw-bold" style="font-size:10px;">Description</label><textarea name="description" class="form-control form-control-sm" rows="2" maxlength="500" style="font-size:11px;">@Model.Description</textarea></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:10px;padding:4px 12px;">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="font-size:10px;padding:4px 12px;">Update</button>
+    </div>
+</form>

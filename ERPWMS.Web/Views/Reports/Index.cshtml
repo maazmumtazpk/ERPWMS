@@ -1,0 +1,233 @@
+﻿@{
+    ViewData["Title"] = "Reports Center";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var reportGroups = new Dictionary<string, List<(string Name, string Code, string Icon)>> {
+        { "Organization", new List<(string, string, string)> {
+            ("Companies", "COMPANY", "building"), ("Branches", "BRANCH", "signpost-split"),
+            ("Departments", "DEPARTMENT", "diagram-3"), ("Designations", "DESIGNATION", "person-badge")
+        }},
+        { "Warehouse Setup", new List<(string, string, string)> {
+            ("Warehouses", "WAREHOUSE", "building-fill"), ("Zones", "ZONE", "bounding-box"),
+            ("Racks", "RACK", "stack"), ("Bins", "BIN", "archive")
+        }},
+        { "Trade Partners", new List<(string, string, string)> {
+            ("Customers", "CUSTOMER", "person-badge-fill"), ("Suppliers", "SUPPLIER", "truck"),
+            ("Complaints", "CUSTOMERCOMPLAINT", "exclamation-circle"), ("Feedback", "CUSTOMERFEEDBACK", "star"),
+            ("Inquiries", "CUSTOMERINQUIRY", "question-circle")
+        }},
+        { "Product Catalog", new List<(string, string, string)> {
+            ("Categories", "CATEGORY", "tags-fill"), ("Sub Categories", "SUBCATEGORY", "tags"),
+            ("Brands", "BRAND", "award"), ("Units", "UNIT", "rulers"), ("Products", "PRODUCT", "box-fill")
+        }},
+        { "Procurement", new List<(string, string, string)> {
+            ("Purchase Orders", "PURCHASEMASTER", "file-earmark-text"), ("Goods Receipt (GRN)", "GRN", "clipboard-check"),
+            ("Purchase Returns", "PURCHASERETURN", "arrow-return-left")
+        }},
+        { "Sales", new List<(string, string, string)> {
+            ("Sales Orders", "SALES", "receipt"), ("Invoices", "INVOICE", "file-text"),
+            ("Dispatch", "DISPATCH", "truck"), ("Picking Lists", "PICKINGLIST", "list-check"),
+            ("Picking", "PICKING", "box-seam"), ("Sales Returns", "SALESRETURN", "arrow-return-left")
+        }},
+        { "Inventory", new List<(string, string, string)> {
+            ("Stock Ledger", "STOCKLEDGER", "journal-text"), ("Adjustments", "STOCKADJUSTMENT", "sliders"),
+            ("Transfers", "STOCKTRANSFER", "arrow-left-right"), ("Cycle Count", "CYCLECOUNT", "arrow-repeat"),
+            ("Adjustment", "ADJUSTMENT", "sliders"), ("Batch Tracking", "BATCHTRACKING", "upc-scan"),
+            ("Serial Numbers", "SERIALNUMBER", "hash"), ("Transfer", "TRANSFER", "arrow-left-right")
+        }},
+        { "Finance", new List<(string, string, string)> {
+            ("Chart of Accounts", "CHARTOFACCOUNT", "diagram-2"), ("Journal Vouchers", "JOURNALVOUCHER", "journal"),
+            ("Payment Vouchers", "PAYMENTVOUCHER", "cash-stack"), ("Receipt Vouchers", "RECEIPTVOUCHER", "receipt-cutoff"),
+            ("Bank Accounts", "BANKACCOUNT", "bank"), ("Bank Reconciliation", "BANKRECONCILIATION", "check2-square"),
+            ("Tax Settings", "TAXSETTING", "percent")
+        }},
+        { "Human Resource", new List<(string, string, string)> {
+            ("Employees", "EMPLOYEE", "person-vcard"), ("Attendance", "ATTENDANCE", "calendar-check"),
+            ("Leaves", "LEAVE", "calendar-x"), ("Payroll", "PAYROLL", "cash-coin"),
+            ("Bank Accounts", "EMPLOYEEBANKACCOUNT", "bank"), ("Salaries", "EMPLOYEESALARY", "cash-stack"),
+            ("Shifts", "SHIFT", "clock-history")
+        }},
+        { "Workflow", new List<(string, string, string)> {
+            ("Dashboard", "WORKFLOWDASHBOARD", "speedometer2"), ("Definitions", "WORKFLOWDEFINITION", "diagram-3"),
+            ("Stages", "WORKFLOWSTAGE", "list-ol"), ("Transitions", "WORKFLOWTRANSITION", "arrow-left-right"),
+            ("Conditions", "WORKFLOWCONDITION", "funnel"), ("Assignments", "WORKFLOWASSIGNMENT", "person-check"),
+            ("Deadlines", "WORKFLOWDEADLINE", "hourglass-split"), ("Instances", "WORKFLOWINSTANCE", "play-circle"),
+            ("Instance Logs", "WORKFLOWINSTANCELOG", "journal-text")
+        }},
+        { "Administration", new List<(string, string, string)> {
+            ("Admin Dashboard", "SYSTEMADMINDASHBOARD", "shield-check"), ("Users", "USER", "people-fill"),
+            ("User Profile", "USERPROFILE", "person-badge"), ("Roles", "ROLE", "shield-lock"),
+            ("System Settings", "SYSTEMSETTING", "gear-fill")
+        }},
+        { "Notifications", new List<(string, string, string)> {
+            ("My Notifications", "NOTIFICATION", "envelope-fill"), ("Templates", "NOTIFICATIONTEMPLATE", "file-earmark-text")
+        }},
+        { "System", new List<(string, string, string)> {
+            ("Database Backups", "BACKUP", "database-fill-gear")
+        }},
+        { "Payroll Reports", new List<(string, string, string)> {
+            ("Payroll Register", "PAYROLLREGISTER", "cash-stack"),
+            ("Attendance Summary", "ATTENDANCESUMMARY", "calendar-check"),
+            ("Leave Report", "LEAVEREPORT", "calendar-x"),
+            ("Loan Report", "LOANREPORT", "cash"),
+            ("Overtime Report", "OVERTIMEREPORT", "clock-history"),
+            ("Salary Report", "SALARYREPORT", "cash-coin")
+        }}
+    };
+    int totalReports = reportGroups.Sum(g => g.Value.Count);
+    int totalCategories = reportGroups.Count;
+}
+<style>
+    /* HERO HEADER AT TOP */
+    .reports-hero{background:linear-gradient(135deg,#0A1628 0%,#1a2f4a 100%);border-radius:12px;padding:16px 22px;margin:0 16px 20px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;gap:14px;box-shadow:0 6px 20px rgba(10,22,40,.15);width:auto;max-width:calc(100% - 32px)}
+    .reports-hero-left{display:flex;align-items:center;gap:14px}
+    .reports-hero-icon{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#F5A623,#E0951A);display:flex;align-items:center;justify-content:center;font-size:19px;color:#0A1628;box-shadow:0 4px 12px rgba(245,166,35,.4);flex-shrink:0}
+    .reports-hero h3{margin:0;color:#fff;font-size:16px;font-weight:800;letter-spacing:.3px;white-space:nowrap}
+    .reports-hero small{color:#94A3B8;font-size:11.5px;display:block;margin-top:3px}
+    .reports-hero-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
+    .reports-search{position:relative}
+    .reports-search input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 14px 8px 34px;color:#fff;font-size:12px;width:230px;outline:none;transition:all .2s}
+    .reports-search input::placeholder{color:#94A3B8}
+    .reports-search input:focus{background:rgba(255,255,255,.14);border-color:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+    .reports-search i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:13px}
+    .reports-date{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:7px 12px;color:#fff;font-size:10.5px;display:flex;align-items:center;gap:7px;line-height:1.2;white-space:nowrap}
+    .reports-date i{color:#F5A623;font-size:14px}
+    
+    /* KPI CARDS */
+    .kpi-pro{background:#fff;border:1px solid #edf0f4;border-radius:12px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;justify-content:space-between;align-items:center;transition:transform .2s,box-shadow .2s;height:100%}
+    .kpi-pro:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+    .kpi-pro-left{display:flex;align-items:center;gap:12px}
+    .kpi-pro-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .kpi-pro-icon.blue{background:#E0F2FE;color:#0284C7}
+    .kpi-pro-icon.green{background:#D7F4EE;color:#118B7B}
+    .kpi-pro-icon.purple{background:#EDE9FE;color:#7C3AED}
+    .kpi-pro-icon.gold{background:#FFF1D7;color:#E39A19}
+    .kpi-pro-label{margin:0;color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .kpi-pro-number{margin:4px 0 0 0;color:#0A1628;font-size:22px;font-weight:800;line-height:1}
+    .kpi-pro-trend{font-size:10px;color:#159A89;font-weight:600;margin-top:2px}
+    .kpi-pro-trend.muted{color:#94A3B8}
+    
+    /* SECTION HEADER */
+    .sec-header{display:flex;align-items:center;gap:10px;margin:0 0 14px 0}
+    .sec-header-icon{width:26px;height:26px;border-radius:7px;background:#FFF1D7;display:flex;align-items:center;justify-content:center;font-size:12px;color:#E39A19}
+    .sec-header h5{margin:0;font-size:15px;font-weight:800;color:#0A1628}
+    .sec-badge{background:#F1F5F9;color:#64748B;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px}
+    
+    /* MODULE CARDS */
+    .module-card{background:#fff;border:1px solid #edf0f4;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:all .25s;height:100%;position:relative;overflow:hidden}
+    .module-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#F5A623,#E0951A);opacity:0;transition:opacity .25s}
+    .module-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.1);border-color:#F5A623}
+    .module-card:hover::before{opacity:1}
+    .module-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+    .module-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .module-icon.c1{background:#E0F2FE;color:#0284C7}
+    .module-icon.c2{background:#D7F4EE;color:#118B7B}
+    .module-icon.c3{background:#EDE9FE;color:#7C3AED}
+    .module-icon.c4{background:#FEF3C7;color:#D97706}
+    .module-icon.c5{background:#FCE7F3;color:#DB2777}
+    .module-icon.c6{background:#DBEAFE;color:#2563EB}
+    .module-arrow{color:#CBD5E1;font-size:14px;transition:color .2s,transform .2s}
+    .module-card:hover .module-arrow{color:#F5A623;transform:translateX(3px)}
+    .module-title{color:#0A1628;font-size:13px;font-weight:800;margin:0 0 3px 0}
+    .module-sub{color:#94A3B8;font-size:10px;margin:0 0 10px 0}
+    .module-links{display:flex;flex-wrap:wrap;gap:5px}
+    .module-link{font-size:9.5px;color:#475569;background:#F8FAFC;border:1px solid #F1F5F9;padding:3px 8px;border-radius:5px;text-decoration:none;font-weight:600;transition:all .15s}
+    .module-link:hover{background:#FFF1D7;color:#E39A19;border-color:#FFE4B5}
+
+    /* SEARCH NO RESULT */
+    .no-result{display:none;padding:40px;text-align:center;color:#94A3B8;background:#fff;border-radius:12px;border:1px dashed #E2E8F0;margin-top:20px}
+    .no-result i{font-size:36px;color:#CBD5E1;display:block;margin-bottom:10px}
+</style>
+
+<div class="container-fluid p-0">
+        <!-- HERO HEADER -->
+    <div class="reports-hero">
+        <div class="reports-hero-left">
+            <div class="reports-hero-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+            <div>
+                <h3>Reports Center</h3>
+                <small>Access all system reports and insights</small>
+            </div>
+        </div>
+        <div class="reports-hero-right">
+            <div class="reports-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="reportSearch" placeholder="Search reports, modules or keywords..." onkeyup="filterReports()" />
+            </div>
+            <div class="reports-date">
+                <i class="bi bi-calendar3"></i>
+                <span>Today<br/>@DateTime.Now.ToString("MMM dd, yyyy")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION HEADER -->
+    <div class="sec-header">
+        <div class="sec-header-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+        <h5>Reports by Module</h5>
+        <span class="sec-badge" id="moduleCount">@totalCategories modules</span>
+    </div>
+
+    <!-- MODULE CARDS GRID -->
+    <div class="row g-3" id="moduleGrid">
+        @{ int colorIdx = 0; }
+        @foreach (var group in reportGroups)
+        {
+            colorIdx++;
+            var colorClass = "c" + (((colorIdx - 1) % 6) + 1);
+            <div class="col-xl-3 col-lg-4 col-md-6 module-item" data-search="@group.Key @string.Join(" ", group.Value.Select(x => x.Name))">
+                <div class="module-card">
+                    <div class="module-head">
+                        <div class="module-icon @colorClass"><i class="bi bi-folder-fill"></i></div>
+                        <i class="bi bi-chevron-right module-arrow"></i>
+                    </div>
+                    <h6 class="module-title">@group.Key</h6>
+                    <p class="module-sub">@group.Value.Count reports</p>
+                    <div class="module-links">
+                        @foreach (var item in group.Value.Take(4))
+                        {
+                            <a href="/Reports/Viewer?code=@item.Code" class="module-link">@item.Name</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- NO RESULT -->
+    <div class="no-result" id="noResult">
+        <i class="bi bi-search"></i>
+        <strong>No Reports Found</strong>
+        <p style="font-size:12px;margin-top:6px;">Try searching with a different keyword.</p>
+    </div>
+</div>
+
+<script>
+    function filterReports() {
+        var input = document.getElementById('reportSearch').value.toLowerCase().trim();
+        var items = document.querySelectorAll('.module-item');
+        var found = 0;
+
+        items.forEach(function(item) {
+            var text = (item.getAttribute('data-search') || '').toLowerCase();
+            if (input === '' || text.includes(input)) {
+                item.style.display = '';
+                found++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        document.getElementById('moduleCount').innerText = found + ' modules';
+        document.getElementById('noResult').style.display = found === 0 ? 'block' : 'none';
+    }
+</script>
+
+
+<script>
+    document.body.classList.add('reports-page');
+</script>
+
+
+
+
+

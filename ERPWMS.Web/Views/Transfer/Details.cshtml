@@ -1,0 +1,225 @@
+@model ERPWMS.Application.DTOs.Inventory.StockTransferDto
+
+@{
+    ViewData["Title"] = "Transfer Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Transfer Details</h2>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light w-50">Transfer No</th>
+                            <td><strong>@Model.TransferNo</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">From Warehouse</th>
+                            <td>@Model.FromWarehouseName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">To Warehouse</th>
+                            <td>@Model.ToWarehouseName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Product</th>
+                            <td>
+                                <span class="text-muted small">@Model.ProductCode</span>
+                                <br />
+                                @Model.ProductName
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Quantity</th>
+                            <td><strong>@Model.Quantity</strong></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Transfer Date</th>
+                            <td>@Model.TransferDate?.ToString("dd-MMM-yyyy")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>
+                                @{
+                                    var statusClass = Model.Status switch
+                                    {
+                                        "Draft" => "bg-secondary",
+                                        "Submitted" => "bg-primary",
+                                        "Approved" => "bg-success",
+                                        "Rejected" => "bg-danger",
+                                        "InTransit" => "bg-warning text-dark",
+                                        "Completed" => "bg-info",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @statusClass">@(Model.Status ?? "Draft")</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Approved By</th>
+                            <td>@(Model.ApprovedByName ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Approved Date</th>
+                            <td>@Model.ApprovedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Received By</th>
+                            <td>@(Model.ReceivedByName ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Received Date</th>
+                            <td>@Model.ReceivedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created By</th>
+                            <td>@Model.CreatedByName</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <!-- Summary Card -->
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="text-muted">Transfer Summary</h6>
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span>Product</span>
+                                <strong>@Model.ProductName</strong>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span>Quantity</span>
+                                <strong>@Model.Quantity</strong>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span>From</span>
+                                <strong>@Model.FromWarehouseName</strong>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span>To</span>
+                                <strong>@Model.ToWarehouseName</strong>
+                            </div>
+                            <div class="d-flex justify-content-between pt-2">
+                                <span>Status</span>
+                                <span class="badge @statusClass">@(Model.Status ?? "Draft")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Timeline -->
+                    <div class="card mt-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="bi bi-clock-history"></i> Status Timeline</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-plus-circle text-success me-2"></i>
+                                    <strong>Created</strong>
+                                    <span class="text-muted">@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</span>
+                                    <br />
+                                    <small class="text-muted">by @Model.CreatedByName</small>
+                                </li>
+                                @if (!string.IsNullOrEmpty(Model.ApprovedByName))
+                                {
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-primary me-2"></i>
+                                        <strong>Approved</strong>
+                                        <span class="text-muted">@Model.ApprovedDate?.ToString("dd-MMM-yyyy HH:mm")</span>
+                                        <br />
+                                        <small class="text-muted">by @Model.ApprovedByName</small>
+                                    </li>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.ReceivedByName))
+                                {
+                                    <li class="mb-2">
+                                        <i class="bi bi-box-arrow-in-down text-success me-2"></i>
+                                        <strong>Received</strong>
+                                        <span class="text-muted">@Model.ReceivedDate?.ToString("dd-MMM-yyyy HH:mm")</span>
+                                        <br />
+                                        <small class="text-muted">by @Model.ReceivedByName</small>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+            <div class="d-flex gap-2 flex-wrap">
+                @if (Model.Status == "Draft")
+                {
+                    <form method="post" asp-action="SubmitTransfer" asp-route-id="@Model.TransferId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('Submit this transfer for approval?')">
+                            <i class="bi bi-send"></i> Submit
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "Submitted")
+                {
+                    <form method="post" asp-action="ApproveTransfer" asp-route-id="@Model.TransferId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Approve this transfer?')">
+                            <i class="bi bi-check-circle"></i> Approve
+                        </button>
+                    </form>
+                    <form method="post" asp-action="RejectTransfer" asp-route-id="@Model.TransferId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this transfer?')">
+                            <i class="bi bi-x-circle"></i> Reject
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "Approved")
+                {
+                    <form method="post" asp-action="DispatchTransfer" asp-route-id="@Model.TransferId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-info" onclick="return confirm('Dispatch this transfer? Source stock will be updated.')">
+                            <i class="bi bi-truck"></i> Dispatch
+                        </button>
+                    </form>
+                }
+                @if (Model.Status == "InTransit")
+                {
+                    <form method="post" asp-action="ReceiveTransfer" asp-route-id="@Model.TransferId" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Receive this transfer? Destination stock will be updated.')">
+                            <i class="bi bi-box-arrow-in-down"></i> Receive
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

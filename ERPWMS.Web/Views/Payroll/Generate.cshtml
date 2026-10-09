@@ -1,0 +1,72 @@
+@model ERPWMS.Application.DTOs.Payroll.GeneratePayrollRequest
+
+@{
+    ViewData["Title"] = "Generate Payroll";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <h5 class="mb-0">Generate Employee Payroll</h5>
+        </div>
+
+        <div class="card-body">
+
+            <form asp-action="Generate"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Employee ID
+                    </label>
+
+                    <input asp-for="EmployeeId"
+                           type="number"
+                           class="form-control"
+                           min="1" />
+
+                    <span asp-validation-for="EmployeeId"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        Payroll Month
+                    </label>
+
+                    <input asp-for="MonthYear"
+                           type="date"
+                           class="form-control" />
+
+                    <span asp-validation-for="MonthYear"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Generate Payroll
+                </button>
+
+                <a asp-action="Index"
+                       class="btn btn-secondary">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

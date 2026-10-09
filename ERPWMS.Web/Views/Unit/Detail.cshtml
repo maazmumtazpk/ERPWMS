@@ -1,0 +1,185 @@
+@model ERPWMS.Application.DTOs.Unit.UnitDto
+
+@{
+    ViewData["Title"] = "Unit Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h3 class="card-title">
+                        <i class="fas fa-weight"></i> Unit Details
+                    </h3>
+
+                    <div class="card-tools">
+
+                        <a asp-action="Index"
+                               class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+
+                        <a asp-action="Modify"
+                               asp-route-id="@Model.UnitId"
+                               class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <dl class="row">
+
+                                <dt class="col-sm-4">Name:</dt>
+                                <dd class="col-sm-8">
+                                    <strong>@Model.UnitName</strong>
+                                </dd>
+
+                                <dt class="col-sm-4">Code:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if (!string.IsNullOrEmpty(Model.UnitCode))
+                                    {
+                                        <span class="badge badge-secondary">
+                                            @Model.UnitCode
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+
+                                </dd>
+
+                                <dt class="col-sm-4">Type:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if ((Model.IsBaseUnit == true))
+                                    {
+                                        <span class="badge badge-success">
+                                            Base
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-info">
+                                            Sub Unit
+                                        </span>
+                                    }
+
+                                </dd>
+
+                                <dt class="col-sm-4">Base Unit:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if ((Model.IsBaseUnit == true))
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">
+                                            @(Model.BaseUnitName ?? "N/A")
+                                        </span>
+                                    }
+
+                                </dd>
+
+                                <dt class="col-sm-4">Conversion Factor:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if ((Model.IsBaseUnit == true))
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @(Model.ConversionFactor?.ToString("0.0000") ?? "N/A")
+                                        </span>
+                                    }
+
+                                </dd>
+
+                            </dl>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <dl class="row">
+
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8">
+
+                                    @if ((Model.IsActive == true))
+                                    {
+                                        <span class="badge badge-success">
+                                            Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger">
+                                            Inactive
+                                        </span>
+                                    }
+
+                                </dd>
+
+                                <dt class="col-sm-4">Products:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge badge-primary badge-lg">
+                                        @Model.ProductCount
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">Sub Units:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge badge-warning badge-lg">
+                                        @Model.ChildUnitCount
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-4">Created Date:</dt>
+                                <dd class="col-sm-8">
+                                    @(Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "N/A")
+                                </dd>
+
+                                <dt class="col-sm-4">Created By:</dt>
+                                <dd class="col-sm-8">
+                                    @Model.CreatedBy
+                                </dd>
+
+                                <dt class="col-sm-4">Last Updated:</dt>
+                                <dd class="col-sm-8">
+                                    @(Model.UpdatedDate?.ToString("dd-MMM-yyyy HH:mm") ?? "Never")
+                                </dd>
+
+                            </dl>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>

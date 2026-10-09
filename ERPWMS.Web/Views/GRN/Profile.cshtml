@@ -1,0 +1,118 @@
+@model ERPWMS.Database.Models.Grn
+@{
+    ViewData["Title"] = "GRN Details";
+    Layout = "_Layout";
+    var details = ViewBag.Details as System.Collections.Generic.List<ERPWMS.Database.Models.Grndetail>
+                  ?? new System.Collections.Generic.List<ERPWMS.Database.Models.Grndetail>();
+    var st = Model.Status ?? "Pending";
+    var stClass = (st == "Approved" || st == "Completed") ? "active" : "inactive";
+}
+@await Html.PartialAsync("_AdminCss")
+
+<div style="padding-bottom:30px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0" style="color:#0A1628;font-size:18px;">GRN Details</h4>
+            <small class="text-muted" style="font-size:11px;">Home / GRN / @Model.GrnNo</small>
+        </div>
+        <a href="/GRN/Index" class="btn-icon" style="width:auto;padding:0 12px;text-decoration:none;"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+    </div>
+
+    <div class="table-card" style="margin-top:0;">
+        <div style="padding:18px 22px;background:linear-gradient(135deg,#0A1628,#1a2942);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#F5A623,#E0951A);color:#0A1628;display:flex;align-items:center;justify-content:center;font-size:26px;">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:18px;font-weight:800;">@Model.GrnNo</h3>
+                    <div style="color:rgba(255,255,255,.7);font-size:11px;margin-top:4px;">
+                        <i class="bi bi-calendar3"></i> @(Model.ReceiptDate?.ToString("dd MMM yyyy") ?? "-")
+                        <span> • @(ViewBag.WarehouseName ?? "-")</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <span class="badge-status @stClass" style="padding:6px 14px;font-size:10.5px;">@st.ToUpper()</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3" style="margin-top:16px;">
+        <div class="col-md-3"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Received</p><h2 class="kpi-number">@Model.TotalReceivedQty</h2></div><div class="kpi-icon blue"><i class="bi bi-box-arrow-in-down"></i></div></div></div></div>
+        <div class="col-md-3"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Accepted</p><h2 class="kpi-number">@Model.TotalAcceptedQty</h2></div><div class="kpi-icon green"><i class="bi bi-check-circle"></i></div></div></div></div>
+        <div class="col-md-3"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Rejected</p><h2 class="kpi-number">@(Model.TotalRejectedQty ?? 0)</h2></div><div class="kpi-icon orange"><i class="bi bi-x-circle"></i></div></div></div></div>
+        <div class="col-md-3"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Items</p><h2 class="kpi-number">@details.Count</h2></div><div class="kpi-icon purple"><i class="bi bi-list-ul"></i></div></div></div></div>
+
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-info-circle-fill" style="color:#F5A623;"></i> GRN Information</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">GRN No</span><strong style="font-family:monospace;">@Model.GrnNo</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Receipt Date</span><strong>@(Model.ReceiptDate?.ToString("dd MMM yyyy") ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Status</span><strong>@st</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">Created</span><strong>@(Model.CreatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-truck" style="color:#F5A623;"></i> Purchase & Warehouse</h5></div>
+                <div style="padding:14px 20px;">
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Purchase Order</span><strong>@(ViewBag.PurchaseOrderNo ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #F1F5F9;font-size:11.5px;"><span style="color:#64748B;">Warehouse</span><strong>@(ViewBag.WarehouseName ?? "-")</strong></div>
+                    <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:11.5px;"><span style="color:#64748B;">GRN ID</span><strong style="font-family:monospace;">#@Model.GrnId</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12">
+            <div class="table-card" style="margin-top:0;">
+                <div class="card-header-custom"><h5><i class="bi bi-list-ul" style="color:#F5A623;"></i> Items <span class="badge-count">@details.Count</span></h5></div>
+                <div style="overflow-x:auto;">
+                    <table class="table-premium">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product ID</th>
+                                <th style="text-align:right;">Received</th>
+                                <th style="text-align:right;">Accepted</th>
+                                <th style="text-align:right;">Rejected</th>
+                                <th>Batch No</th>
+                                <th>Mfg Date</th>
+                                <th>Expiry</th>
+                                <th>Bin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (details.Count == 0)
+                        {
+                            <tr><td colspan="9" style="text-align:center;padding:20px;color:#94A3B8;">No items</td></tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var d in details)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;color:#64748B;">@i</td>
+                                    <td>Product #@d.ProductId</td>
+                                    <td style="text-align:right;font-weight:700;color:#159A89;">@d.ReceivedQty</td>
+                                    <td style="text-align:right;font-weight:700;">@d.AcceptedQty</td>
+                                    <td style="text-align:right;font-weight:700;color:#DC2626;">@(d.RejectedQty ?? 0)</td>
+                                    <td style="font-family:monospace;font-size:11px;">@(d.BatchNo ?? "-")</td>
+                                    <td style="font-size:11px;">@(d.MfgDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                                    <td style="font-size:11px;">@(d.ExpiryDate?.ToString("dd MMM yyyy") ?? "-")</td>
+                                    <td style="font-size:11px;">Bin #@d.BinId</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

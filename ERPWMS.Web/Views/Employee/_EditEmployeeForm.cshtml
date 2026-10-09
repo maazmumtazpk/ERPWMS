@@ -1,0 +1,90 @@
+@model ERPWMS.Database.Models.Employee
+@{ Layout = null; }
+<form id="editEmployeeForm" method="post" action="/Employee/UpdateEmployee">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="EmployeeId" value="@Model.EmployeeId" />
+    <div id="editEmpAlert" style="display:none;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:14px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Employee Code</label>
+            <input type="text" name="EmployeeCode" class="form-control form-control-sm" value="@Model.EmployeeCode" readonly style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;background:#f1f5f9;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">First Name *</label>
+            <input type="text" name="FirstName" class="form-control form-control-sm" value="@Model.FirstName" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Last Name *</label>
+            <input type="text" name="LastName" class="form-control form-control-sm" value="@Model.LastName" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Father Name</label>
+            <input type="text" name="FatherName" class="form-control form-control-sm" value="@Model.FatherName" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">CNIC</label>
+            <input type="text" name="Cnic" class="form-control form-control-sm" value="@Model.Cnic" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Date of Birth</label>
+            <input type="date" name="DOB" class="form-control form-control-sm" value="@(Model.DOB?.ToString("yyyy-MM-dd"))" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Gender</label>
+            <select name="Gender" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="M" selected="@(Model.Gender=="M")">Male</option><option value="F" selected="@(Model.Gender=="F")">Female</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Hire Date *</label>
+            <input type="date" name="HireDate" class="form-control form-control-sm" value="@Model.HireDate.ToString("yyyy-MM-dd")" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Department *</label>
+            <select name="DepartmentId" id="editDept" class="form-select form-select-sm" required data-sel="@Model.DepartmentId" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Designation *</label>
+            <select name="DesignationId" id="editDesig" class="form-select form-select-sm" required data-sel="@Model.DesignationId" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Branch *</label>
+            <select name="BranchId" id="editBranch" class="form-select form-select-sm" required data-sel="@Model.BranchId" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Warehouse</label>
+            <select name="WarehouseId" id="editWh" class="form-select form-select-sm" data-sel="@(Model.WarehouseId ?? 0)" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Shift</label>
+            <select name="ShiftId" id="editShift" class="form-select form-select-sm" data-sel="@(Model.ShiftId ?? 0)" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="">-- Select --</option></select>
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Base Salary *</label>
+            <input type="number" name="BaseSalary" class="form-control form-control-sm" step="0.01" value="@Model.BaseSalary" required style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;" />
+        </div>
+        <div class="col-md-4">
+            <label style="font-size:10px;font-weight:700;color:#475569;margin-bottom:3px;display:block;">Status</label>
+            <select name="IsActive" class="form-select form-select-sm" style="font-size:11px;padding:6px 10px;min-height:32px;border-radius:6px;border:1px solid #dde4ec;"><option value="true" selected="@((Model.IsActive == true))">Active</option><option value="false" selected="@(Model.IsActive != true)">Inactive</option></select>
+        </div>
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:14px;display:flex;justify-content:flex-end;gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:11px;padding:6px 16px;border-radius:6px;">Cancel</button>
+        <button type="submit" class="btn btn-sm" style="background:#F5A623;color:#0A1628;font-weight:700;font-size:11px;padding:6px 16px;border-radius:6px;border:none;">Update</button>
+    </div>
+</form>
+<script>
+    fetch("/Employee/GetDropdowns").then(r=>r.json()).then(d=>{
+        var fill = function(id, arr, valKey, textKey){
+            var s=document.getElementById(id); if(!s)return;
+            var sel = parseInt(s.getAttribute("data-sel") || "0");
+            s.innerHTML="<option value=''>-- Select --</option>";
+            (arr||[]).forEach(function(x){ var o=document.createElement("option"); o.value=x[valKey]; o.textContent=x[textKey]; if(sel === parseInt(x[valKey])) o.selected=true; s.appendChild(o); });
+        };
+        fill("editDept", d.departments, "departmentId", "departmentName");
+        fill("editDesig", d.designations, "designationId", "designationName");
+        fill("editBranch", d.branches, "branchId", "branchName");
+        fill("editWh", d.warehouses, "warehouseId", "warehouseName");
+        fill("editShift", d.shifts, "shiftId", "shiftName");
+    });
+</script>

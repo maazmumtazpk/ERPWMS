@@ -1,0 +1,113 @@
+@model ERPWMS.Application.DTOs.Attendance.CheckInAttendanceRequest
+
+@{
+    ViewData["Title"] = "Check In";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <h4 class="mb-0">Employee Check In</h4>
+        </div>
+
+        <div class="card-body">
+
+            <form asp-action="CheckIn"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EmployeeId"
+                               class="form-label">
+                            Employee
+                        </label>
+
+                        <input asp-for="EmployeeId"
+                               class="form-control"
+                               type="number"
+                               min="1" />
+
+                        <span asp-validation-for="EmployeeId"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="AttendanceDate"
+                               class="form-label">
+                            Attendance Date
+                        </label>
+
+                        <input asp-for="AttendanceDate"
+                               class="form-control"
+                               type="date" />
+
+                        <span asp-validation-for="AttendanceDate"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CheckInTime"
+                               class="form-label">
+                            Check In Time
+                        </label>
+
+                        <input asp-for="CheckInTime"
+                               class="form-control"
+                               type="time" />
+
+                        <span asp-validation-for="CheckInTime"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ShiftId"
+                               class="form-label">
+                            Shift
+                        </label>
+
+                        <input asp-for="ShiftId"
+                               class="form-control"
+                               type="number"
+                               min="1" />
+                    </div>
+
+                </div>
+
+                <div class="mt-3">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Check In
+                    </button>
+
+                    <a asp-action="Index"
+                           class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

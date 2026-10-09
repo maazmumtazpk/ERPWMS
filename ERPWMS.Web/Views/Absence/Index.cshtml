@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "Absence";
+    Layout = "_Layout";
+}
+<form id="__af" style="display:none;">@Html.AntiForgeryToken()</form>
+<div class="toast-holder" id="toastHolder"></div>
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="row g-3">
+<div class="col-md-4">
+<div class="table-card"><div class="card-header-custom"><h5>Mark Absence</h5></div><div class="card-body">
+<div class="row g-3">
+<div class="col-12"><label class="form-label">Employee</label><select id="employeeId" class="form-control"></select></div>
+<div class="col-12"><label class="form-label">Date</label><input type="date" id="absenceDate" class="form-control" /></div>
+<div class="col-12"><label class="form-label">Deduction Days</label><input type="number" id="deductionDays" class="form-control" value="1" step="0.5" /></div>
+<div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control" rows="2"></textarea></div>
+<div class="col-12"><button class="btn-gold w-100" onclick="markAbsence()">Mark</button></div>
+</div>
+</div></div>
+</div>
+<div class="col-md-8">
+<div class="table-card"><div class="card-header-custom"><h5>Recent Absences</h5><button class="btn-icon" onclick="reload_()"><i class="bi bi-arrow-clockwise"></i></button></div><div class="card-body">
+<table class="table-premium" id="xTable"><thead><tr><th>Employee</th><th>Date</th><th>Type</th><th>Days</th><th>Remarks</th></tr></thead><tbody id="xBody"></tbody></table>
+</div></div>
+</div>
+</div>
+</div>
+@await Html.PartialAsync("_AdminJs")
+<script>
+function tk(){var i=document.querySelector('#__af input[name="__RequestVerificationToken"]');return i?i.value:'';}
+function loadEmployees(){
+    fetch('/Absence/GetEmployees').then(function(r){return r.json();}).then(function(d){
+        var s=document.getElementById('employeeId'); s.innerHTML='<option value="">-- Select --</option>';
+        d.forEach(function(e){var o=document.createElement('option'); o.value=e.employeeId; o.textContent=e.employeeCode+' - '+e.fullName; s.appendChild(o);});
+    });
+}
+function markAbsence(){
+    var fd=new FormData();
+    fd.append('__RequestVerificationToken',tk());
+    fd.append('employeeId',document.getElementById('employeeId').value);
+    fd.append('absenceDate',document.getElementById('absenceDate').value);
+    fd.append('deductionDays',document.getElementById('deductionDays').value);
+    fd.append('remarks',document.getElementById('remarks').value);
+    fetch('/Absence/Mark',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(res){
+        if(res.success){showToast(res.message,'success'); reload_();}
+        else showToast(res.message,'error');
+    });
+}
+function reload_(){
+    fetch('/Absence/GetAll').then(function(r){return r.json();}).then(function(d){
+        var b=document.getElementById('xBody');
+        if(!d||d.length===0){b.innerHTML='<tr><td colspan="5" class="text-center">No absences</td></tr>'; return;}
+        var h='';
+        d.forEach(function(x){h+='<tr><td>'+x.employeeName+'</td><td>'+x.absenceDate+'</td><td>'+x.absenceType+'</td><td>'+x.deductionDays+'</td><td>'+(x.remarks||'-')+'</td></tr>';});
+        b.innerHTML=h;
+    });
+}
+document.addEventListener('DOMContentLoaded', function(){
+    loadEmployees();
+    document.getElementById('absenceDate').value = new Date().toISOString().split('T')[0];
+    reload_();
+});
+</script>

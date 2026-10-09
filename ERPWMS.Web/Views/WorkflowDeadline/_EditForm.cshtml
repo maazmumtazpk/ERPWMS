@@ -1,0 +1,15 @@
+@model ERPWMS.Database.Models.WorkflowDeadline
+@{ Layout = null; }
+<form id="editDeadForm" method="post" action="/WorkflowDeadline/Edit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="deadlineId" value="@Model.DeadlineId" />
+    <div id="editDeadAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Due Date *</label><input type="date" name="dueDate" class="form-control form-control-sm" value="@Model.DueDate.ToString("yyyy-MM-dd")" required /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Status</label><select name="isMet" class="form-select form-select-sm">@if((Model.IsMet == true)){<option value="true" selected>Met</option><option value="false">Pending</option>}else{<option value="true">Met</option><option value="false" selected>Pending</option>}</select></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </div>
+</form>

@@ -1,0 +1,122 @@
+﻿/* ============================================================
+   Layout.cshtml.css — Scoped styles for main layout
+   ============================================================ */
+
+/* ===== NAVBAR CUSTOMIZATION ===== */
+.navbar-premium .navbar-toggler {
+    border-color: rgba(255,255,255,0.2);
+}
+
+.navbar-premium .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ===== DROPDOWN MENU ===== */
+.navbar-premium .dropdown-menu {
+    background: #FFFFFF;
+    border: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    border-radius: 12px;
+    padding: 8px 0;
+    margin-top: 8px;
+}
+
+.navbar-premium .dropdown-item {
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #0A1628;
+    transition: all 0.15s ease;
+}
+
+    .navbar-premium .dropdown-item:hover {
+        background: #FEF9F0;
+        color: #F5A623;
+    }
+
+    .navbar-premium .dropdown-item i {
+        margin-right: 10px;
+        width: 18px;
+        text-align: center;
+    }
+
+/* ===== RESPONSIVE NAVBAR ===== */
+@media (max-width: 992px) {
+    .navbar-premium .navbar-collapse {
+        background: #0A1628;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-top: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .navbar-premium .nav-link {
+        padding: 10px 12px !important;
+    }
+
+    .navbar-premium .user-profile {
+        margin-top: 12px;
+        padding: 8px 16px;
+        width: 100%;
+        justify-content: center;
+    }
+
+        .navbar-premium .user-profile .user-info {
+            display: block !important;
+        }
+}
+
+/* ===== FOOTER LINKS HOVER ===== */
+.footer-premium .footer-links a {
+    position: relative;
+}
+
+    .footer-premium .footer-links a::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: #F5A623;
+        transition: width 0.3s ease;
+    }
+
+    .footer-premium .footer-links a:hover::after {
+        width: 100%;
+    }
+
+/* ===== LOADING SPINNER (Optional) ===== */
+.page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+    .page-loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .page-loader .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #E2E8F0;
+        border-top-color: #F5A623;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

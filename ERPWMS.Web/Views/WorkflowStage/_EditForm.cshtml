@@ -1,0 +1,19 @@
+@model ERPWMS.Database.Models.WorkflowStage
+@{ Layout = null; }
+<form id="editStageForm" method="post" action="/WorkflowStage/QuickEdit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="stageId" value="@Model.StageId" />
+    <div id="editStageAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6"><label class="form-label fw-bold">Stage Name *</label><input type="text" name="stageName" class="form-control form-control-sm" value="@Model.StageName" required maxlength="200" /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Stage Code</label><input type="text" name="stageCode" class="form-control form-control-sm" value="@Model.StageCode" maxlength="50" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Order</label><input type="number" name="stageOrder" class="form-control form-control-sm" value="@Model.StageOrder" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">SLA Hours</label><input type="number" name="slaDeadlineHours" class="form-control form-control-sm" value="@(Model.SladeadlineHours ?? 0)" /></div>
+        <div class="col-md-4"><label class="form-label fw-bold">Status</label><select name="isActive" class="form-select form-select-sm">@if((Model.IsActive == true)){<option value="true" selected>Active</option><option value="false">Inactive</option>}else{<option value="true">Active</option><option value="false" selected>Inactive</option>}</select></div>
+        <div class="col-md-6"><div style="display:flex;gap:8px;padding-top:20px;"><label><input type="checkbox" name="isStart" value="true" @((Model.IsStart == true) ? "checked" : "") /> Start</label><label><input type="checkbox" name="isEnd" value="true" @((Model.IsEnd == true) ? "checked" : "") /> End</label></div></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Update</button>
+    </div>
+</form>

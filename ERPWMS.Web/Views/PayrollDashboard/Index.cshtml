@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Payroll Dashboard";
+    Layout = "_Layout";
+}
+@await Html.PartialAsync("_AdminCss")
+<div style="padding-bottom:30px;">
+<div class="row g-3">
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card total"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Total Employees</p><h2 class="kpi-number" id="kpiEmp">0</h2></div><div class="kpi-icon blue"><i class="bi bi-people"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card active"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Present Today</p><h2 class="kpi-number" id="kpiPresent">0</h2></div><div class="kpi-icon green"><i class="bi bi-check-circle"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card inactive"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Absent Today</p><h2 class="kpi-number" id="kpiAbsent">0</h2></div><div class="kpi-icon orange"><i class="bi bi-x-circle"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card month"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Late Today</p><h2 class="kpi-number" id="kpiLate">0</h2></div><div class="kpi-icon purple"><i class="bi bi-clock-history"></i></div></div></div></div>
+</div>
+
+<div class="row g-3 mt-2">
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">On Leave</p><h2 class="kpi-number" id="kpiLeave">0</h2></div><div class="kpi-icon blue"><i class="bi bi-calendar-x"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Pending Leaves</p><h2 class="kpi-number" id="kpiPendLeave">0</h2></div><div class="kpi-icon orange"><i class="bi bi-hourglass"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Pending OT</p><h2 class="kpi-number" id="kpiPendOT">0</h2></div><div class="kpi-icon orange"><i class="bi bi-clock"></i></div></div></div></div>
+<div class="col-xl-3 col-lg-3 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Pending Corrections</p><h2 class="kpi-number" id="kpiPendCorr">0</h2></div><div class="kpi-icon orange"><i class="bi bi-pencil"></i></div></div></div></div>
+</div>
+
+<div class="row g-3 mt-2">
+<div class="col-xl-4 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Loan Outstanding</p><h2 class="kpi-number" id="kpiLoans">0</h2></div><div class="kpi-icon purple"><i class="bi bi-cash"></i></div></div></div></div>
+<div class="col-xl-4 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Monthly Bonuses</p><h2 class="kpi-number" id="kpiBonus">0</h2></div><div class="kpi-icon green"><i class="bi bi-gift"></i></div></div></div></div>
+<div class="col-xl-4 col-md-6"><div class="kpi-card"><div class="kpi-content"><div class="kpi-text-group"><p class="kpi-label">Missing Punches</p><h2 class="kpi-number" id="kpiMiss">0</h2></div><div class="kpi-icon orange"><i class="bi bi-exclamation"></i></div></div></div></div>
+</div>
+
+<div class="row g-3 mt-3">
+<div class="col-xl-6">
+<div class="table-card"><div class="card-header-custom"><h5><i class="bi bi-calculator"></i> Current Payroll</h5></div><div class="card-body" id="currPayroll">Loading...</div></div>
+</div>
+<div class="col-xl-6">
+<div class="table-card"><div class="card-header-custom"><h5><i class="bi bi-bar-chart"></i> Monthly Trend (@DateTime.Now.Year)</h5></div><div class="card-body"><canvas id="trendChart" style="height:200px;"></canvas></div></div>
+</div>
+</div>
+</div>
+@await Html.PartialAsync("_AdminJs")
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function fmt(n){return (n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");}
+
+fetch('/PayrollDashboard/GetSummary').then(function(r){return r.json();}).then(function(d){
+    document.getElementById('kpiEmp').textContent = d.totalEmployees;
+    document.getElementById('kpiPresent').textContent = d.presentToday;
+    document.getElementById('kpiAbsent').textContent = d.absentToday;
+    document.getElementById('kpiLate').textContent = d.lateToday;
+    document.getElementById('kpiLeave').textContent = d.onLeaveToday;
+    document.getElementById('kpiPendLeave').textContent = d.pendingLeaves;
+    document.getElementById('kpiPendOT').textContent = d.pendingOT;
+    document.getElementById('kpiPendCorr').textContent = d.pendingCorrections;
+    document.getElementById('kpiMiss').textContent = d.pendingMissing;
+    document.getElementById('kpiLoans').textContent = fmt(d.totalLoanOutstanding);
+    document.getElementById('kpiBonus').textContent = fmt(d.monthlyBonuses);
+
+    var box = document.getElementById('currPayroll');
+    if(d.currentPayroll){
+        var cp = d.currentPayroll;
+        var cls = cp.status==='Approved'?'active':(cp.status==='Paid'?'active':'role');
+        box.innerHTML = '<table class="table-premium"><tr><td><b>Run No</b></td><td>'+cp.runNo+'</td></tr>' +
+            '<tr><td><b>Employees</b></td><td>'+cp.totalEmployees+'</td></tr>' +
+            '<tr><td><b>Gross</b></td><td>'+fmt(cp.totalGross)+'</td></tr>' +
+            '<tr><td><b>Deductions</b></td><td>'+fmt(cp.totalDeductions)+'</td></tr>' +
+            '<tr><td><b>Net</b></td><td><b>'+fmt(cp.totalNet)+'</b></td></tr>' +
+            '<tr><td><b>Status</b></td><td><span class="badge-status '+cls+'">'+cp.status+'</span></td></tr></table>';
+    } else {
+        box.innerHTML = '<div class="text-muted">No payroll run this month yet.</div>';
+    }
+});
+
+fetch('/PayrollDashboard/GetMonthlyTrend').then(function(r){return r.json();}).then(function(d){
+    var labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var gross = new Array(12).fill(0);
+    var net = new Array(12).fill(0);
+    d.forEach(function(x){ gross[x.month-1] = x.totalGross; net[x.month-1] = x.totalNet; });
+    var ctx = document.getElementById('trendChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Gross', data: gross, borderColor: '#F5A623', backgroundColor: 'rgba(245,166,35,0.1)', tension: 0.3 },
+                { label: 'Net', data: net, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', tension: 0.3 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+});
+</script>

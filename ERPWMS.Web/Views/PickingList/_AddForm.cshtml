@@ -1,0 +1,141 @@
+﻿@{ Layout = null; }
+<form id="addPickingForm" method="post" action="/PickingList/Register">
+    @Html.AntiForgeryToken()
+    <div id="addPickingAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label fw-bold" style="font-size:10px;">Picking No *</label>
+            <input type="text" name="pickingNo" id="pickingNoField" class="form-control form-control-sm" required maxlength="50" style="font-size:11px;" value="@ViewBag.NextPickingNo" readonly />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold" style="font-size:10px;">Picking Date</label>
+            <input type="date" name="pickingDate" class="form-control form-control-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="font-size:11px;" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold" style="font-size:10px;">Sales Order *</label>
+            <select name="salesId" id="addSales" class="form-select form-select-sm" required style="font-size:11px;">
+                <option value="">Loading...</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold" style="font-size:10px;">Warehouse</label>
+            <select name="warehouseId" id="addWh" class="form-select form-select-sm" style="font-size:11px;">
+                <option value="">Loading...</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;">
+        <span style="font-size:12px;font-weight:700;color:#0A1628;">Items to Pick</span>
+        <button type="button" class="btn btn-sm btn-gold" id="addItemBtn" style="background:#F5A623;color:#0A1628;font-weight:700;padding:4px 12px;border-radius:6px;font-size:11px;border:none;"><i class="bi bi-plus"></i> Add Item</button>
+    </div>
+
+    <div id="itemsContainer">
+        <!-- Items auto-fill honge jab Sales Order select hoga -->
+    </div>
+
+    <div style="padding:12px 0 0;border-top:1px solid #eef2f6;margin-top:12px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size:10px;padding:4px 12px;">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" style="font-size:10px;padding:4px 12px;background:#F5A623;color:#0A1628;font-weight:700;border:none;">Create</button>
+    </div>
+</form>
+
+<script>
+(function(){
+    var idx = 0;
+
+    // Load Sales Orders (filtered - sirf Delivered wale)
+    fetch("/PickingList/GetSales").then(function(r){return r.json();}).then(function(d){
+        var s = document.getElementById("addSales");
+        if(!s) return;
+        s.innerHTML = "<option value=''>-- Select --</option>";
+        (d||[]).forEach(function(x){
+            var o = document.createElement("option");
+            o.value = x.salesId;
+            o.textContent = x.salesOrderNo;
+            s.appendChild(o);
+        });
+    });
+
+    // Load Warehouses
+    fetch("/PickingList/GetWarehouses").then(function(r){return r.json();}).then(function(d){
+        var s = document.getElementById("addWh");
+        if(!s) return;
+        s.innerHTML = "<option value=''>-- Select --</option>";
+        (d||[]).forEach(function(x){
+            var o = document.createElement("option");
+            o.value = x.warehouseId;
+            o.textContent = x.warehouseName;
+            s.appendChild(o);
+        });
+    });
+
+    // Auto-fill Items jab Sales Order select ho
+    var soSel = document.getElementById("addSales");
+    if(soSel) soSel.addEventListener("change", function(){
+        var sid = this.value;
+        if(!sid) return;
+        fetch("/PickingList/GetSalesDetails?salesId=" + sid)
+            .then(function(r){ return r.json(); })
+            .then(function(items){
+                var cont = document.getElementById("itemsContainer");
+                cont.innerHTML = "";
+                idx = 0;
+
+                if(!Array.isArray(items) || items.length === 0){
+                    cont.innerHTML = "<div style='padding:10px;text-align:center;color:#94A3B8;font-size:11px;'>Is Sales Order mein koi items nahi hain.</div>";
+                    return;
+                }
+
+                items.forEach(function(it){
+                    var row = document.createElement("div");
+                    row.className = "item-row";
+                    row.style.cssText = "padding:10px 12px;background:#fafbfc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;";
+                    row.innerHTML = `
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label" style="font-size:10px;font-weight:600;">Product</label>
+                                <input type="text" class="form-control form-control-sm" value="${it.productName}" readonly style="font-size:11px;background:#f1f5f9;" />
+                                <input type="hidden" name="PickingDetails[${idx}].ProductId" value="${it.productId}" />
+                                <input type="hidden" name="PickingDetails[${idx}].SalesDetailId" value="${it.salesDetailId}" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" style="font-size:10px;font-weight:600;">Picked Qty</label>
+                                <input type="number" name="PickingDetails[${idx}].PickedQty" class="form-control form-control-sm" min="1" value="${it.quantity}" required style="font-size:11px;" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" style="font-size:10px;font-weight:600;">Batch No</label>
+                                <input type="text" name="PickingDetails[${idx}].BatchNo" class="form-control form-control-sm" value="${it.batchNo || ''}" style="font-size:11px;" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" style="font-size:10px;font-weight:600;">Serial Numbers</label>
+                                <input type="text" name="PickingDetails[${idx}].SerialNumbers" class="form-control form-control-sm" placeholder="SN-001, SN-002" style="font-size:11px;" />
+                            </div>
+                        </div>
+                    `;
+                    cont.appendChild(row);
+                    idx++;
+                });
+            });
+    });
+
+    // Add Item manually
+    var addBtn = document.getElementById("addItemBtn");
+    if(addBtn) addBtn.addEventListener("click", function(){
+        var cont = document.getElementById("itemsContainer");
+        var row = document.createElement("div");
+        row.className = "item-row";
+        row.style.cssText = "padding:10px 12px;background:#fafbfc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;";
+        row.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-4"><label class="form-label" style="font-size:10px;">Product</label><select name="PickingDetails[${idx}].ProductId" class="form-select form-select-sm" style="font-size:11px;"><option value="">-- Select --</option></select><input type="hidden" name="PickingDetails[${idx}].SalesDetailId" value="0" /></div>
+                <div class="col-md-2"><label class="form-label" style="font-size:10px;">Picked Qty</label><input type="number" name="PickingDetails[${idx}].PickedQty" class="form-control form-control-sm" min="1" value="1" style="font-size:11px;" /></div>
+                <div class="col-md-3"><label class="form-label" style="font-size:10px;">Batch No</label><input type="text" name="PickingDetails[${idx}].BatchNo" class="form-control form-control-sm" style="font-size:11px;" /></div>
+                <div class="col-md-3"><label class="form-label" style="font-size:10px;">Serial No</label><input type="text" name="PickingDetails[${idx}].SerialNumbers" class="form-control form-control-sm" style="font-size:11px;" /></div>
+            </div>
+        `;
+        cont.appendChild(row);
+        idx++;
+    });
+})();
+</script>

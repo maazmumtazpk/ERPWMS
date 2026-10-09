@@ -1,0 +1,88 @@
+@model ERPWMS.Application.DTOs.Reports.ReportResult
+@{ Layout = null; }
+<style>
+    .rpt-toolbar{padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;background:#F8FAFC}
+    .rpt-toolbar strong{color:#0A1628;font-size:13px;font-weight:700}
+    .rpt-toolbar strong i{color:#F5A623;margin-right:6px}
+    .count-badge{background:#D7F4EE;color:#118B7B;font-size:9px;font-weight:700;padding:2px 8px;border-radius:12px;margin-left:6px}
+    .date-info{font-size:10px;color:#94A3B8}
+    
+    .rpt-table-wrap{width:100%;overflow-x:hidden}
+    .rpt-table{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:auto}
+    .rpt-table thead th{background:#F8FAFC;color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:9px 10px;border-bottom:2px solid #E2E8F0;text-align:left;white-space:nowrap}
+    .rpt-table tbody td{padding:9px 10px;border-bottom:1px solid #F1F5F9;color:#0A1628;vertical-align:middle;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+    .rpt-table tbody tr:hover{background:#F8FAFC}
+    .rpt-table tbody tr:last-child td{border-bottom:none}
+    .rpt-table .row-num{color:#94A3B8;font-weight:600;text-align:center;width:40px}
+    .badge-active{background:#D7F4EE;color:#118B7B;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;text-transform:uppercase;letter-spacing:.3px}
+    .badge-inactive{background:#FEE2E2;color:#B91C1C;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;text-transform:uppercase;letter-spacing:.3px}
+    .rpt-empty{padding:60px 20px;text-align:center;color:#94A3B8}
+    .rpt-empty i{font-size:38px;display:block;margin-bottom:8px;color:#CBD5E1}
+    .rpt-empty strong{font-size:13px;color:#475569;display:block;margin-bottom:4px}
+    .rpt-empty small{font-size:11px}
+</style>
+
+<div class="rpt-toolbar">
+    <div>
+        <strong><i class="bi bi-list-ul"></i>@Model.ReportName</strong>
+        <span class="count-badge">@Model.TotalRows rows</span>
+    </div>
+    <span class="date-info"><i class="bi bi-clock"></i> @Model.GeneratedAt.ToString("dd MMM yyyy HH:mm")</span>
+</div>
+
+<div class="rpt-table-wrap">
+    <table class="rpt-table">
+        <thead>
+            <tr>
+                <th class="row-num">#</th>
+                @foreach (var col in Model.Columns)
+                {
+                    <th>@col</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Count > 0)
+            {
+                int i = 1;
+                foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td class="row-num">@(i++)</td>
+                        @foreach (var col in Model.Columns)
+                        {
+                            var val = row.ContainsKey(col) ? row[col]?.ToString() ?? "-" : "-";
+                            var lowerCol = col.ToLower();
+                            var lowerVal = val.ToLower();
+                            
+                            if ((lowerCol.Contains("status") || lowerCol.Contains("isactive")) && (lowerVal == "active" || lowerVal == "yes"))
+                            {
+                                <td><span class="badge-active">@val</span></td>
+                            }
+                            else if ((lowerCol.Contains("status") || lowerCol.Contains("isactive")) && (lowerVal == "inactive" || lowerVal == "no"))
+                            {
+                                <td><span class="badge-inactive">@val</span></td>
+                            }
+                            else
+                            {
+                                <td title="@val">@val</td>
+                            }
+                        }
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="@(Model.Columns.Count + 1)">
+                        <div class="rpt-empty">
+                            <i class="bi bi-inbox"></i>
+                            <strong>No Records Found</strong>
+                            <small>This report has no data available at the moment.</small>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

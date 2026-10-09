@@ -1,0 +1,296 @@
+
+@model ERPWMS.Application.DTOs.Sales.PickingListDto
+
+@{
+    ViewData["Title"] = "Picking List Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>?? Picking List Details</h2>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-md-6">
+
+                    <table class="table table-bordered">
+
+                        <tr>
+                            <th class="bg-light w-50">Picking No</th>
+                            <td>
+                                <strong>@Model.PickingNo</strong>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Sales Order</th>
+                            <td>@Model.SalesOrderNo</td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Warehouse</th>
+                            <td>@Model.WarehouseName</td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Picking Date</th>
+                            <td>
+                                @Model.PickingDate?.ToString("dd-MMM-yyyy")
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Status</th>
+                            <td>
+                                @{
+                                    var statusClass = Model.Status switch
+                                    {
+                                        "Draft" => "bg-secondary",
+                                        "Assigned" => "bg-primary",
+                                        "Picked" => "bg-warning text-dark",
+                                        "Verified" => "bg-success",
+                                        "Completed" => "bg-info",
+                                        "Cancelled" => "bg-dark",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+
+                                <span class="badge @statusClass">
+                                    @Model.Status
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Assigned To</th>
+                            <td>@Model.AssignedToName</td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Picked By</th>
+                            <td>@Model.PickedByName</td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Verified By</th>
+                            <td>@Model.VerifiedByName</td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Created By</th>
+                            <td>@Model.CreatedByName</td>
+                        </tr>
+
+                        <tr>
+                            <th class="bg-light">Created Date</th>
+                            <td>
+                                @Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+            </div>
+
+            <hr />
+
+            <h5 class="fw-bold">?? Items</h5>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Picked Qty</th>
+                            <th>Bin</th>
+                            <th>Batch</th>
+                            <th>Serial Numbers</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.PickingDetails != null &&
+                                                     Model.PickingDetails.Any())
+                        {
+                            foreach (var item in Model.PickingDetails)
+                            {
+                                <tr>
+                                    <td>
+                                        @item.ProductCode - @item.ProductName
+                                    </td>
+
+                                    <td>
+                                        @item.PickedQty
+                                    </td>
+
+                                    <td>
+                                        @item.BinName
+                                    </td>
+
+                                    <td>
+                                        @item.BatchNo
+                                    </td>
+
+                                    <td>
+                                        @item.SerialNumbers
+                                    </td>
+
+                                    <td>
+                                        @item.Status
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6"
+                                    class="text-center text-muted">
+                                    No items found.
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+            </div>
+
+            <hr />
+
+            <div class="d-flex gap-2 flex-wrap">
+
+                @if (Model.Status == "Draft")
+                {
+                    <a asp-action="Edit"
+                           asp-route-id="@Model.PickingId"
+                           class="btn btn-primary">
+
+                        <i class="bi bi-pencil"></i>
+                        Edit
+
+                    </a>
+
+                    <form method="post"
+                          asp-action="AssignPicker"
+                          asp-route-id="@Model.PickingId"
+                          style="display:inline;">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="assignedTo"
+                               value="@(ViewBag.Users?.FirstOrDefault()?.Id)" />
+
+                        <button type="submit"
+                                class="btn btn-warning">
+
+                            Assign Picker
+
+                        </button>
+
+                    </form>
+                }
+
+                @if (Model.Status == "Assigned" ||
+                                     Model.Status == "Draft")
+                {
+                    <form method="post"
+                          asp-action="ConfirmPicking"
+                          asp-route-id="@Model.PickingId"
+                          style="display:inline;">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-info"
+                                onclick="return confirm('Confirm picking?')">
+
+                            Confirm Picking
+
+                        </button>
+
+                    </form>
+                }
+
+                @if (Model.Status == "Picked")
+                {
+                    <form method="post"
+                          asp-action="VerifyPicking"
+                          asp-route-id="@Model.PickingId"
+                          style="display:inline;">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-success"
+                                onclick="return confirm('Verify picking?')">
+
+                            Verify Picking
+
+                        </button>
+
+                    </form>
+                }
+
+                @if (Model.Status == "Verified")
+                {
+                    <form method="post"
+                          asp-action="GenerateDispatch"
+                          asp-route-id="@Model.PickingId"
+                          style="display:inline;">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit"
+                                class="btn btn-primary"
+                                onclick="return confirm('Generate dispatch from this picking?')">
+
+                            Generate Dispatch
+
+                        </button>
+
+                    </form>
+                }
+
+            </div>
+
+        </div>
+    </div>
+</div>
+

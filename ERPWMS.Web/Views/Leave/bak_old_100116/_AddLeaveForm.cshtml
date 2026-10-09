@@ -1,0 +1,21 @@
+﻿@{ Layout = null; }
+<form id="addLeaveForm" method="post" action="/Leave/Register">
+    @Html.AntiForgeryToken()
+    <div id="addLeaveAlert" style="display:none;padding:8px 10px;border-radius:6px;font-size:11px;margin-bottom:12px;background:#FEF2F2;color:#DC2626;border-left:3px solid #DC2626;"></div>
+    <div class="row g-2">
+        <div class="col-12"><label class="form-label fw-bold">Employee *</label><select name="employeeId" id="addEmp" class="form-select form-select-sm" required><option value="">-- Select Employee --</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Leave Type</label><select name="leaveType" class="form-select form-select-sm"><option value="Casual">Casual</option><option value="Sick">Sick</option><option value="Annual">Annual</option><option value="Unpaid">Unpaid</option><option value="Maternity">Maternity</option></select></div>
+        <div class="col-md-6"><label class="form-label fw-bold">Total Days</label><input type="number" name="totalDays" class="form-control form-control-sm" value="1" min="1" required /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">From Date *</label><input type="date" name="fromDate" class="form-control form-control-sm" required /></div>
+        <div class="col-md-6"><label class="form-label fw-bold">To Date *</label><input type="date" name="toDate" class="form-control form-control-sm" required /></div>
+        <div class="col-12"><label class="form-label fw-bold">Reason</label><textarea name="reason" class="form-control form-control-sm" rows="2" maxlength="500"></textarea></div>
+    </div>
+    <div style="padding:10px 0 0;border-top:1px solid #eef2f6;margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm">Submit</button>
+    </div>
+</form>
+<script>
+fetch("/Leave/GetEmployees").then(function(r){return r.json();}).then(function(d){var s=document.getElementById("addEmp");if(!s)return;s.innerHTML="<option value=''>-- Select Employee --</option>";(d||[]).forEach(function(x){var o=document.createElement("option");o.value=x.employeeId;o.textContent=x.employeeName;s.appendChild(o);});}).catch(function(){});
+document.querySelector("input[name='fromDate']").addEventListener("change",function(){var f=this.value;var t=document.querySelector("input[name='toDate']");if(f&&!t.value)t.value=f;});
+</script>

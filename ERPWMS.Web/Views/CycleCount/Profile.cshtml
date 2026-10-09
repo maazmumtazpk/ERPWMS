@@ -1,0 +1,122 @@
+@model ERPWMS.Database.Models.CycleCount
+@{
+    ViewData["Title"] = "Cycle Count Details";
+    Layout = "_Layout";
+}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0 fw-bold" style="color:#0A1628;">Cycle Count Details</h3>
+            <small class="text-muted">Home / Cycle Count / CC-@Model.CycleCountId</small>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+    </div>
+
+    <!-- Header Card (Dark) -->
+    <div class="card shadow-sm mb-3" style="background:#0A1628;color:#fff;border:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div style="background:#F5A623;color:#0A1628;padding:14px;border-radius:10px;font-size:1.6rem;margin-right:16px;">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1 fw-bold" style="color:#fff;">CC-@Model.CycleCountId</h3>
+                        <div style="font-size:12px;color:#94A3B8;">
+                            <i class="bi bi-calendar3"></i> @(Model.CountedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    @{
+                        var statusColor = Model.Status == "Verified" ? "#159A89" 
+                                        : Model.Status == "Adjusted" ? "#0EA5E9" 
+                                        : Model.Status == "Cancelled" ? "#DC2626" 
+                                        : "#F5A623";
+                    }
+                    <span style="background:@statusColor;color:#fff;padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">
+                        @Model.Status
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product & Location + Count Info -->
+    <div class="row mb-3">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card shadow-sm h-100" style="border:1px solid #edf0f4;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3" style="color:#0A1628;">
+                        <i class="bi bi-box" style="color:#F5A623;"></i> Product & Location
+                    </h6>
+                    <p class="mb-1 fw-bold" style="color:#0A1628;font-size:14px;">@(Model.Product?.ProductName ?? "N/A")</p>
+                    <p class="mb-1" style="font-size:12px;color:#64748B;">
+                        <i class="bi bi-building" style="color:#94A3B8;"></i> @(Model.Warehouse?.WarehouseName ?? "N/A")
+                    </p>
+                    <p class="mb-0" style="font-size:12px;color:#64748B;">
+                        <i class="bi bi-grid" style="color:#94A3B8;"></i> @(Model.Bin?.BinName ?? "N/A")
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100" style="border:1px solid #edf0f4;">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3" style="color:#0A1628;">
+                        <i class="bi bi-info-circle" style="color:#F5A623;"></i> Count Info
+                    </h6>
+                    <table class="table table-sm mb-0" style="font-size:12px;">
+                        <tr>
+                            <td style="color:#64748B;border:none;">System Qty</td>
+                            <td class="text-end fw-bold" style="color:#0A1628;border:none;">@Model.SystemQty</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B;border:none;">Actual Qty</td>
+                            <td class="text-end fw-bold" style="color:#0A1628;border:none;">@Model.ActualQty</td>
+                        </tr>
+                        <tr>
+                            <td style="color:#64748B;border:none;">Variance</td>
+                            <td class="text-end fw-bold" style="border:none;color:@(Model.Variance != 0 ? (Model.Variance > 0 ? "#059669" : "#DC2626") : "#64748B");">
+                                @(Model.Variance > 0 ? "+" : "")@Model.Variance
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variance Alert -->
+    @if (Model.Variance != 0)
+    {
+        <div class="alert" style="background:@(Model.Variance > 0 ? "#F0FDF4" : "#FEF2F2");border-left:4px solid @(Model.Variance > 0 ? "#059669" : "#DC2626");border-radius:8px;color:@(Model.Variance > 0 ? "#166534" : "#991B1B");font-size:13px;">
+            <i class="bi bi-@(Model.Variance > 0 ? "arrow-up-circle" : "arrow-down-circle")" style="margin-right:6px;"></i>
+            <strong>Variance Detected:</strong> 
+            @if (Model.Variance > 0)
+            {
+                <span>Actual count is <strong>@Model.Variance units more</strong> than system (Surplus).</span>
+            }
+            else
+            {
+                <span>Actual count is <strong>@(Math.Abs(Model.Variance)) units less</strong> than system (Shortage).</span>
+            }
+        </div>
+    }
+
+    <!-- Remarks -->
+    @if (!string.IsNullOrEmpty(Model.Remarks))
+    {
+        <div class="card shadow-sm" style="border:1px solid #edf0f4;">
+            <div class="card-body">
+                <h6 class="fw-bold mb-2" style="color:#0A1628;">
+                    <i class="bi bi-chat-left-text" style="color:#F5A623;"></i> Remarks
+                </h6>
+                <p class="mb-0" style="font-size:12px;color:#475569;">@Model.Remarks</p>
+            </div>
+        </div>
+    }
+</div>

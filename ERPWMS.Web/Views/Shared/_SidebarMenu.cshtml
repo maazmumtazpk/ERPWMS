@@ -1,0 +1,66 @@
+﻿@*
+    Sidebar Menu - Auto-generated
+    Include in _Layout.cshtml: @await Html.PartialAsync("_SidebarMenu")
+*@
+
+<style>
+.sb-menu{list-style:none;padding:0;margin:0;}
+.sb-menu li{padding:0;margin:1px 0;}
+.sb-menu a{display:flex;align-items:center;gap:10px;padding:9px 14px;color:#94A3B8;text-decoration:none;font-size:12.5px;font-weight:600;border-radius:8px;transition:all .15s;position:relative;}
+.sb-menu a:hover{background:rgba(245,166,35,.08);color:#F5A623;}
+.sb-menu a.active{background:rgba(245,166,35,.15);color:#F5A623;box-shadow:inset 3px 0 0 #F5A623;}
+.sb-menu a i{width:18px;text-align:center;font-size:14px;flex-shrink:0;}
+.sb-menu a .sb-badge{margin-left:auto;background:#F5A623;color:#0A1628;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;}
+.sb-section{padding:16px 14px 6px;color:#4B5563;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;}
+.sb-section:first-child{padding-top:8px;}
+</style>
+
+@{
+    var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAct = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    Func<string, string, string> ActiveClass = (ctrl, act) =>
+        (string.Equals(currentCtrl, ctrl, System.StringComparison.OrdinalIgnoreCase) &&
+         string.Equals(currentAct, act, System.StringComparison.OrdinalIgnoreCase)) ? "active" : "";
+    Func<string, string> ActiveCtrlOnly = (ctrl) =>
+        string.Equals(currentCtrl, ctrl, System.StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+
+<div class="sb-section">Dashboard</div>
+<ul class="sb-menu">
+    <li><a href="/Dashboard" class="@ActiveCtrlOnly("Dashboard")"><i class="bi bi-speedometer2"></i> Main Dashboard</a></li>
+    <li><a href="/SystemAdminDashboard" class="@ActiveCtrlOnly("SystemAdminDashboard")"><i class="bi bi-shield-check"></i> System Admin</a></li>
+    <li><a href="/WorkflowDashboard" class="@ActiveCtrlOnly("WorkflowDashboard")"><i class="bi bi-diagram-3"></i> Workflow Dashboard</a></li>
+</ul>
+
+<div class="sb-section">Workflow</div>
+<ul class="sb-menu">
+    <li><a href="/WorkflowDefinition" class="@ActiveCtrlOnly("WorkflowDefinition")"><i class="bi bi-diagram-3-fill"></i> Definitions</a></li>
+    <li><a href="/WorkflowStage" class="@ActiveCtrlOnly("WorkflowStage")"><i class="bi bi-list-ol"></i> Stages</a></li>
+    <li><a href="/WorkflowTransition" class="@ActiveCtrlOnly("WorkflowTransition")"><i class="bi bi-arrow-left-right"></i> Transitions</a></li>
+    <li><a href="/WorkflowCondition" class="@ActiveCtrlOnly("WorkflowCondition")"><i class="bi bi-funnel"></i> Conditions</a></li>
+    <li><a href="/WorkflowAssignment" class="@ActiveCtrlOnly("WorkflowAssignment")"><i class="bi bi-person-check"></i> Assignments</a></li>
+    <li><a href="/WorkflowDeadline" class="@ActiveCtrlOnly("WorkflowDeadline")"><i class="bi bi-hourglass-split"></i> Deadlines</a></li>
+    <li><a href="/WorkflowInstance" class="@ActiveCtrlOnly("WorkflowInstance")"><i class="bi bi-play-circle"></i> Instances</a></li>
+    <li><a href="/WorkflowInstanceLog" class="@ActiveCtrlOnly("WorkflowInstanceLog")"><i class="bi bi-journal-text"></i> Instance Logs</a></li>
+</ul>
+
+<div class="sb-section">Administration</div>
+<ul class="sb-menu">
+    <li><a href="/User" class="@ActiveCtrlOnly("User")"><i class="bi bi-people-fill"></i> Users</a></li>
+    <li><a href="/Role" class="@ActiveCtrlOnly("Role")"><i class="bi bi-shield-lock-fill"></i> Roles</a></li>
+    <li><a href="/SystemSetting" class="@ActiveCtrlOnly("SystemSetting")"><i class="bi bi-gear-fill"></i> System Settings</a></li>
+</ul>
+
+<div class="sb-section">Notifications</div>
+<ul class="sb-menu">
+    <li><a href="/Notification" class="@ActiveCtrlOnly("Notification")"><i class="bi bi-bell-fill"></i> My Notifications</a></li>
+    <li><a href="/NotificationTemplate" class="@ActiveCtrlOnly("NotificationTemplate")"><i class="bi bi-file-earmark-text-fill"></i> Templates</a></li>
+</ul>
+
+<div class="sb-section">Audit & Logs</div>
+<ul class="sb-menu">
+    <li><a href="/SystemAdminDashboard/AuditLogs" class="@ActiveClass("SystemAdminDashboard","AuditLogs")"><i class="bi bi-file-earmark-text"></i> Audit Logs</a></li>
+    <li><a href="/SystemAdminDashboard/LoginHistory" class="@ActiveClass("SystemAdminDashboard","LoginHistory")"><i class="bi bi-clock-history"></i> Login History</a></li>
+    <li><a href="/SystemAdminDashboard/ActiveSessions" class="@ActiveClass("SystemAdminDashboard","ActiveSessions")"><i class="bi bi-person-badge"></i> Active Sessions</a></li>
+    <li><a href="/SystemAdminDashboard/BackupLogs" class="@ActiveClass("SystemAdminDashboard","BackupLogs")"><i class="bi bi-database-fill"></i> Backup Logs</a></li>
+</ul>
