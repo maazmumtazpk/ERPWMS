@@ -1,167 +1,450 @@
-@model ERPWMS.Web.ViewModels.DashboardViewModel
-@{ ViewData["Title"] = "Dashboard"; }
+﻿@model ERPWMS.Web.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 
-<style>
-.dash-wrap{font-size:13px;color:#374151}
-.dash-title{font-size:20px;font-weight:700;color:#1f2937;margin:0}
-.dash-sub{font-size:12px;color:#9ca3af}
-.pill{border:1px solid #e5e7eb;border-radius:20px;padding:5px 14px;font-size:11px;color:#6b7280;background:#fff;display:inline-block}
-.kpi{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:flex-start;height:100%}
-.kpi-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#9ca3af;margin-bottom:6px}
-.kpi-val{font-size:22px;font-weight:700;color:#111827;line-height:1.1}
-.kpi-val .c{font-size:13px;color:#6b7280;font-weight:500}
-.kpi-sub{font-size:11px;color:#9ca3af;margin-top:4px}
-.kpi-ic{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.cnt{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center;height:100%}
-.cnt-lbl{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9ca3af}
-.cnt-val{font-size:20px;font-weight:700;color:#111827;line-height:1;margin-top:4px}
-.cnt-sub{font-size:11px;color:#9ca3af;margin-top:3px}
-.cnt-ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.pnl{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.pnl-h{padding:12px 16px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center}
-.pnl-h h6{font-size:13px;font-weight:700;margin:0;color:#374151}
-.pnl-b{padding:14px 16px}
-.qa{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;transition:.15s}
-.qa:hover{border-color:#d1d5db;background:#fafafa}
-.qa i{font-size:18px}
-.qa span{font-size:11px;font-weight:600;color:#374151}
-.act{font-size:12px;margin:0}
-.act th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af;font-weight:700;padding:10px 12px;border-bottom:1px solid #f3f4f6}
-.act td{padding:10px 12px;vertical-align:middle;border-bottom:1px solid #f9fafb;font-size:12px}
-.act tr:last-child td{border-bottom:none}
-.bdg{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;display:inline-block}
-</style>
+    var totalSales = Model.TotalSales;
+    var todaySales = Model.TodaySales;
+    var stockValue = Model.StockValue;
+    var pendingOrd = Model.PendingOrders;
+    var totalOrd = Model.TotalOrders;
 
-<div class="dash-wrap">
+    string salesK = (totalSales / 1000m).ToString("0.0");
+    string stockNum = stockValue.ToString("N0");
+    string lastUpdatedStr = Model.LastUpdated.ToString("h:mm tt");
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h4 class="dash-title">Dashboard</h4>
-        <small class="dash-sub">Updated @Model.LastUpdated.ToString("h:mm:ss tt")</small>
-    </div>
-    <div class="d-flex gap-2">
-        <div class="btn-group btn-group-sm">
-            <a class="btn @(Model.DateRangeDays == 7 ? "btn-dark" : "btn-light border")" asp-action="Index" asp-route-days="7">7D</a>
-            <a class="btn @(Model.DateRangeDays == 30 ? "btn-dark" : "btn-light border")" asp-action="Index" asp-route-days="30">30D</a>
-            <a class="btn @(Model.DateRangeDays == 90 ? "btn-dark" : "btn-light border")" asp-action="Index" asp-route-days="90">90D</a>
-            <a class="btn @(Model.DateRangeDays == 365 ? "btn-dark" : "btn-light border")" asp-action="Index" asp-route-days="365">1Y</a>
+    // === SAFE JSON SERIALIZATION ===
+    string trendLabelsJson = "[]";
+    if (Model.TrendLabels != null && Model.TrendLabels.Count > 0)
+        trendLabelsJson = System.Text.Json.JsonSerializer.Serialize(Model.TrendLabels);
+
+    string salesDataJson = "[]";
+    if (Model.SalesTrend != null && Model.SalesTrend.Count > 0)
+        salesDataJson = System.Text.Json.JsonSerializer.Serialize(Model.SalesTrend);
+
+    string purchDataJson = "[]";
+    if (Model.PurchaseTrend != null && Model.PurchaseTrend.Count > 0)
+        purchDataJson = System.Text.Json.JsonSerializer.Serialize(Model.PurchaseTrend);
+
+    var topList = Model.TopProducts ?? new List<ERPWMS.Web.ViewModels.TopProductItem>();
+
+    string topLabelsJson = "[]";
+    string topValuesJson = "[]";
+    if (topList.Count > 0)
+    {
+        topLabelsJson = System.Text.Json.JsonSerializer.Serialize(
+            topList.Select(p => p.Name ?? p.ProductName ?? "Unknown").ToList());
+        topValuesJson = System.Text.Json.JsonSerializer.Serialize(
+            topList.Select(p => p.Revenue).ToList());
+    }
+
+    var topTotal = topList.Sum(p => p.Revenue);
+    var donutColors = new[] { "#2455E6", "#E8741A", "#0E8F7E", "#9AA6BA", "#C62828" };
+
+    var acts = Model.RecentActivity ?? new List<ERPWMS.Web.ViewModels.ActivityItem>();
+}
+
+@* SVG Sprite *@
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" /></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" /></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8M18 2v4h-4M6 22v-4h4" /></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6" /></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h10.2l2-8H6M9 20h.01M17 20h.01" /></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8" /></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" /></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM21 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M1 6h13v10H1zM14 10h4l4 3v3h-8zM6 19h.01M18 19h.01" /></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12M9 21v-7h6v7" /></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01" /></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9z" /></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M9 14h6M9 18h6" /></symbol>
+    <symbol id="i-fileplus" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M12 12v6M9 15h6" /></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6" /></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4" /></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0M14 4v4M8 10v4M18 16v4" /></symbol>
+    <symbol id="i-bars" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2" /></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4" /></symbol>
+</svg>
+
+<div class="wms-page">
+
+    <header class="wms-topbar">
+        <div class="wms-crumbs"><span>Home</span><span>/</span><b>Dashboard</b></div>
+        <div class="wms-tools">
+            <label class="wms-search">
+                <svg class="wms-ic" style="width:18px;height:18px"><use href="#i-search" /></svg>
+                <input type="text" placeholder="Search products, orders, suppliers">
+                <span class="wms-kbd">Ctrl K</span>
+            </label>
+            <a class="wms-iconbtn" href="/Notification">
+                <svg class="wms-ic"><use href="#i-bell" /></svg>
+                <span class="wms-badge">3</span>
+            </a>
         </div>
-        <a class="btn btn-sm btn-light border" asp-action="Index" asp-route-days="@Model.DateRangeDays"><i class="fas fa-sync-alt"></i></a>
-    </div>
-</div>
+    </header>
 
-<div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3"><div class="kpi"><div><div class="kpi-lbl">Total Sales</div><div class="kpi-val"><span class="c">Rs </span>@((Model.TotalSales/1000m).ToString("0.0"))K</div><div class="kpi-sub">Today: Rs @Model.TodaySales.ToString("N0")</div></div><div class="kpi-ic" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-shopping-cart"></i></div></div></div>
-    <div class="col-6 col-lg-3"><div class="kpi"><div><div class="kpi-lbl">Running Stock</div><div class="kpi-val"><span class="c">Rs </span>@((Model.StockValue/1000000m).ToString("0.0"))M</div><div class="kpi-sub">All warehouses</div></div><div class="kpi-ic" style="background:#d1fae5;color:#059669;"><i class="fas fa-cubes"></i></div></div></div>
-    <div class="col-6 col-lg-3"><div class="kpi"><div><div class="kpi-lbl">Stock Value</div><div class="kpi-val"><span class="c">Rs </span>@Model.StockValue.ToString("N0")</div><div class="kpi-sub">Current inventory</div></div><div class="kpi-ic" style="background:#fef3c7;color:#d97706;"><i class="fas fa-boxes"></i></div></div></div>
-    <div class="col-6 col-lg-3"><div class="kpi"><div><div class="kpi-lbl">Pending Orders</div><div class="kpi-val">@Model.PendingOrders</div><div class="kpi-sub">Out of @Model.TotalOrders orders</div></div><div class="kpi-ic" style="background:#fee2e2;color:#dc2626;"><i class="fas fa-clock"></i></div></div></div>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3"><div class="cnt"><div><div class="cnt-lbl">Customers</div><div class="cnt-val">@Model.TotalCustomers</div><div class="cnt-sub">Active accounts</div></div><div class="cnt-ic" style="background:#dbeafe;color:#2563eb;"><i class="fas fa-users"></i></div></div></div>
-    <div class="col-6 col-lg-3"><div class="cnt"><div><div class="cnt-lbl">Products</div><div class="cnt-val">@Model.TotalProducts</div><div class="cnt-sub">In catalog</div></div><div class="cnt-ic" style="background:#ede9fe;color:#8b5cf6;"><i class="fas fa-cube"></i></div></div></div>
-    <div class="col-6 col-lg-3"><div class="cnt"><div><div class="cnt-lbl">Suppliers</div><div class="cnt-val">@Model.TotalSuppliers</div><div class="cnt-sub">Registered</div></div><div class="cnt-ic" style="background:#cffafe;color:#06b6d4;"><i class="fas fa-truck"></i></div></div></div>
-    <div class="col-6 col-lg-3"><div class="cnt"><div><div class="cnt-lbl">Warehouses</div><div class="cnt-val">@Model.TotalWarehouses</div><div class="cnt-sub">Active</div></div><div class="cnt-ic" style="background:#fed7aa;color:#ea580c;"><i class="fas fa-warehouse"></i></div></div></div>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-lg-8"><div class="pnl h-100"><div class="pnl-h"><h6><i class="fas fa-chart-line me-2" style="color:#f59e0b;"></i>Sales &amp; Purchases Trend</h6><small style="font-size:11px;color:#9ca3af;">Last @Model.DateRangeDays days</small></div><div class="pnl-b"><div style="height:230px;"><canvas id="trendChart"></canvas></div></div></div></div>
-    <div class="col-lg-4"><div class="pnl h-100"><div class="pnl-h"><h6><i class="fas fa-chart-pie me-2" style="color:#f59e0b;"></i>Top Products</h6><small style="font-size:11px;color:#9ca3af;">By revenue</small></div><div class="pnl-b"><div style="height:230px;"><canvas id="productChart"></canvas></div></div></div></div>
-</div>
-
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <span class="pill">23 Aug</span><span class="pill">26 Aug</span><span class="pill">29 Aug</span><span class="pill">01 Sep</span>
-    <span class="pill">04 Sep</span><span class="pill">07 Sep</span><span class="pill">10 Sep</span><span class="pill">13 Sep</span>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-lg-4"><div class="pnl h-100"><div class="pnl-h"><h6><i class="fas fa-exclamation-triangle me-2" style="color:#dc2626;"></i>Alerts</h6></div><div class="pnl-b">
-        <div style="display:flex;align-items:center;padding:10px 12px;border-radius:8px;background:#fef2f2;">
-            <i class="fas fa-exclamation-circle" style="font-size:18px;color:#dc2626;margin-right:10px;"></i>
-            <div><div style="font-size:12px;font-weight:700;color:#1f2937;">System Errors</div><div style="font-size:11px;color:#9ca3af;">@Model.SystemErrors24h error(s) in 24 hours</div></div>
+    <section class="wms-titlerow">
+        <div>
+            <h1>Dashboard</h1>
+            <div class="wms-updated">Updated @lastUpdatedStr - All warehouses</div>
         </div>
-    </div></div></div>
-    <div class="col-lg-8"><div class="pnl h-100"><div class="pnl-h"><h6><i class="fas fa-bolt me-2" style="color:#f59e0b;"></i>Quick Actions</h6></div><div class="pnl-b"><div class="row g-2">
-        <div class="col-3"><a href="/PurchaseMasters/Create" class="qa"><i class="fas fa-file-circle-plus" style="color:#2563eb;"></i><span>New PO</span></a></div>
-        <div class="col-3"><a href="/GRNs/Create" class="qa"><i class="fas fa-clipboard-check" style="color:#059669;"></i><span>New GRN</span></a></div>
-        <div class="col-3"><a href="/SalesMasters/Create" class="qa"><i class="fas fa-cart-plus" style="color:#7c3aed;"></i><span>New Sale</span></a></div>
-        <div class="col-3"><a href="/Invoices" class="qa"><i class="fas fa-file-invoice" style="color:#d97706;"></i><span>Invoices</span></a></div>
-        <div class="col-3"><a href="/StockTransfers/Create" class="qa"><i class="fas fa-arrow-right-arrow-left" style="color:#0891b2;"></i><span>Transfer</span></a></div>
-        <div class="col-3"><a href="/StockAdjustments/Create" class="qa"><i class="fas fa-sliders" style="color:#dc2626;"></i><span>Adjust</span></a></div>
-        <div class="col-3"><a href="/CycleCounts/Create" class="qa"><i class="fas fa-rotate" style="color:#7c3aed;"></i><span>Cycle</span></a></div>
-        <div class="col-3"><a href="/Reports" class="qa"><i class="fas fa-chart-bar" style="color:#059669;"></i><span>Reports</span></a></div>
-    </div></div></div></div>
-</div>
-
-<div class="pnl mb-3">
-    <div class="pnl-h"><h6><i class="fas fa-clock-rotate-left me-2" style="color:#f59e0b;"></i>Recent Activity</h6><a href="#" style="font-size:11px;color:#f59e0b;text-decoration:none;">View all &rarr;</a></div>
-    <div class="pnl-b p-0">
-        <table class="table act mb-0">
-            <thead><tr><th>Type</th><th>Reference</th><th>Party</th><th style="text-align:right;">Amount</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody>
-                @if (Model.RecentActivity != null && Model.RecentActivity.Count > 0)
+        <div class="wms-period-wrap">
+            <div class="wms-period">
+                @foreach (var d in new[] { 7, 30, 90, 365 })
                 {
-                    foreach (var a in Model.RecentActivity)
+                    var lbl = d == 365 ? "1Y" : (d + "D");
+                    var act = Model.DateRangeDays == d ? "active" : "";
+                    <a asp-action="Index" asp-route-days="@d" class="@act">@lbl</a>
+                }
+            </div>
+            <a class="wms-iconbtn" asp-action="Index" asp-route-days="@Model.DateRangeDays">
+                <svg class="wms-ic" style="width:18px;height:18px"><use href="#i-refresh" /></svg>
+            </a>
+        </div>
+    </section>
+
+    <section class="wms-grid">
+        @await Html.PartialAsync("_KpiCard", new
+        {
+            Color = "blue",
+            Icon = "i-cart",
+            Label = "TOTAL SALES",
+            Pre = "Rs",
+            Num = salesK + "K",
+            Sub = "Today: Rs " + todaySales.ToString("N0") + " - Approved + completed only"
+        })
+        @await Html.PartialAsync("_KpiCard", new
+        {
+            Color = "green",
+            Icon = "i-box",
+            Label = "STOCK ON HAND",
+            Num = Model.TotalProducts.ToString(),
+            Suf = "units",
+            Sub = "Across " + Model.TotalWarehouses + " warehouses"
+        })
+        @await Html.PartialAsync("_KpiCard", new
+        {
+            Color = "amber",
+            Icon = "i-coin",
+            Label = "STOCK VALUE",
+            Pre = "Rs",
+            Num = stockNum,
+            Sub = "Current inventory at cost"
+        })
+        @await Html.PartialAsync("_KpiCard", new
+        {
+            Color = "red",
+            Icon = "i-clock",
+            Label = "PENDING ORDERS",
+            Num = pendingOrd.ToString(),
+            Suf = "of " + totalOrd,
+            Sub = "Sales orders awaiting delivery"
+        })
+    </section>
+
+    <section class="wms-grid">
+        @await Html.PartialAsync("_MiniCard", new { Color = "blue", Icon = "i-users", Label = "CUSTOMERS", Num = Model.TotalCustomers.ToString(), Sub = "Active accounts" })
+        @await Html.PartialAsync("_MiniCard", new { Color = "blue", Icon = "i-box", Label = "PRODUCTS", Num = Model.TotalProducts.ToString(), Sub = "In catalog" })
+        @await Html.PartialAsync("_MiniCard", new { Color = "green", Icon = "i-truck", Label = "SUPPLIERS", Num = Model.TotalSuppliers.ToString(), Sub = "Registered" })
+        @await Html.PartialAsync("_MiniCard", new { Color = "amber", Icon = "i-house", Label = "WAREHOUSES", Num = Model.TotalWarehouses.ToString(), Sub = "Active" })
+    </section>
+
+    <section class="wms-split">
+        <div class="wms-card wms-panel" style="flex:2 1 520px">
+            <div class="wms-panel-head">
+                <div class="wms-panel-title">
+                    <svg class="wms-ic" style="color:#2455E6"><use href="#i-trend" /></svg>
+                    <h2>Sales &amp; Purchases Trend</h2>
+                </div>
+                <div class="wms-legend">
+                    <span><i style="width:18px;height:4px;border-radius:2px;background:#2455E6;display:block"></i>Sales</span>
+                    <span><i style="width:18px;height:0;border-top:4px dashed #E8741A;display:block"></i>Purchases</span>
+                    <span class="muted">Last @Model.DateRangeDays days</span>
+                </div>
+            </div>
+            <div style="position:relative;height:280px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="wms-card wms-panel" style="flex:1 1 320px">
+            <div class="wms-panel-head">
+                <h2 style="font-size:18px;font-weight:800">Top Products</h2>
+                <span style="font-size:13px;color:#5B6577">By revenue</span>
+            </div>
+            <div class="wms-donut-wrap" style="height:190px;position:relative;">
+                <canvas id="productChart"></canvas>
+            </div>
+            <ul class="wms-plist">
+                @{
+                    var idx = 0; var grand = topTotal == 0 ? 1m : topTotal;
+                }
+                @foreach (var p in topList.Take(4))
+                {
+                    var pct = (int)Math.Round((p.Revenue / grand) * 100);
+                    var c = donutColors[idx % donutColors.Length];
+                    <li>
+                        <span class="sw" style="background:@c"></span>
+                        <span class="n">@(p.Name ?? p.ProductName ?? "Unknown")</span>
+                        <span class="v">Rs @((p.Revenue / 1000m).ToString("0.0"))K</span>
+                        <span class="p">@pct%</span>
+                    </li>
+                    idx++;
+                }
+                @if (topList.Count == 0)
+                {
+                    <li><span class="n" style="color:#5B6577">No products yet</span></li>
+                }
+            </ul>
+        </div>
+    </section>
+
+    <section class="wms-split">
+        <div class="wms-card wms-panel" style="flex:1 1 340px">
+            <div class="wms-panel-head">
+                <div class="wms-panel-title">
+                    <svg class="wms-ic" style="color:#B3261E"><use href="#i-warn" /></svg>
+                    <h2>Alerts</h2>
+                </div>
+                <span class="wms-pill">@(Model.SystemErrors24h > 0 ? Model.SystemErrors24h + " need attention" : "All clear")</span>
+            </div>
+            <ul class="wms-alerts">
+                <li class="wms-alert" style="background:#FDE4E1;color:#8A1C15">
+                    <div class="box"><svg class="wms-ic"><use href="#i-box" /></svg></div>
+                    <div class="tx"><b style="color:#121A2B">Low stock</b><span>Check products below reorder level</span></div>
+                    <span class="tag">REVIEW</span>
+                </li>
+                <li class="wms-alert" style="background:#FFF1D6;color:#7A4B00">
+                    <div class="box"><svg class="wms-ic"><use href="#i-file" /></svg></div>
+                    <div class="tx"><b style="color:#121A2B">Pending orders</b><span>@Model.PendingOrders orders awaiting approval</span></div>
+                    <span class="tag">APPROVE</span>
+                </li>
+                <li class="wms-alert" style="background:#E3EBFD;color:#1A3FB0">
+                    <div class="box"><svg class="wms-ic"><use href="#i-refresh" /></svg></div>
+                    <div class="tx"><b style="color:#121A2B">Cycle count due</b><span>Warehouse scheduled this week</span></div>
+                    <span class="tag">SCHEDULE</span>
+                </li>
+                <li class="wms-alert" style="background:#DDF3E6;color:#0F5F32">
+                    <div class="box"><svg class="wms-ic"><use href="#i-shield" /></svg></div>
+                    <div class="tx"><b style="color:#121A2B">System errors</b><span>@Model.SystemErrors24h errors in last 24 hours</span></div>
+                    <span class="tag">@(Model.SystemErrors24h == 0 ? "ALL CLEAR" : "CHECK")</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="wms-card wms-panel" style="flex:2 1 480px">
+            <div class="wms-panel-title">
+                <svg class="wms-ic" style="color:#E8741A"><use href="#i-bolt" /></svg>
+                <h2>Quick Actions</h2>
+            </div>
+            <div class="wms-actions">
+                <a class="wms-action" href="/PurchaseMaster/Create"><svg class="wms-ic" style="color:#2455E6"><use href="#i-fileplus" /></svg>New PO</a>
+                <a class="wms-action" href="/GRN/Create"><svg class="wms-ic" style="color:#0E8F7E"><use href="#i-check" /></svg>New GRN</a>
+                <a class="wms-action" href="/Sales/Create"><svg class="wms-ic" style="color:#2455E6"><use href="#i-cart" /></svg>New Sale</a>
+                <a class="wms-action" href="/Invoice"><svg class="wms-ic" style="color:#B3261E"><use href="#i-receipt" /></svg>Invoices</a>
+                <a class="wms-action" href="/StockTransfer/Create"><svg class="wms-ic" style="color:#2455E6"><use href="#i-swap" /></svg>Transfer</a>
+                <a class="wms-action" href="/StockAdjustment/Create"><svg class="wms-ic" style="color:#B3261E"><use href="#i-sliders" /></svg>Adjust</a>
+                <a class="wms-action" href="/CycleCount/Create"><svg class="wms-ic" style="color:#2455E6"><use href="#i-refresh" /></svg>Cycle Count</a>
+                <a class="wms-action" href="/Reports"><svg class="wms-ic" style="color:#3B4558"><use href="#i-bars" /></svg>Reports</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="wms-card wms-panel">
+        <div class="wms-panel-head">
+            <div class="wms-panel-title">
+                <svg class="wms-ic" style="color:#E8741A"><use href="#i-clock" /></svg>
+                <h2>Recent Activity</h2>
+            </div>
+            <a class="wms-viewall" href="#">View all</a>
+        </div>
+        <div class="wms-scroll-x">
+            <table class="wms-table">
+                <thead>
+                    <tr>
+                        <th>TYPE</th>
+                        <th>REFERENCE</th>
+                        <th>PARTY</th>
+                        <th class="r">AMOUNT</th>
+                        <th>STATUS</th>
+                        <th class="r">DATE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (acts.Count > 0)
                     {
-                        var tBg = a.Type == "Sales" ? "#3b82f6" : "#10b981";
-                        <tr>
-                            <td><span class="bdg" style="background:@tBg;color:#fff;">@(a.Type ?? "-")</span></td>
-                            <td style="font-weight:600;color:#111827;">@(a.Reference ?? "-")</td>
-                            <td style="color:#6b7280;">@(a.Party ?? "-")</td>
-                            <td style="text-align:right;font-weight:700;">Rs @((a.Amount ?? 0m).ToString("N0"))</td>
-                            <td><span class="bdg" style="background:#e5e7eb;color:#6b7280;">@(a.Status ?? "-")</span></td>
-                            <td style="color:#9ca3af;">@((a.Date ?? DateTime.MinValue).ToString("dd MMM"))</td>
-                        </tr>
+                        foreach (var a in acts)
+                        {
+                            var isSales = (a.Type ?? "").Equals("Sales", StringComparison.OrdinalIgnoreCase);
+                            var tagCls = isSales ? "wms-t-sales" : "wms-t-purchase";
+                            var st = (a.Status ?? "Draft").ToLower();
+                            var stCls = st.Contains("complet") ? "wms-s-completed"
+                                        : st.Contains("approv") ? "wms-s-approved"
+                                        : st.Contains("submit") ? "wms-s-submitted"
+                                        : "wms-s-draft";
+                            var dateStr = "-";
+                            try { if (a.Date != null) { dateStr = ((DateTime)a.Date).ToString("dd MMM yyyy"); } } catch { }
+                            <tr>
+                                <td><span class="wms-tag-type @tagCls">@a.Type</span></td>
+                                <td class="ref">@a.Reference</td>
+                                <td class="party">@a.Party</td>
+                                <td class="r amt">Rs @((a.Amount ?? 0m).ToString("N0"))</td>
+                                <td><span class="wms-status @stCls">@a.Status</span></td>
+                                <td class="r date">@dateStr</td>
+                            </tr>
+                        }
                     }
-                }
-                else
-                {
-                    <tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:24px;">No recent activity</td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
+                    else
+                    {
+                        <tr><td colspan="6" style="text-align:center;color:#5B6577;padding:40px;">No recent activity</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
 
 </div>
 
 @section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-    var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TrendLabels ?? new List<string>()));
-    var salesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SalesTrend ?? new List<decimal>()));
-    var purchaseData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PurchaseTrend ?? new List<decimal>()));
+    <script>
+        console.log("=== DASHBOARD CHARTS START ===");
 
-    new Chart(document.getElementById('trendChart'), {
-        type: 'line',
-        data: { labels: labels, datasets: [
-            { label: 'Sales', data: salesData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 },
-            { label: 'Purchases', data: purchaseData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 0 }
-        ]},
-        options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 10 } } } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { callback: v => (v/1000) + 'K', font: { size: 10 }, color: '#9ca3af' } },
-                x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#9ca3af' } }
+        var trendLabelsRaw = @Html.Raw(trendLabelsJson);
+        var salesDataRaw   = @Html.Raw(salesDataJson);
+        var purchDataRaw   = @Html.Raw(purchDataJson);
+        var topLabelsRaw   = @Html.Raw(topLabelsJson);
+        var topValuesRaw   = @Html.Raw(topValuesJson);
+
+        console.log("trendLabelsRaw:", trendLabelsRaw);
+        console.log("salesDataRaw:", salesDataRaw);
+        console.log("topLabelsRaw:", topLabelsRaw);
+
+        if (typeof Chart === 'undefined') {
+            console.error("Chart.js NOT loaded!");
+        } else {
+            console.log("Chart.js version:", Chart.version);
+        }
+
+        // ---- TREND CHART ----
+        var trendCanvas = document.getElementById('trendChart');
+        if (trendCanvas && typeof Chart !== 'undefined') {
+            try {
+                var labels = trendLabelsRaw;
+                var sales = salesDataRaw;
+                var purchases = purchDataRaw;
+        
+                if (labels.length === 0) {
+                    labels = ['No Data'];
+                    sales = [0];
+                    purchases = [0];
+                }
+        
+                new Chart(trendCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Sales',
+                                data: sales,
+                                borderColor: '#2455E6',
+                                backgroundColor: 'rgba(36,85,230,0.12)',
+                                fill: true,
+                                tension: 0.35,
+                                borderWidth: 3,
+                                pointRadius: 0,
+                                pointHoverRadius: 5,
+                                pointBackgroundColor: '#fff',
+                                pointBorderColor: '#2455E6',
+                                pointBorderWidth: 2
+                            },
+                            {
+                                label: 'Purchases',
+                                data: purchases,
+                                borderColor: '#E8741A',
+                                backgroundColor: 'transparent',
+                                fill: false,
+                                tension: 0.35,
+                                borderWidth: 3,
+                                borderDash: [8,6],
+                                pointRadius: 0,
+                                pointHoverRadius: 5,
+                                pointBackgroundColor: '#fff',
+                                pointBorderColor: '#E8741A',
+                                pointBorderWidth: 2.5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#E3E8F0' },
+                                ticks: { callback: function(v){ return (v/1000)+'K'; } }
+                            },
+                            x: {
+                        grid: { display: false },
+                        ticks: {
+                            maxRotation: 0,
+                            minRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 8,
+                            font: { size: 11 }
+                        }
+                    }
+                        }
+                    }
+                });
+                console.log("✅ Trend chart created");
+            } catch(e) {
+                console.error("❌ Trend chart error:", e);
             }
         }
-    });
 
-    var pL = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-        (Model.TopProducts ?? new List<ERPWMS.Web.ViewModels.TopProductItem>())
-            .Select(p => p.Name ?? p.ProductName ?? "Unknown").ToList()));
-    var pD = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-        (Model.TopProducts ?? new List<ERPWMS.Web.ViewModels.TopProductItem>())
-            .Select(p => p.Revenue).ToList()));
-
-    if (pL.length === 0) { pL = ['No Data']; pD = [1]; }
-
-    new Chart(document.getElementById('productChart'), {
-        type: 'doughnut',
-        data: { labels: pL, datasets: [{ data: pD, backgroundColor: ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '68%',
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, font: { size: 10 }, padding: 8 } } }
+        // ---- DONUT CHART ----
+        var prodCanvas = document.getElementById('productChart');
+        if (prodCanvas && typeof Chart !== 'undefined') {
+            try {
+                var pLabels = topLabelsRaw;
+                var pValues = topValuesRaw;
+                var donutColors = ['#2455E6','#E8741A','#0E8F7E','#9AA6BA','#C62828'];
+        
+                if (pValues.length === 0) {
+                    pLabels = ['No Data'];
+                    pValues = [1];
+                }
+        
+                new Chart(prodCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: pLabels,
+                        datasets: [{
+                            data: pValues,
+                            backgroundColor: donutColors,
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+                console.log("✅ Donut chart created");
+            } catch(e) {
+                console.error("❌ Donut chart error:", e);
+            }
         }
-    });
-</script>
+
+        console.log("=== DASHBOARD CHARTS END ===");
+    </script>
 }
+

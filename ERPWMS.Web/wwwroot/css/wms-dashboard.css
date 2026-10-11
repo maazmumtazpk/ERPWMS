@@ -1,0 +1,809 @@
+﻿/* ============================================================
+   WMS Dashboard — CLEAN CSS
+   Final version — no conflicts, screen-fit
+   ============================================================ */
+
+:root {
+    --bg: #F3F5F9;
+    --card: #FFFFFF;
+    --ink: #121A2B;
+    --muted: #5B6577;
+    --soft: #3B4558;
+    --line: #E3E8F0;
+    --line2: #DCE2EC;
+    --blue: #2455E6;
+    --orange: #E8741A;
+    --teal: #0E8F7E;
+    --navy: #0F1B33;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+}
+
+button { font-family: inherit; cursor: pointer; }
+a { text-decoration: none; color: inherit; }
+h1, h2 { margin: 0; }
+
+.wms-ic {
+    width: 18px; height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+/* ============================================================
+   PAGE — Full width, tight
+   ============================================================ */
+.wms-page {
+    width: 100%;
+    padding: 16px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+.wms-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 4px;
+}
+
+.wms-crumbs {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.wms-crumbs b { color: var(--ink); font-weight: 700; }
+
+.wms-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wms-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px;
+    background: #fff;
+    border: 1px solid var(--line2);
+    border-radius: 10px;
+    color: var(--muted);
+    min-width: 240px;
+}
+
+.wms-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.wms-search input::placeholder { color: var(--muted); }
+
+.wms-kbd {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    border: 1px solid var(--line2);
+    border-radius: 5px;
+    padding: 2px 5px;
+}
+
+.wms-iconbtn {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--line2);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+    transition: background 0.15s;
+    cursor: pointer;
+}
+
+.wms-iconbtn:hover { background: #F8FAFD; }
+
+.wms-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: #C62828;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* ============================================================
+   TITLE ROW
+   ============================================================ */
+.wms-titlerow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.wms-titlerow h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.wms-updated {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.wms-period-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wms-period {
+    display: flex;
+    padding: 3px;
+    gap: 3px;
+    background: #fff;
+    border: 1px solid var(--line2);
+    border-radius: 10px;
+}
+
+.wms-period a {
+    min-width: 44px;
+    height: 30px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    background: transparent;
+    color: var(--soft);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wms-period a.active {
+    background: var(--navy);
+    color: #fff;
+}
+
+/* ============================================================
+   GRID — 4 columns
+   ============================================================ */
+.wms-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+}
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.wms-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+/* ============================================================
+   KPI CARD
+   ============================================================ */
+.wms-kpi {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 100px;
+}
+
+.wms-kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.wms-kpi-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.wms-tile {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.wms-tile .wms-ic {
+    width: 16px;
+    height: 16px;
+}
+
+.wms-kpi-val {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.wms-kpi-val .pre {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.wms-kpi-val .num {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.wms-kpi-val .suf {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.wms-kpi-sub {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.3;
+}
+
+/* ============================================================
+   MINI CARD
+   ============================================================ */
+.wms-mini {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wms-mini .wms-tile {
+    width: 34px;
+    height: 34px;
+}
+
+.wms-mini .wms-ic {
+    width: 16px;
+    height: 16px;
+}
+
+.wms-mini .t {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.wms-mini .row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.wms-mini .num {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.wms-mini .sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+/* ============================================================
+   TINTS
+   ============================================================ */
+.tile-blue  { background: #E3EBFD; color: #1A3FB0; }
+.tile-green { background: #D8F1EC; color: #0A6B5E; }
+.tile-amber { background: #FCE6D3; color: #A24E0B; }
+.tile-red   { background: #FDE4E1; color: #8A1C15; }
+
+/* ============================================================
+   SPLIT / PANELS
+   ============================================================ */
+.wms-split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.wms-panel {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.wms-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.wms-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wms-panel-title h2 {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.wms-panel-title .wms-ic {
+    width: 16px;
+    height: 16px;
+}
+
+.wms-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--soft);
+}
+
+.wms-legend span { display: flex; align-items: center; gap: 5px; }
+.wms-legend .muted { color: var(--muted); font-weight: 500; }
+
+.wms-scroll-x { overflow-x: auto; }
+
+/* ============================================================
+   CHARTS
+   ============================================================ */
+.wms-panel > div[style*="height:280px"] {
+    height: 200px !important;
+}
+
+.wms-panel > div[style*="height:190px"],
+.wms-donut-wrap {
+    height: 160px !important;
+}
+
+.wms-panel canvas {
+    max-height: 200px;
+}
+
+.wms-donut-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.wms-donut-wrap canvas {
+    max-width: 160px;
+    max-height: 160px;
+}
+
+/* ============================================================
+   DONUT LIST
+   ============================================================ */
+.wms-plist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wms-plist li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+}
+
+.wms-plist .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.wms-plist .n { flex: 1; min-width: 0; font-weight: 600; }
+.wms-plist .v { font-weight: 700; }
+.wms-plist .p { width: 34px; text-align: right; color: var(--muted); font-weight: 600; }
+
+/* ============================================================
+   ALERTS
+   ============================================================ */
+.wms-pill {
+    font-size: 10px;
+    font-weight: 800;
+    color: #8A1C15;
+    background: #FDE4E1;
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+
+.wms-alerts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wms-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.wms-alert .box {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.wms-alert .box .wms-ic {
+    width: 14px;
+    height: 14px;
+}
+
+.wms-alert .tx {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.wms-alert .tx b {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.wms-alert .tx span {
+    font-size: 10.5px;
+    color: var(--soft);
+}
+
+.wms-alert .tag {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   QUICK ACTIONS
+   ============================================================ */
+.wms-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.wms-action {
+    min-height: 68px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #F8FAFD;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 700;
+    transition: all 0.15s;
+    padding: 8px 4px;
+}
+
+.wms-action:hover {
+    background: #EEF3FC;
+    border-color: #C9D6F5;
+}
+
+.wms-action .wms-ic {
+    width: 20px;
+    height: 20px;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.wms-viewall {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue);
+}
+
+.wms-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.wms-table th {
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    text-transform: uppercase;
+}
+
+.wms-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #EEF1F6;
+}
+
+.wms-table th.r, .wms-table td.r { text-align: right; }
+.wms-table td.ref { font-weight: 700; }
+.wms-table td.party { color: var(--soft); }
+.wms-table td.amt { font-weight: 700; }
+.wms-table td.date { color: var(--muted); }
+
+.wms-tag-type {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.wms-t-sales    { background: #E3EBFD; color: #1A3FB0; }
+.wms-t-purchase { background: #D8F1EC; color: #0A6B5E; }
+
+.wms-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.wms-status::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 3px;
+    background: currentColor;
+}
+
+.wms-s-completed { background: #E3EBFD; color: #1A3FB0; }
+.wms-s-approved  { background: #DDF3E6; color: #0F5F32; }
+.wms-s-submitted { background: #FFF1D6; color: #7A4B00; }
+.wms-s-draft     { background: #ECEFF4; color: #3B4558; }
+
+/* ============================================================
+   LAYOUT OVERRIDE — Dashboard full width, hide layout topbar
+   ============================================================ */
+body.wms-dashboard .wms-topbar { display: none !important; }
+body.wms-dashboard .wms-content { padding: 0 !important; margin: 0 !important; }
+body.wms-dashboard .wms-main { margin-left: 250px !important; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1400px) {
+    .wms-kpi-val .num { font-size: 20px; }
+    .wms-mini .num { font-size: 16px; }
+}
+
+@media (max-width: 1200px) {
+    .wms-grid { grid-template-columns: repeat(2, 1fr); }
+    .wms-split { flex-direction: column; }
+    .wms-split > div { flex: 1 1 100% !important; width: 100%; }
+}
+
+@media (max-width: 768px) {
+    body.wms-dashboard .wms-main { margin-left: 0 !important; }
+    .wms-grid { grid-template-columns: 1fr; }
+    .wms-actions { grid-template-columns: repeat(2, 1fr); }
+    .wms-page { padding: 12px 14px 20px; }
+}
+
+/* ============================================================
+   END
+   ============================================================ */
+
+/* ============================================================
+   TABLE COLUMNS — Equal spacing
+   ============================================================ */
+
+.wms-table {
+    table-layout: fixed !important;
+    width: 100% !important;
+}
+
+/* TYPE — small column */
+.wms-table th:nth-child(1),
+.wms-table td:nth-child(1) {
+    width: 10% !important;
+}
+
+/* REFERENCE — medium */
+.wms-table th:nth-child(2),
+.wms-table td:nth-child(2) {
+    width: 20% !important;
+}
+
+/* PARTY — largest */
+.wms-table th:nth-child(3),
+.wms-table td:nth-child(3) {
+    width: 25% !important;
+}
+
+/* AMOUNT — right-aligned, medium */
+.wms-table th:nth-child(4),
+.wms-table td:nth-child(4) {
+    width: 15% !important;
+    text-align: right !important;
+}
+
+/* STATUS — small */
+.wms-table th:nth-child(5),
+.wms-table td:nth-child(5) {
+    width: 15% !important;
+}
+
+/* DATE — right-aligned, fixed */
+.wms-table th:nth-child(6),
+.wms-table td:nth-child(6) {
+    width: 15% !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+}
+
+/* Header alignment match */
+.wms-table th {
+    padding: 10px 12px !important;
+    vertical-align: middle !important;
+}
+
+.wms-table td {
+    padding: 10px 12px !important;
+    vertical-align: middle !important;
+}
+
+/* Text truncation for long content */
+.wms-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wms-table td.party,
+.wms-table td.ref {
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   TABLE — Amount + Status gap
+   ============================================================ */
+
+/* Amount column — right aligned with extra padding */
+.wms-table th:nth-child(4),
+.wms-table td:nth-child(4) {
+    width: 14% !important;
+    text-align: right !important;
+    padding-right: 30px !important;
+}
+
+/* Status column — left aligned with extra padding */
+.wms-table th:nth-child(5),
+.wms-table td:nth-child(5) {
+    width: 16% !important;
+    text-align: left !important;
+    padding-left: 30px !important;
+}
+
+/* Date column — right aligned */
+.wms-table th:nth-child(6),
+.wms-table td:nth-child(6) {
+    width: 15% !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+}
+
+
+/* ============================================================
+   TABLE — Amount column LEFT shift
+   ============================================================ */
+
+/* AMOUNT — left aligned with padding */
+.wms-table th:nth-child(4),
+.wms-table td:nth-child(4) {
+    width: 15% !important;
+    text-align: left !important;
+    padding-left: 20px !important;
+    padding-right: 10px !important;
+}
+
+/* STATUS — left aligned */
+.wms-table th:nth-child(5),
+.wms-table td:nth-child(5) {
+    width: 15% !important;
+    text-align: left !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+/* DATE — right aligned */
+.wms-table th:nth-child(6),
+.wms-table td:nth-child(6) {
+    width: 12% !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+    padding-right: 20px !important;
+}
+
+/* PARTY — slightly wider */
+.wms-table th:nth-child(3),
+.wms-table td:nth-child(3) {
+    width: 23% !important;
+    text-align: left !important;
+}
+

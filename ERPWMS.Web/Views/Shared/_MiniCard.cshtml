@@ -1,0 +1,24 @@
+﻿@{
+    dynamic m = Model;
+    Func<string, string> GetStr = (name) => {
+        try {
+            var val = m.GetType().GetProperty(name)?.GetValue(m);
+            return val?.ToString() ?? "";
+        } catch { return ""; }
+    };
+    string color = GetStr("Color");  if (string.IsNullOrEmpty(color)) color = "blue";
+    string icon  = GetStr("Icon");   if (string.IsNullOrEmpty(icon))  icon  = "i-box";
+    string label = GetStr("Label");
+    string num   = GetStr("Num");    if (string.IsNullOrEmpty(num))   num   = "-";
+    string sub   = GetStr("Sub");
+}
+<div class="wms-card wms-mini">
+    <div class="wms-tile tile-@color"><svg class="wms-ic"><use href="#@icon"/></svg></div>
+    <div class="t">
+        <span class="wms-kpi-label">@label</span>
+        <div class="row">
+            <span class="num">@num</span>
+            <span class="sub">@sub</span>
+        </div>
+    </div>
+</div>

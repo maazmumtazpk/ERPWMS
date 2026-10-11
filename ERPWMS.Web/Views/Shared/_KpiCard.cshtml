@@ -1,0 +1,28 @@
+﻿@{
+    dynamic m = Model;
+    Func<string, string> GetStr = (name) => {
+        try {
+            var val = m.GetType().GetProperty(name)?.GetValue(m);
+            return val?.ToString() ?? "";
+        } catch { return ""; }
+    };
+    string color = GetStr("Color");  if (string.IsNullOrEmpty(color)) color = "blue";
+    string icon  = GetStr("Icon");   if (string.IsNullOrEmpty(icon))  icon  = "i-box";
+    string label = GetStr("Label");
+    string pre   = GetStr("Pre");
+    string num   = GetStr("Num");    if (string.IsNullOrEmpty(num))   num   = "-";
+    string suf   = GetStr("Suf");
+    string sub   = GetStr("Sub");
+}
+<div class="wms-card wms-kpi">
+    <div class="wms-kpi-head">
+        <span class="wms-kpi-label">@label</span>
+        <div class="wms-tile tile-@color"><svg class="wms-ic"><use href="#@icon"/></svg></div>
+    </div>
+    <div class="wms-kpi-val">
+        @if (!string.IsNullOrEmpty(pre)) { <span class="pre">@pre</span> }
+        <span class="num">@num</span>
+        @if (!string.IsNullOrEmpty(suf)) { <span class="suf">@suf</span> }
+    </div>
+    @if (!string.IsNullOrEmpty(sub)) { <span class="wms-kpi-sub">@sub</span> }
+</div>

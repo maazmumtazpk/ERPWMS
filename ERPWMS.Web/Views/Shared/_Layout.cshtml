@@ -25,10 +25,12 @@
 
     <!-- SITE CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/wms-dashboard.css" asp-append-version="true" />
 
     @await RenderSectionAsync("Styles", required: false)
 
-    <style>
+    @* DISABLED for wms-dashboard.css compatibility *@
+@* <style>
         :root{
             --wms-sidebar-width:250px;
             --wms-navy:#0A1628;
@@ -208,42 +210,19 @@
             .wms-content{padding:16px 16px 32px;}
             .wms-topbar-title{font-size:17px;}
         }
-    </style>    <style>
-        /* Reports aur Viewer page par topbar hide */
-        body.reports-page .wms-topbar,
-        body.viewer-page .wms-topbar { 
-            display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; 
-        }
-        body.reports-page .wms-main,
-        body.viewer-page .wms-main { 
-            padding-top: 0 !important; margin-top: 0 !important; 
-        }
-        body.reports-page .wms-content,
-        body.viewer-page .wms-content { padding: 0 !important; margin: 0 !important; }
-        body.reports-page main,
-        body.viewer-page main { padding: 0 !important; margin: 0 !important; }
-    </style>
-    <style>
-        /* Reports aur Viewer dono page par topbar hide */
-        body.reports-page .wms-topbar,
-        body.viewer-page .wms-topbar { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
-        body.reports-page .wms-main,
-        body.viewer-page .wms-main { padding-top: 0 !important; margin-top: 0 !important; }
-        body.reports-page .wms-content,
-        body.viewer-page .wms-content { padding: 0 !important; margin: 0 !important; }
-        body.reports-page main,
-        body.viewer-page main { padding: 0 !important; margin: 0 !important; }
-    </style>
+    </style> *@    @* DISABLED *@
+    @* DISABLED *@
 
-    <style>
-        /* ========= FULL WIDTH PAGE MODE ========= */
-        body.wms-widepage .wms-content {
-            padding: 18px 22px 30px 22px;
-            min-height: auto;
-        }
-    </style>
+    @* DISABLED *@
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
-<body>
+@{
+    var _ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var _isDashboard = string.Equals(_ctrl, "Dashboard", StringComparison.OrdinalIgnoreCase);
+}
+<body class="@(_isDashboard ? "wms-dashboard" : "")">
 
     <!-- ═══════════ SIDEBAR (unchanged partial) ═══════════ -->
     @await Html.PartialAsync("_Sidebar")
@@ -361,6 +340,7 @@
 
     @await Html.PartialAsync("_AdminJs")
 
+    
     @await RenderSectionAsync("Scripts", required: false)
 
 
@@ -399,6 +379,10 @@ function loadCompaniesOnce(sel){
 </script>
 </body>
 </html>
+
+
+
+
 
 
 

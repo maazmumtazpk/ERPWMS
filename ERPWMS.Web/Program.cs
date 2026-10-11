@@ -115,7 +115,7 @@ builder.Services.AddMediatR(cfg =>
 // ============================================================
 // 7. AUTOMAPPER
 // ============================================================
-builder.Services.AddAutoMapper(typeof(ERPWMS.Application.Common.ICurrentUserService).Assembly);
+builder.Services.AddAutoMapper(cfg => { }, typeof(ERPWMS.Application.Common.ICurrentUserService).Assembly);
 
 // ============================================================
 // 8. COMMON SERVICES
