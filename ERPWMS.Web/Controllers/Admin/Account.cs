@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.Identity;
+﻿using ERPWMS.Application.DTOs.Identity;
 using ERPWMS.Domain.Services;
 using ERPWMS.Infrastructure.Data;
 using ERPWMS.Database.Models;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 using System;
 using System.Collections.Generic;
@@ -18,14 +19,24 @@ using ERPWMS.Database;
 
 namespace ERPWMS.Web.Controllers.Admin
 {
-    public class AccountController(
-        IUserService userService,
-        IRoleService roleService,
-        AppDbContext context) : Controller
+    public class AccountController : Controller
     {
-        private readonly IUserService _userService = userService;
-        private readonly IRoleService _roleService = roleService;
-        private readonly AppDbContext _context = context;
+        private readonly IUserService _userService;
+        private readonly IRoleService _roleService;
+        private readonly AppDbContext _context;
+        private readonly ILogger<AccountController> _logger;
+
+        public AccountController(
+            IUserService userService,
+            IRoleService roleService,
+            AppDbContext context,
+            ILogger<AccountController> logger)
+        {
+            _userService = userService;
+            _roleService = roleService;
+            _context = context;
+            _logger = logger;
+        }
 
         // =========================================================
         // LOGIN - GET
@@ -67,7 +78,22 @@ namespace ERPWMS.Web.Controllers.Admin
 
             if (!await _userService.CanLoginAsync(user))
             {
-                ModelState.AddModelError(string.Empty, "Your account is inactive or deleted.");
+                _logger.LogWarning("Login attempt on inactive account: {UserId}", user.Id);
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
+            }
+
+            if (user.LockoutEnabled == true &&
+                user.LockoutEnd.HasValue &&
+                user.LockoutEnd.Value > DateTime.UtcNow)
+            {
+                var remainingMinutes = (int)Math.Ceiling(
+                    (user.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes);
+
+                _logger.LogWarning("Login attempt on locked account: {UserId}", user.Id);
+
+                ModelState.AddModelError(string.Empty,
+                    $"Account is locked. Please try again after {remainingMinutes} minutes.");
                 return View(model);
             }
 
@@ -80,6 +106,8 @@ namespace ERPWMS.Web.Controllers.Admin
                     "Failed",
                     Request.HttpContext.Connection.RemoteIpAddress?.ToString(),
                     Request.Headers.UserAgent.ToString());
+
+                _logger.LogWarning("Failed login attempt for user: {UserId}", user.Id);
 
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return View(model);
@@ -111,27 +139,10 @@ namespace ERPWMS.Web.Controllers.Admin
 
             if (company == null || company.CompanyId <= 0)
             {
+                _logger.LogError("No company configured in the system.");
                 ModelState.AddModelError(string.Empty, "No company is configured in the system.");
                 return View(model);
             }
-
-            // Login debug
-            Console.WriteLine("");
-            Console.WriteLine("============================================");
-            Console.WriteLine("              LOGIN DEBUG");
-            Console.WriteLine("============================================");
-            Console.WriteLine($"USER ID       : {user.Id}");
-            Console.WriteLine($"USERNAME      : {user.UserName}");
-            Console.WriteLine($"EMAIL         : {user.Email}");
-            Console.WriteLine($"ROLE COUNT    : {roles.Count}");
-            foreach (var role in roles)
-            {
-                Console.WriteLine($"ROLE          : [{role}]");
-            }
-            Console.WriteLine($"IS ADMIN      : {isAdmin}");
-            Console.WriteLine($"COMPANY ID    : {company.CompanyId}");
-            Console.WriteLine($"COMPANY NAME  : {company.CompanyName}");
-            Console.WriteLine("============================================");
 
             var claims = new List<Claim>
             {
@@ -195,21 +206,6 @@ namespace ERPWMS.Web.Controllers.Admin
 
             var principal = new ClaimsPrincipal(identity);
 
-            Console.WriteLine("");
-            Console.WriteLine("============================================");
-            Console.WriteLine("       FINAL AUTHENTICATION DEBUG");
-            Console.WriteLine("============================================");
-            Console.WriteLine($"Authenticated   : {principal.Identity?.IsAuthenticated}");
-            Console.WriteLine($"Name            : {principal.Identity?.Name}");
-            Console.WriteLine($"Is Admin        : {principal.IsInRole("Admin")}");
-            Console.WriteLine($"CompanyId       : {company.CompanyId}");
-            Console.WriteLine($"CompanyName     : {company.CompanyName}");
-            foreach (var claim in principal.Claims)
-            {
-                Console.WriteLine($"CLAIM => {claim.Type} = {claim.Value}");
-            }
-            Console.WriteLine("============================================");
-
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = model.RememberMe,
@@ -235,6 +231,8 @@ namespace ERPWMS.Web.Controllers.Admin
                 user.Id,
                 Request.HttpContext.Connection.RemoteIpAddress?.ToString(),
                 Request.Headers.UserAgent.ToString());
+
+            _logger.LogInformation("User {UserId} logged in successfully.", user.Id);
 
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
@@ -276,6 +274,8 @@ namespace ERPWMS.Web.Controllers.Admin
                     history.LogoutTime = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
                 }
+
+                _logger.LogInformation("User {UserId} logged out.", userId);
             }
 
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -317,7 +317,7 @@ namespace ERPWMS.Web.Controllers.Admin
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ROLE DATABASE ERROR: {ex.Message}");
+                _logger.LogError(ex, "Error fetching roles for user {UserId}", userId);
                 return new List<string>();
             }
         }
@@ -378,7 +378,7 @@ namespace ERPWMS.Web.Controllers.Admin
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"PERMISSION ERROR: {ex.Message}");
+                _logger.LogError(ex, "Error fetching permissions for user {UserId}", userId);
                 return new List<string>();
             }
         }
