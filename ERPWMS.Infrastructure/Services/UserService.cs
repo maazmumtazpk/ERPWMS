@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Services;
+﻿using ERPWMS.Domain.Services;
 using ERPWMS.Infrastructure.Data;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +54,20 @@ namespace ERPWMS.Infrastructure.Services.Identity
             // PLAIN TEXT PASSWORD COMPARISON
             // =====================================================
 
-            return user.PasswordHash == password;
+            bool isValid;
+            try
+            {
+                isValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+            }
+            catch
+            {
+                isValid = false; // Legacy plain-text fallback removed
+                if (isValid)
+                {
+                    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+                }
+            }
+            return isValid;
         }
 
         public async Task<bool> CanLoginAsync(User user)
@@ -113,7 +126,7 @@ namespace ERPWMS.Infrastructure.Services.Identity
                 // =================================================
                 // PLAIN PASSWORD
                 // =================================================
-                PasswordHash = password,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
 
                 SecurityStamp =
                     Guid.NewGuid().ToString(),
@@ -273,12 +286,21 @@ namespace ERPWMS.Infrastructure.Services.Identity
             if (user == null)
                 return false;
 
-            // Check current plain password
-            if (user.PasswordHash != currentPassword)
-                return false;
+           // Check current password with BCrypt
+bool currentIsValid;
+try
+{
+    currentIsValid = BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash);
+}
+catch
+{
+    currentIsValid = user.PasswordHash == currentPassword;
+}
+if (!currentIsValid)
+    return false;
 
             // Save new plain password
-            user.PasswordHash = newPassword;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
 
             user.SecurityStamp =
                 Guid.NewGuid().ToString();
