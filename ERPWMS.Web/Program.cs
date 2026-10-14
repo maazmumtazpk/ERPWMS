@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ERPWMS.Application.Common;
 using ERPWMS.Application.Interfaces;
+using Microsoft.AspNetCore.Authentication;
 using ERPWMS.Database;
 using ERPWMS.Database.Models;
 using ERPWMS.Domain.Interfaces;
@@ -19,6 +20,7 @@ using ERPWMS.Infrastructure.Services.Reports;
 using ERPWMS.Infrastructure.Services.Workflow;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +35,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // ============================================================
-// 2. AUTHENTICATION (Custom Cookie Auth)
+// 2. AUTHENTICATION (Custom Cookie Auth - SECURE)
 // ============================================================
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -43,8 +45,34 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
+
+        // Cookie Security Settings
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.Name = "ERPWMS.Auth";
+        options.Cookie.IsEssential = true;
+
+        // Session validation
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            if (context.Principal?.Identity?.IsAuthenticated == true)
+            {
+                var lastActivity = context.Properties?.Items["LastActivity"];
+                if (!string.IsNullOrEmpty(lastActivity))
+                {
+                    if (DateTime.TryParse(lastActivity, out var last))
+                    {
+                        if ((DateTime.UtcNow - last).TotalMinutes > 60)
+                        {
+                            context.RejectPrincipal();
+                            await context.HttpContext.SignOutAsync(
+                                CookieAuthenticationDefaults.AuthenticationScheme);
+                        }
+                    }
+                }
+            }
+        };
     });
 
 // ============================================================
@@ -196,7 +224,7 @@ builder.Services.AddScoped<IBankAccountRepository, BankAccountRepository>();
 builder.Services.AddScoped<IChartOfAccountRepository, ChartOfAccountRepository>();
 builder.Services.AddScoped<ITaxSettingRepository, TaxSettingRepository>();
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
- builder.Services.AddScoped<IPayrollSettingRepository, PayrollSettingRepository>();
+builder.Services.AddScoped<IPayrollSettingRepository, PayrollSettingRepository>();
 builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 builder.Services.AddScoped<IWeeklyOffRepository, WeeklyOffRepository>();
 builder.Services.AddScoped<IAttendanceProcessor, ERPWMS.Infrastructure.Services.AttendanceProcessor>();
@@ -272,11 +300,3 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
-
-
-
-
-
-
-
-
