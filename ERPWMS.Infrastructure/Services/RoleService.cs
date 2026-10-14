@@ -1,8 +1,11 @@
-
-using ERPWMS.Domain.Services;
+﻿using ERPWMS.Domain.Services;
 using ERPWMS.Infrastructure.Data;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using ERPWMS.Database;
 
 namespace ERPWMS.Infrastructure.Services
@@ -11,14 +14,12 @@ namespace ERPWMS.Infrastructure.Services
     {
         private readonly AppDbContext _context;
 
+        private static readonly string[] SystemRoles = { "Admin", "Administrator", "SuperAdmin" };
+
         public RoleService(AppDbContext context)
         {
             _context = context;
         }
-
-        // =========================================================
-        // GET ALL ROLES
-        // =========================================================
 
         public async Task<IEnumerable<AspNetRole>> GetAllRolesAsync()
         {
@@ -27,19 +28,11 @@ namespace ERPWMS.Infrastructure.Services
                 .ToListAsync();
         }
 
-        // =========================================================
-        // GET ROLE BY ID
-        // =========================================================
-
         public async Task<AspNetRole?> GetRoleByIdAsync(int roleId)
         {
             return await _context.AspNetRoles
                 .FirstOrDefaultAsync(x => x.Id == roleId);
         }
-
-        // =========================================================
-        // GET ROLE BY NAME
-        // =========================================================
 
         public async Task<AspNetRole?> GetRoleByNameAsync(string roleName)
         {
@@ -53,25 +46,17 @@ namespace ERPWMS.Infrastructure.Services
                     x.NormalizedName == normalizedName);
         }
 
-        // =========================================================
-        // CREATE ROLE
-        // =========================================================
-
         public async Task<AspNetRole> CreateRoleAsync(string roleName)
         {
             if (string.IsNullOrWhiteSpace(roleName))
-                throw new ArgumentException(
-                    "Role name is required.",
-                    nameof(roleName));
+                throw new ArgumentException("Role name is required.", nameof(roleName));
 
             roleName = roleName.Trim();
 
-            var normalizedName =
-                roleName.ToUpperInvariant();
+            var normalizedName = roleName.ToUpperInvariant();
 
             var exists = await _context.AspNetRoles
-                .AnyAsync(x =>
-                    x.NormalizedName == normalizedName);
+                .AnyAsync(x => x.NormalizedName == normalizedName);
 
             if (exists)
             {
@@ -87,15 +72,10 @@ namespace ERPWMS.Infrastructure.Services
             };
 
             _context.AspNetRoles.Add(role);
-
             await _context.SaveChangesAsync();
 
             return role;
         }
-
-        // =========================================================
-        // UPDATE ROLE
-        // =========================================================
 
         public async Task UpdateRoleAsync(AspNetRole role)
         {
@@ -103,22 +83,26 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentNullException(nameof(role));
 
             if (string.IsNullOrWhiteSpace(role.Name))
-                throw new ArgumentException(
-                    "Role name is required.",
-                    nameof(role));
+                throw new ArgumentException("Role name is required.", nameof(role));
+
+            // Prevent renaming system roles
+            var existingRole = await _context.AspNetRoles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == role.Id);
+
+            if (existingRole != null &&
+                SystemRoles.Any(r => string.Equals(r, existingRole.Name, StringComparison.OrdinalIgnoreCase)) &&
+                !string.Equals(role.Name, existingRole.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Cannot rename system role.");
+            }
 
             role.Name = role.Name.Trim();
-            role.NormalizedName =
-                role.Name.ToUpperInvariant();
+            role.NormalizedName = role.Name.ToUpperInvariant();
 
             _context.AspNetRoles.Update(role);
-
             await _context.SaveChangesAsync();
         }
-
-        // =========================================================
-        // DELETE ROLE
-        // =========================================================
 
         public async Task<bool> DeleteRoleAsync(int roleId)
         {
@@ -129,6 +113,12 @@ namespace ERPWMS.Infrastructure.Services
             if (role == null)
                 return false;
 
+            // Protect system roles
+            if (SystemRoles.Any(r => string.Equals(r, role.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("Cannot delete system role.");
+            }
+
             if (role.Users.Any())
             {
                 throw new InvalidOperationException(
@@ -136,45 +126,30 @@ namespace ERPWMS.Infrastructure.Services
             }
 
             _context.AspNetRoles.Remove(role);
-
             await _context.SaveChangesAsync();
 
             return true;
         }
 
-        // =========================================================
-        // ROLE EXISTS
-        // =========================================================
-
-        public async Task<bool> RoleExistsAsync(
-            string roleName,
-            int? excludeRoleId = null)
+        public async Task<bool> RoleExistsAsync(string roleName, int? excludeRoleId = null)
         {
             if (string.IsNullOrWhiteSpace(roleName))
                 return false;
 
-            var normalizedName =
-                roleName.Trim().ToUpperInvariant();
+            var normalizedName = roleName.Trim().ToUpperInvariant();
 
             var query = _context.AspNetRoles
-                .Where(x =>
-                    x.NormalizedName == normalizedName);
+                .Where(x => x.NormalizedName == normalizedName);
 
             if (excludeRoleId.HasValue)
             {
-                query = query.Where(x =>
-                    x.Id != excludeRoleId);
+                query = query.Where(x => x.Id != excludeRoleId);
             }
 
             return await query.AnyAsync();
         }
 
-        // =========================================================
-        // GET USERS IN ROLE
-        // =========================================================
-
-        public async Task<IEnumerable<User>> GetUsersInRoleAsync(
-            int roleId)
+        public async Task<IEnumerable<User>> GetUsersInRoleAsync(int roleId)
         {
             var role = await _context.AspNetRoles
                 .Include(x => x.Users)
@@ -188,13 +163,7 @@ namespace ERPWMS.Infrastructure.Services
                 .ToList();
         }
 
-        // =========================================================
-        // CHECK USER IN ROLE
-        // =========================================================
-
-        public async Task<bool> IsUserInRoleAsync(
-            int userId,
-            int roleId)
+        public async Task<bool> IsUserInRoleAsync(int userId, int roleId)
         {
             return await _context.AspNetRoles
                 .Where(role => role.Id == roleId)
@@ -204,13 +173,7 @@ namespace ERPWMS.Infrastructure.Services
                     user.IsDeleted != true);
         }
 
-        // =========================================================
-        // ADD USER TO ROLE
-        // =========================================================
-
-        public async Task<bool> AddUserToRoleAsync(
-            int userId,
-            int roleId)
+        public async Task<bool> AddUserToRoleAsync(int userId, int roleId)
         {
             var user = await _context.Users
                 .FirstOrDefaultAsync(x =>
@@ -221,8 +184,7 @@ namespace ERPWMS.Infrastructure.Services
                 return false;
 
             var role = await _context.AspNetRoles
-                .FirstOrDefaultAsync(x =>
-                    x.Id == roleId);
+                .FirstOrDefaultAsync(x => x.Id == roleId);
 
             if (role == null)
                 return false;
@@ -231,24 +193,16 @@ namespace ERPWMS.Infrastructure.Services
                 return true;
 
             role.Users.Add(user);
-
             await _context.SaveChangesAsync();
 
             return true;
         }
 
-        // =========================================================
-        // REMOVE USER FROM ROLE
-        // =========================================================
-
-        public async Task<bool> RemoveUserFromRoleAsync(
-            int userId,
-            int roleId)
+        public async Task<bool> RemoveUserFromRoleAsync(int userId, int roleId)
         {
             var role = await _context.AspNetRoles
                 .Include(x => x.Users)
-                .FirstOrDefaultAsync(x =>
-                    x.Id == roleId);
+                .FirstOrDefaultAsync(x => x.Id == roleId);
 
             if (role == null)
                 return false;
@@ -260,11 +214,9 @@ namespace ERPWMS.Infrastructure.Services
                 return true;
 
             role.Users.Remove(user);
-
             await _context.SaveChangesAsync();
 
             return true;
         }
     }
 }
-

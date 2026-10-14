@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.Identity;
+﻿using ERPWMS.Application.DTOs.Identity;
 using ERPWMS.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ERPWMS.Controllers.Admin
 {
-    [Authorize(Policy = "SystemAdmin.View")]
     public class UserController : Controller
     {
         private readonly IUserService _userService;
@@ -22,6 +22,7 @@ namespace ERPWMS.Controllers.Admin
             _roleService = roleService;
         }
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public async Task<IActionResult> Index(string? searchTerm = null, bool? isActive = null, int page = 1, int pageSize = 10)
         {
@@ -69,9 +70,11 @@ namespace ERPWMS.Controllers.Admin
             return View(dtos);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpGet]
         public IActionResult Create() => View();
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateUserRequest request)
         {
@@ -82,6 +85,7 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -98,6 +102,7 @@ namespace ERPWMS.Controllers.Admin
             return View(model);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateUserRequest request)
         {
@@ -121,6 +126,7 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Activate(int id)
         {
@@ -129,14 +135,24 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Deactivate(int id)
         {
+            // Prevent self-deactivation
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (currentUserId == id.ToString())
+            {
+                TempData["Error"] = "You cannot deactivate yourself.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var r = await _userService.DeactivateUserAsync(id);
             TempData[r ? "Success" : "Error"] = r ? "User deactivated." : "User not found.";
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpGet]
         public async Task<IActionResult> Roles(int id)
         {
@@ -152,6 +168,7 @@ namespace ERPWMS.Controllers.Admin
             return View(allRoles);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRole(int userId, int roleId)
         {
@@ -160,6 +177,7 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Roles), new { id = userId });
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveRole(int userId, int roleId)
         {
@@ -168,9 +186,11 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Roles), new { id = userId });
         }
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public IActionResult AddPartial() => PartialView("_AddForm");
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public async Task<IActionResult> EditPartial(int id)
         {
@@ -179,6 +199,7 @@ namespace ERPWMS.Controllers.Admin
             return PartialView("_EditForm", u);
         }
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public async Task<IActionResult> GetStatistics()
         {
@@ -193,6 +214,7 @@ namespace ERPWMS.Controllers.Admin
             });
         }
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -210,6 +232,7 @@ namespace ERPWMS.Controllers.Admin
             return Json(list);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickAdd(string userName, string email, string firstName,
             string lastName, string employeeCode, string password)
@@ -218,8 +241,12 @@ namespace ERPWMS.Controllers.Admin
             {
                 if (string.IsNullOrWhiteSpace(userName)) return Json(new { success = false, message = "Username required" });
                 if (string.IsNullOrWhiteSpace(email)) return Json(new { success = false, message = "Email required" });
-                if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
-                    return Json(new { success = false, message = "Password min 6 chars" });
+
+                // Password strength validation
+                if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+                    return Json(new { success = false, message = "Password min 8 chars" });
+                if (!password.Any(char.IsUpper) || !password.Any(char.IsLower) || !password.Any(char.IsDigit))
+                    return Json(new { success = false, message = "Password must contain upper, lower, and digit" });
 
                 await _userService.CreateUserAsync(userName, email, password, firstName, lastName, employeeCode, null, true);
                 return Json(new { success = true, message = "User created successfully" });
@@ -227,6 +254,7 @@ namespace ERPWMS.Controllers.Admin
             catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickEdit(int userId, string userName, string email,
             string firstName, string lastName, string employeeCode, bool isActive = true)
@@ -251,11 +279,19 @@ namespace ERPWMS.Controllers.Admin
             catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickDelete(int id)
         {
             try
             {
+                // Prevent self-deactivation
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (currentUserId == id.ToString())
+                {
+                    return Json(new { success = false, message = "You cannot deactivate yourself." });
+                }
+
                 var u = await _userService.GetUserByIdAsync(id);
                 if (u == null) return Json(new { success = false, message = "Not found" });
                 u.IsActive = false;
@@ -265,6 +301,7 @@ namespace ERPWMS.Controllers.Admin
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickToggle(int id)
         {
@@ -280,4 +317,3 @@ namespace ERPWMS.Controllers.Admin
         }
     }
 }
-

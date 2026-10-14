@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Services;
+﻿using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -29,6 +29,43 @@ namespace ERPWMS.Infrastructure.Services.Audit
             int page = 1,
             int pageSize = 50)
         {
+            var query = BuildQuery(userId, moduleId, action, fromDate, toDate, recordType, recordId);
+
+            return await query
+                .OrderByDescending(a => a.Timestamp)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetAuditLogCountAsync(
+            int? userId = null,
+            int? moduleId = null,
+            string? action = null,
+            DateTime? fromDate = null,
+            DateTime? toDate = null)
+        {
+            var query = _context.AuditLogs.AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(a => a.UserId == userId);
+            if (moduleId.HasValue)
+                query = query.Where(a => a.ModuleId == moduleId);
+            if (!string.IsNullOrEmpty(action))
+                query = query.Where(a => a.Action == action);
+            if (fromDate.HasValue)
+                query = query.Where(a => a.Timestamp >= fromDate);
+            if (toDate.HasValue)
+                query = query.Where(a => a.Timestamp <= toDate);
+
+            return await query.CountAsync();
+        }
+
+        private IQueryable<AuditLog> BuildQuery(
+            int? userId, int? moduleId, string? action,
+            DateTime? fromDate, DateTime? toDate,
+            string? recordType, int? recordId)
+        {
             var query = _context.AuditLogs
                 .Include(a => a.User)
                 .Include(a => a.Module)
@@ -55,38 +92,7 @@ namespace ERPWMS.Infrastructure.Services.Audit
             if (recordId.HasValue)
                 query = query.Where(a => a.RecordId == recordId);
 
-            return await query
-                .OrderByDescending(a => a.Timestamp)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-        }
-
-        public async Task<int> GetAuditLogCountAsync(
-            int? userId = null,
-            int? moduleId = null,
-            string? action = null,
-            DateTime? fromDate = null,
-            DateTime? toDate = null)
-        {
-            var query = _context.AuditLogs.AsQueryable();
-
-            if (userId.HasValue)
-                query = query.Where(a => a.UserId == userId);
-
-            if (moduleId.HasValue)
-                query = query.Where(a => a.ModuleId == moduleId);
-
-            if (!string.IsNullOrEmpty(action))
-                query = query.Where(a => a.Action == action);
-
-            if (fromDate.HasValue)
-                query = query.Where(a => a.Timestamp >= fromDate);
-
-            if (toDate.HasValue)
-                query = query.Where(a => a.Timestamp <= toDate);
-
-            return await query.CountAsync();
+            return query;
         }
 
         public async Task<AuditLog?> GetAuditLogByIdAsync(int auditId)

@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.Identity;
+﻿using ERPWMS.Application.DTOs.Identity;
 using ERPWMS.Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace ERPWMS.Controllers.Admin
 {
-    [Authorize(Policy = "SystemAdmin.View")]
     public class RoleController : Controller
     {
         private readonly IRoleService _roleService;
@@ -22,15 +21,18 @@ namespace ERPWMS.Controllers.Admin
             _permissionService = permissionService;
         }
 
+        [Authorize(Policy = "SystemAdmin.View")]
         public async Task<IActionResult> Index()
         {
             var roles = await _roleService.GetAllRolesAsync();
             return View(roles);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpGet]
         public IActionResult Create() => View();
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateRoleRequest request)
         {
@@ -40,6 +42,7 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -50,6 +53,7 @@ namespace ERPWMS.Controllers.Admin
             return View(model);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateRoleRequest request)
         {
@@ -66,6 +70,7 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -81,6 +86,7 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpGet]
         public async Task<IActionResult> Permissions(int id)
         {
@@ -96,6 +102,7 @@ namespace ERPWMS.Controllers.Admin
             return View(modules);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePermissions(PermissionUpdateRequest request)
         {
@@ -108,9 +115,11 @@ namespace ERPWMS.Controllers.Admin
             return RedirectToAction(nameof(Permissions), new { id = request.RoleId });
         }
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public IActionResult AddPartial() => PartialView("_AddForm");
 
+        [Authorize(Policy = "SystemAdmin.View")]
         [HttpGet]
         public async Task<IActionResult> EditPartial(int id)
         {
@@ -119,7 +128,8 @@ namespace ERPWMS.Controllers.Admin
             return PartialView("_EditForm", r);
         }
 
-                [HttpGet]
+        [Authorize(Policy = "SystemAdmin.View")]
+        [HttpGet]
         public async Task<IActionResult> GetStatistics()
         {
             var roles = (await _roleService.GetAllRolesAsync())?.ToList()
@@ -133,7 +143,8 @@ namespace ERPWMS.Controllers.Admin
             });
         }
 
-                [HttpGet]
+        [Authorize(Policy = "SystemAdmin.View")]
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var roles = (await _roleService.GetAllRolesAsync())?.ToList()
@@ -148,6 +159,7 @@ namespace ERPWMS.Controllers.Admin
             return Json(list);
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickAdd(string name)
         {
@@ -160,6 +172,7 @@ namespace ERPWMS.Controllers.Admin
             catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickEdit(int roleId, string name)
         {
@@ -175,6 +188,7 @@ namespace ERPWMS.Controllers.Admin
             catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
         }
 
+        [Authorize(Policy = "SystemAdmin.Manage")]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> QuickDelete(int id)
         {
@@ -187,5 +201,3 @@ namespace ERPWMS.Controllers.Admin
         }
     }
 }
-
-

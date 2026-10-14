@@ -1,4 +1,4 @@
-using ERPWMS.Application.Common;
+﻿using ERPWMS.Application.Common;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
@@ -15,15 +15,11 @@ namespace ERPWMS.Infrastructure.Services
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CurrentUserService(
-            IHttpContextAccessor httpContextAccessor)
+        public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
         }
 
-        // =====================================================
-        // USER ID  ✅ string?
-        // =====================================================
         public string? UserId
         {
             get
@@ -31,19 +27,13 @@ namespace ERPWMS.Infrastructure.Services
                 if (!IsAuthenticated)
                     return null;
 
-                var userIdClaim =
-                    _httpContextAccessor.HttpContext?
-                        .User?
-                        .FindFirst(ClaimTypes.NameIdentifier)?
-                        .Value;
-
-                return userIdClaim;
+                return _httpContextAccessor.HttpContext?
+                    .User?
+                    .FindFirst(ClaimTypes.NameIdentifier)?
+                    .Value;
             }
         }
 
-        // =====================================================
-        // USER NAME
-        // =====================================================
         public string? UserName
         {
             get
@@ -58,9 +48,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // EMAIL
-        // =====================================================
         public string? Email
         {
             get
@@ -75,9 +62,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // COMPANY ID  (int? rakha — Company.Id int hai)
-        // =====================================================
         public int? CompanyId
         {
             get
@@ -85,11 +69,10 @@ namespace ERPWMS.Infrastructure.Services
                 if (!IsAuthenticated)
                     return null;
 
-                var companyIdClaim =
-                    _httpContextAccessor.HttpContext?
-                        .User?
-                        .FindFirst("CompanyId")?
-                        .Value;
+                var companyIdClaim = _httpContextAccessor.HttpContext?
+                    .User?
+                    .FindFirst("CompanyId")?
+                    .Value;
 
                 return int.TryParse(companyIdClaim, out var companyId)
                     ? companyId
@@ -97,9 +80,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // COMPANY NAME
-        // =====================================================
         public string? CompanyName
         {
             get
@@ -114,9 +94,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // ROLES
-        // =====================================================
         public string[]? Roles
         {
             get
@@ -132,9 +109,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // AUTHENTICATION
-        // =====================================================
         public bool IsAuthenticated
         {
             get
@@ -146,9 +120,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // USER PRINCIPAL
-        // =====================================================
         public IPrincipal? User
         {
             get
@@ -157,9 +128,6 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // =====================================================
-        // ROLE CHECK
-        // =====================================================
         public bool IsInRole(string role)
         {
             if (!IsAuthenticated)
@@ -170,126 +138,65 @@ namespace ERPWMS.Infrastructure.Services
                 .IsInRole(role) ?? false;
         }
 
-        // =====================================================
-        // VALIDATED USER ID  ✅ string
-        // =====================================================
         public string GetValidatedUserId()
         {
             if (!IsAuthenticated)
-            {
-                throw new UnauthorizedAccessException(
-                    "User is not authenticated.");
-            }
+                throw new UnauthorizedAccessException("User is not authenticated.");
 
             if (string.IsNullOrEmpty(UserId))
-            {
-                throw new UnauthorizedAccessException(
-                    "User ID could not be determined.");
-            }
+                throw new UnauthorizedAccessException("User ID could not be determined.");
+
+            if (!int.TryParse(UserId, out _))
+                throw new UnauthorizedAccessException("User ID is not valid.");
 
             return UserId;
         }
 
-        // =====================================================
-        // VALIDATED USER NAME
-        // =====================================================
         public string GetValidatedUserName()
         {
             if (!IsAuthenticated)
-            {
-                throw new UnauthorizedAccessException(
-                    "User is not authenticated.");
-            }
+                throw new UnauthorizedAccessException("User is not authenticated.");
 
             if (string.IsNullOrEmpty(UserName))
-            {
-                throw new UnauthorizedAccessException(
-                    "User name could not be determined.");
-            }
+                throw new UnauthorizedAccessException("User name could not be determined.");
 
             return UserName;
         }
 
-        // =====================================================
-        // VALIDATED COMPANY ID
-        // =====================================================
         public int GetValidatedCompanyId()
         {
             if (!IsAuthenticated)
-            {
-                throw new UnauthorizedAccessException(
-                    "User is not authenticated.");
-            }
+                throw new UnauthorizedAccessException("User is not authenticated.");
 
             if (!CompanyId.HasValue || CompanyId <= 0)
-            {
-                throw new UnauthorizedAccessException(
-                    "Company ID could not be determined.");
-            }
+                throw new UnauthorizedAccessException("Company ID could not be determined.");
 
-            return CompanyId ?? 0;
+            return CompanyId.Value;
         }
 
-        // =====================================================
-        // VALIDATED COMPANY NAME
-        // =====================================================
         public string GetValidatedCompanyName()
         {
             if (!IsAuthenticated)
-            {
-                throw new UnauthorizedAccessException(
-                    "User is not authenticated.");
-            }
+                throw new UnauthorizedAccessException("User is not authenticated.");
 
             if (string.IsNullOrWhiteSpace(CompanyName))
-            {
-                throw new UnauthorizedAccessException(
-                    "Company name could not be determined.");
-            }
+                throw new UnauthorizedAccessException("Company name could not be determined.");
 
             return CompanyName;
         }
 
-        // =====================================================
-        // APPLICATION COMMON - USER ID  ✅ string
-        // =====================================================
-        public string GetUserId()
-        {
-            return GetValidatedUserId();
-        }
+        public string GetUserId() => GetValidatedUserId();
+        public int GetCompanyId() => GetValidatedCompanyId();
+        public string GetCompanyName() => GetValidatedCompanyName();
 
-        // =====================================================
-        // APPLICATION COMMON - COMPANY ID
-        // =====================================================
-        public int GetCompanyId()
-        {
-            return GetValidatedCompanyId();
-        }
-
-        // =====================================================
-        // APPLICATION COMMON - COMPANY NAME
-        // =====================================================
-        public string GetCompanyName()
-        {
-            return GetValidatedCompanyName();
-        }
-
-        // =====================================================
-        // DOMAIN SERVICE - ASYNC USER ID  ✅ Task<string>
-        // =====================================================
         public Task<string> GetUserIdAsync()
         {
-            return Task.FromResult(
-                GetValidatedUserId());
+            return Task.FromResult(GetValidatedUserId());
         }
 
-        // =====================================================
-        // DOMAIN SERVICE - ASYNC USER NAME
-        // =====================================================
         public Task<string> GetUserNameAsync()
         {
-            return Task.FromResult(
-                GetValidatedUserName());
+            return Task.FromResult(GetValidatedUserName());
         }
     }
 }
