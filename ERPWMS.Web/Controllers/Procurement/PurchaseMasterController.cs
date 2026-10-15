@@ -1,4 +1,5 @@
-using ERPWMS.Application.DTOs.Procurement;
+﻿using ERPWMS.Application.Common;
+using ERPWMS.Database;
 using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,14 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ERPWMS.Database;
 using ICurrentUserService = ERPWMS.Application.Common.ICurrentUserService;
-using ERPWMS.Application.Common;
-using ERPWMS.Domain.Services;
 
 namespace ERPWMS.Web.Controllers.Procurement
 {
-    [Authorize]
+    [Authorize(Policy = "Purchase.Access")]
     public class PurchaseMasterController : Controller
     {
         private readonly AppDbContext _context;
@@ -26,54 +24,52 @@ namespace ERPWMS.Web.Controllers.Procurement
             _userSvc = userSvc;
         }
 
-        // ✅ FIX: CompanyId int? hai — direct use karo
-        private int CompanyId => _userSvc.CompanyId ?? 1;
-
-        // ✅ FIX: UserId string? hai — TryParse use karo
-        private int UserId => int.TryParse(_userSvc.UserId, out var u) ? u : 1;
-
-        // ---------------------------------------------------
-        // INDEX
-        // ---------------------------------------------------
-        public IActionResult Index() => View();
-
-        // ---------------------------------------------------
-        // GET ALL JSON
-        // ---------------------------------------------------
-        [HttpGet]
-        public async Task<IActionResult> GetAllJson()
+        private int CompanyId
         {
-            try
+            get
             {
-                var list = await _context.PurchaseMasters
-                    .Include(p => p.Supplier)
-                    .Include(p => p.Warehouse)
-                    .Where(p => p.IsDeleted != true)
-                    .OrderBy(p => p.PurchaseId)
-                    .Select(p => new
-                    {
-                        purchaseId = p.PurchaseId,
-                        purchaseOrderNo = p.PurchaseOrderNo,
-                        supplierName = p.Supplier != null ? p.Supplier.SupplierName : "",
-                        warehouseName = p.Warehouse != null ? p.Warehouse.WarehouseName : "",
-                        orderDate = p.OrderDate,
-                        netAmount = p.NetAmount,
-                        status = p.Status ?? "Draft",
-                        createdByName = p.CreatedByNavigation != null ? p.CreatedByNavigation.UserName : "",
-                        createdDate = p.CreatedDate
-                    })
-                    .ToListAsync();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
+                if (!_userSvc.CompanyId.HasValue || _userSvc.CompanyId.Value <= 0)
+                    throw new UnauthorizedAccessException("Company context missing.");
+                return _userSvc.CompanyId.Value;
             }
         }
 
-        // ---------------------------------------------------
-        // CREATE PARTIAL
-        // ---------------------------------------------------
+        private int UserId
+        {
+            get
+            {
+                if (!int.TryParse(_userSvc.UserId, out var u) || u <= 0)
+                    throw new UnauthorizedAccessException("User identity missing.");
+                return u;
+            }
+        }
+
+        private const int MaxLineItems = 500;
+
+        public IActionResult Index() => View();
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllJson()
+        {
+            var list = await _context.PurchaseMasters
+                .Include(p => p.Supplier)
+                .Include(p => p.Warehouse)
+                .Where(p => p.IsDeleted != true)
+                .OrderByDescending(p => p.PurchaseId)
+                .Select(p => new
+                {
+                    purchaseId = p.PurchaseId,
+                    purchaseOrderNo = p.PurchaseOrderNo,
+                    supplierName = p.Supplier != null ? p.Supplier.SupplierName : "",
+                    warehouseName = p.Warehouse != null ? p.Warehouse.WarehouseName : "",
+                    orderDate = p.OrderDate,
+                    netAmount = p.NetAmount,
+                    status = p.Status ?? "Draft",
+                    createdDate = p.CreatedDate
+                }).ToListAsync();
+            return Ok(list);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetCreatePartial()
         {
@@ -83,14 +79,10 @@ namespace ERPWMS.Web.Controllers.Procurement
             return PartialView("_CreateForm");
         }
 
-        // ---------------------------------------------------
-        // EDIT PARTIAL
-        // ---------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetEditPartial(int id)
         {
-            var po = await _context.PurchaseMasters
-                .Include(p => p.PurchaseDetails)
+            var po = await _context.PurchaseMasters.Include(p => p.PurchaseDetails)
                 .FirstOrDefaultAsync(p => p.PurchaseId == id && p.IsDeleted != true);
             if (po == null) return NotFound();
 
@@ -103,313 +95,258 @@ namespace ERPWMS.Web.Controllers.Procurement
             return PartialView("_EditForm");
         }
 
-        // ---------------------------------------------------
-        // CREATE AJAX
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAjax()
         {
+            var f = Request.Form;
+            if (!int.TryParse(f["SupplierId"], out var supplierId) || supplierId <= 0)
+                return Json(new { success = false, message = "Supplier required." });
+            if (!int.TryParse(f["WarehouseId"], out var warehouseId) || warehouseId <= 0)
+                return Json(new { success = false, message = "Warehouse required." });
+
+            var orderNo = (f["PurchaseOrderNo"].ToString() ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(orderNo))
+                return Json(new { success = false, message = "PO Number required." });
+
+            if (await _context.PurchaseMasters.AnyAsync(p => p.PurchaseOrderNo == orderNo && p.IsDeleted != true))
+                return Json(new { success = false, message = "PO Number already exists." });
+
+            decimal disc = 0, tax = 0;
+            if (!decimal.TryParse(f["Discount"], out disc) || disc < 0) disc = 0;
+            if (!decimal.TryParse(f["TaxAmount"], out tax) || tax < 0) tax = 0;
+
+            var po = new PurchaseMaster
+            {
+                SupplierId = supplierId,
+                WarehouseId = warehouseId,
+                PurchaseOrderNo = orderNo,
+                OrderDate = DateTime.TryParse(f["OrderDate"], out var od) ? od : DateTime.UtcNow,
+                ExpectedDeliveryDate = DateOnly.TryParse(f["ExpectedDeliveryDate"], out var edd) ? edd : (DateOnly?)null,
+                Discount = disc,
+                TaxAmount = tax,
+                Status = "Draft",
+                IsDeleted = false,
+                CreatedBy = UserId.ToString(),
+                CreatedDate = DateTime.UtcNow
+            };
+
+            var details = new List<PurchaseDetail>();
+            for (int i = 0; i < MaxLineItems; i++)
+            {
+                var pidStr = f["PurchaseDetails[" + i + "].ProductId"].ToString();
+                if (string.IsNullOrEmpty(pidStr)) break;
+                if (!int.TryParse(pidStr, out var pid) || pid <= 0) continue;
+                if (!int.TryParse(f["PurchaseDetails[" + i + "].Quantity"].ToString(), out var qty) || qty <= 0) continue;
+                if (!decimal.TryParse(f["PurchaseDetails[" + i + "].UnitPrice"].ToString(), out var price) || price < 0) continue;
+
+                decimal? dp = null;
+                if (decimal.TryParse(f["PurchaseDetails[" + i + "].DiscountPercent"], out var dpv) && dpv >= 0 && dpv <= 100) dp = dpv;
+
+                decimal line = qty * price;
+                decimal net = line - (line * ((dp ?? 0) / 100m));
+
+                details.Add(new PurchaseDetail
+                {
+                    ProductId = pid,
+                    Quantity = qty,
+                    UnitPrice = price,
+                    DiscountPercent = dp,
+                    TotalPrice = net,
+                    BatchNo = f["PurchaseDetails[" + i + "].BatchNo"].ToString(),
+                    CreatedBy = UserId.ToString(),
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                });
+            }
+
+            if (details.Count == 0)
+                return Json(new { success = false, message = "At least one item required." });
+
+            po.TotalAmount = details.Sum(d => d.TotalPrice);
+            po.NetAmount = po.TotalAmount - (po.Discount ?? 0) + (po.TaxAmount ?? 0);
+
+            using var tx = await _context.Database.BeginTransactionAsync();
             try
             {
-                var f = Request.Form;
-                if (!int.TryParse(f["SupplierId"], out var supplierId) || supplierId <= 0)
-                    return Json(new { success = false, message = "Supplier required." });
-                if (!int.TryParse(f["WarehouseId"], out var warehouseId) || warehouseId <= 0)
-                    return Json(new { success = false, message = "Warehouse required." });
-                var orderNo = (f["PurchaseOrderNo"].ToString() ?? "").Trim();
-                if (string.IsNullOrWhiteSpace(orderNo))
-                    return Json(new { success = false, message = "PO Number required." });
-
-                var po = new PurchaseMaster
-                {
-                    SupplierId = supplierId,
-                    WarehouseId = warehouseId,
-                    PurchaseOrderNo = orderNo,
-                    OrderDate = DateTime.TryParse(f["OrderDate"], out var od) ? od : DateTime.UtcNow,
-                    ExpectedDeliveryDate = DateOnly.TryParse(f["ExpectedDeliveryDate"], out var edd) ? edd : (DateOnly?)null,
-                    Discount = decimal.TryParse(f["Discount"], out var disc) ? disc : 0,
-                    TaxAmount = decimal.TryParse(f["TaxAmount"], out var tax) ? tax : 0,
-                    Status = "Draft",
-                    IsDeleted = false,
-                    CreatedBy = UserId.ToString(),
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                var details = new List<PurchaseDetail>();
-                for (int i = 0; ; i++)
-                {
-                    var pidStr = f["PurchaseDetails[" + i + "].ProductId"].ToString();
-                    if (string.IsNullOrEmpty(pidStr)) break;
-                    if (!int.TryParse(pidStr, out var pid) || pid <= 0) continue;
-                    var qtyStr = f["PurchaseDetails[" + i + "].Quantity"].ToString();
-                    var priceStr = f["PurchaseDetails[" + i + "].UnitPrice"].ToString();
-                    if (!int.TryParse(qtyStr, out var qty) || qty <= 0) continue;
-                    if (!decimal.TryParse(priceStr, out var price) || price <= 0) continue;
-
-                    decimal? dp = null;
-                    if (decimal.TryParse(f["PurchaseDetails[" + i + "].DiscountPercent"], out var dpv)) dp = dpv;
-
-                    details.Add(new PurchaseDetail
-                    {
-                        ProductId = pid,
-                        Quantity = qty,
-                        UnitPrice = price,
-                        DiscountPercent = dp,
-                        BatchNo = f["PurchaseDetails[" + i + "].BatchNo"].ToString(),
-                        CreatedBy = UserId.ToString(),
-                        CreatedDate = DateTime.UtcNow,
-                        IsDeleted = false
-                    });
-                }
-
-                if (details.Count == 0)
-                    return Json(new { success = false, message = "At least one item required." });
-
-                po.TotalAmount = details.Sum(d =>
-                {
-                    decimal line = d.Quantity * d.UnitPrice;
-                    decimal lineDisc = line * ((d.DiscountPercent ?? 0) / 100m);
-                    return line - lineDisc;
-                });
-
-                po.NetAmount = po.TotalAmount - (po.Discount ?? 0) + (po.TaxAmount ?? 0);
-
                 _context.PurchaseMasters.Add(po);
                 await _context.SaveChangesAsync();
-
-                foreach (var d in details)
-                {
-                    d.PurchaseId = po.PurchaseId;
-                    d.TotalPrice = (d.Quantity * d.UnitPrice) * (1 - ((d.DiscountPercent ?? 0) / 100m));
-                }
+                foreach (var d in details) d.PurchaseId = po.PurchaseId;
                 _context.PurchaseDetails.AddRange(details);
                 await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "PO '" + po.PurchaseOrderNo + "' created.", id = po.PurchaseId });
+                await tx.CommitAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                var m = ex.Message;
-                if (ex.InnerException != null) m += " | " + ex.InnerException.Message;
-                return Json(new { success = false, message = m });
+                await tx.RollbackAsync();
+                return Json(new { success = false, message = "Could not create PO." });
             }
+
+            return Json(new { success = true, message = "PO '" + po.PurchaseOrderNo + "' created.", id = po.PurchaseId });
         }
 
-        // ---------------------------------------------------
-        // UPDATE AJAX
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Edit")]
         public async Task<IActionResult> UpdateAjax()
         {
-            try
+            var f = Request.Form;
+            if (!int.TryParse(f["PurchaseId"], out var id))
+                return Json(new { success = false, message = "Invalid ID." });
+
+            var po = await _context.PurchaseMasters.Include(p => p.PurchaseDetails)
+                .FirstOrDefaultAsync(p => p.PurchaseId == id && p.IsDeleted != true);
+            if (po == null) return Json(new { success = false, message = "Not found." });
+            if (po.Status != "Draft") return Json(new { success = false, message = "Only Draft can be edited." });
+
+            if (int.TryParse(f["SupplierId"], out var sid) && sid > 0) po.SupplierId = sid;
+            if (int.TryParse(f["WarehouseId"], out var wid) && wid > 0) po.WarehouseId = wid;
+            po.PurchaseOrderNo = (f["PurchaseOrderNo"].ToString() ?? po.PurchaseOrderNo).Trim();
+            if (DateTime.TryParse(f["OrderDate"], out var od)) po.OrderDate = od;
+            if (DateOnly.TryParse(f["ExpectedDeliveryDate"], out var edd2)) po.ExpectedDeliveryDate = edd2;
+
+            decimal disc = 0, tax = 0;
+            if (!decimal.TryParse(f["Discount"], out disc) || disc < 0) disc = 0;
+            if (!decimal.TryParse(f["TaxAmount"], out tax) || tax < 0) tax = 0;
+            po.Discount = disc;
+            po.TaxAmount = tax;
+            po.UpdatedBy = UserId.ToString();
+            po.UpdatedDate = DateTime.UtcNow;
+
+            foreach (var d in po.PurchaseDetails.ToList()) d.IsDeleted = true;
+
+            var newDetails = new List<PurchaseDetail>();
+            for (int i = 0; i < MaxLineItems; i++)
             {
-                var f = Request.Form;
-                if (!int.TryParse(f["PurchaseId"], out var id))
-                    return Json(new { success = false, message = "Invalid ID." });
+                var pidStr = f["PurchaseDetails[" + i + "].ProductId"].ToString();
+                if (string.IsNullOrEmpty(pidStr)) break;
+                if (!int.TryParse(pidStr, out var pid) || pid <= 0) continue;
+                if (!int.TryParse(f["PurchaseDetails[" + i + "].Quantity"].ToString(), out var qty) || qty <= 0) continue;
+                if (!decimal.TryParse(f["PurchaseDetails[" + i + "].UnitPrice"].ToString(), out var price) || price < 0) continue;
 
-                var po = await _context.PurchaseMasters
-                    .Include(p => p.PurchaseDetails)
-                    .FirstOrDefaultAsync(p => p.PurchaseId == id);
-                if (po == null) return Json(new { success = false, message = "Not found." });
-                if (po.Status != "Draft") return Json(new { success = false, message = "Only Draft can be edited." });
+                decimal? dp = null;
+                if (decimal.TryParse(f["PurchaseDetails[" + i + "].DiscountPercent"], out var dpv) && dpv >= 0 && dpv <= 100) dp = dpv;
 
-                po.SupplierId = int.TryParse(f["SupplierId"], out var sid) ? sid : po.SupplierId;
-                po.WarehouseId = int.TryParse(f["WarehouseId"], out var wid) ? wid : po.WarehouseId;
-                po.PurchaseOrderNo = (f["PurchaseOrderNo"].ToString() ?? po.PurchaseOrderNo).Trim();
-                if (DateTime.TryParse(f["OrderDate"], out var od)) po.OrderDate = od;
-                if (DateOnly.TryParse(f["ExpectedDeliveryDate"], out var edd2)) po.ExpectedDeliveryDate = edd2;
-                if (decimal.TryParse(f["Discount"], out var disc)) po.Discount = disc;
-                if (decimal.TryParse(f["TaxAmount"], out var tax)) po.TaxAmount = tax;
-                po.UpdatedBy = UserId.ToString();
-                po.UpdatedDate = DateTime.UtcNow;
-
-                foreach (var d in po.PurchaseDetails.ToList())
+                decimal line = qty * price;
+                decimal net = line - (line * ((dp ?? 0) / 100m));
+                newDetails.Add(new PurchaseDetail
                 {
-                    _context.PurchaseDetails.Remove(d);
-                }
-
-                var newDetails = new List<PurchaseDetail>();
-                for (int i = 0; ; i++)
-                {
-                    var pidStr = f["PurchaseDetails[" + i + "].ProductId"].ToString();
-                    if (string.IsNullOrEmpty(pidStr)) break;
-                    if (!int.TryParse(pidStr, out var pid) || pid <= 0) continue;
-                    if (!int.TryParse(f["PurchaseDetails[" + i + "].Quantity"], out var qty) || qty <= 0) continue;
-                    if (!decimal.TryParse(f["PurchaseDetails[" + i + "].UnitPrice"], out var price) || price <= 0) continue;
-
-                    decimal? dp = null;
-                    if (decimal.TryParse(f["PurchaseDetails[" + i + "].DiscountPercent"], out var dpv)) dp = dpv;
-
-                    newDetails.Add(new PurchaseDetail
-                    {
-                        PurchaseId = po.PurchaseId,
-                        ProductId = pid,
-                        Quantity = qty,
-                        UnitPrice = price,
-                        DiscountPercent = dp,
-                        BatchNo = f["PurchaseDetails[" + i + "].BatchNo"].ToString(),
-                        TotalPrice = (qty * price) * (1 - ((dp ?? 0) / 100m)),
-                        CreatedBy = UserId.ToString(),
-                        CreatedDate = DateTime.UtcNow,
-                        IsDeleted = false
-                    });
-                }
-
-                if (newDetails.Count == 0)
-                    return Json(new { success = false, message = "At least one item required." });
-
-                po.TotalAmount = newDetails.Sum(d =>
-                {
-                    decimal line = d.Quantity * d.UnitPrice;
-                    decimal lineDisc = line * ((d.DiscountPercent ?? 0) / 100m);
-                    return line - lineDisc;
+                    PurchaseId = po.PurchaseId,
+                    ProductId = pid,
+                    Quantity = qty,
+                    UnitPrice = price,
+                    DiscountPercent = dp,
+                    BatchNo = f["PurchaseDetails[" + i + "].BatchNo"].ToString(),
+                    TotalPrice = net,
+                    CreatedBy = UserId.ToString(),
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
                 });
-
-                po.NetAmount = po.TotalAmount - (po.Discount ?? 0) + (po.TaxAmount ?? 0);
-
-                _context.PurchaseDetails.AddRange(newDetails);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "PO updated." });
             }
-            catch (Exception ex)
-            {
-                var m = ex.Message;
-                if (ex.InnerException != null) m += " | " + ex.InnerException.Message;
-                return Json(new { success = false, message = m });
-            }
+
+            if (newDetails.Count == 0)
+                return Json(new { success = false, message = "At least one item required." });
+
+            po.TotalAmount = newDetails.Sum(d => d.TotalPrice);
+            po.NetAmount = po.TotalAmount - (po.Discount ?? 0) + (po.TaxAmount ?? 0);
+            _context.PurchaseDetails.AddRange(newDetails);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "PO updated." });
         }
 
-        // ---------------------------------------------------
-        // SUBMIT
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Submit")]
         public async Task<IActionResult> Submit(int id)
         {
-            try
+            var po = await _context.PurchaseMasters.FindAsync(id);
+            if (po == null || po.IsDeleted == true) return NotFound();
+            if (po.Status != "Draft")
             {
-                var po = await _context.PurchaseMasters.FindAsync(id);
-                if (po == null) return NotFound();
-                if (po.Status != "Draft") throw new Exception("Only Draft can be submitted.");
-                po.Status = "Submitted";
-                po.UpdatedBy = UserId.ToString();
-                po.UpdatedDate = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "PO submitted.";
+                TempData["Error"] = "Only Draft can be submitted.";
+                return RedirectToAction("Details", new { id });
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message?.ToString();
-            }
+            po.Status = "Submitted";
+            po.UpdatedBy = UserId.ToString();
+            po.UpdatedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "PO submitted.";
             return RedirectToAction("Details", new { id });
         }
 
-        // ---------------------------------------------------
-        // APPROVE
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Approve")]
         public async Task<IActionResult> Approve(int id)
         {
-            try
+            var po = await _context.PurchaseMasters.FindAsync(id);
+            if (po == null || po.IsDeleted == true) return NotFound();
+            if (po.Status != "Submitted")
             {
-                var po = await _context.PurchaseMasters.FindAsync(id);
-                if (po == null) return NotFound();
-                if (po.Status != "Submitted") throw new Exception("Only Submitted can be approved.");
-                po.Status = "Approved";
-                po.UpdatedBy = UserId.ToString();
-                po.UpdatedDate = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "PO approved.";
+                TempData["Error"] = "Only Submitted can be approved.";
+                return RedirectToAction("Details", new { id });
             }
-            catch (Exception ex)
+            if (po.CreatedBy == UserId.ToString())
             {
-                TempData["Error"] = ex.Message?.ToString();
+                TempData["Error"] = "You cannot approve your own PO.";
+                return RedirectToAction("Details", new { id });
             }
+            po.Status = "Approved";
+            po.UpdatedBy = UserId.ToString();
+            po.UpdatedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "PO approved.";
             return RedirectToAction("Details", new { id });
         }
 
-        // ---------------------------------------------------
-        // REJECT
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Approve")]
         public async Task<IActionResult> Reject(int id)
         {
-            try
+            var po = await _context.PurchaseMasters.FindAsync(id);
+            if (po == null || po.IsDeleted == true) return NotFound();
+            if (po.Status != "Submitted")
             {
-                var po = await _context.PurchaseMasters.FindAsync(id);
-                if (po == null) return NotFound();
-                if (po.Status != "Submitted") throw new Exception("Only Submitted can be rejected.");
-                po.Status = "Rejected";
-                po.UpdatedBy = UserId.ToString();
-                po.UpdatedDate = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "PO rejected.";
+                TempData["Error"] = "Only Submitted can be rejected.";
+                return RedirectToAction("Details", new { id });
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message?.ToString();
-            }
+            po.Status = "Rejected";
+            po.UpdatedBy = UserId.ToString();
+            po.UpdatedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "PO rejected.";
             return RedirectToAction("Details", new { id });
         }
 
-        // ---------------------------------------------------
-        // DELETE
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var po = await _context.PurchaseMasters.FindAsync(id);
-                if (po == null) return Json(new { success = false });
-                po.IsDeleted = true;
-                po.DeletedBy = UserId.ToString();
-                po.DeletedDate = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+            var po = await _context.PurchaseMasters.FindAsync(id);
+            if (po == null || po.IsDeleted == true) return Json(new { success = false });
+            if (po.Status == "Approved" || po.Status == "Completed")
+                return Json(new { success = false, message = "Approved/Completed POs cannot be deleted." });
+
+            po.IsDeleted = true;
+            po.DeletedBy = UserId.ToString();
+            po.DeletedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
         }
 
-        // ---------------------------------------------------
-        // DETAILS
-        // ---------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var po = await _context.PurchaseMasters
-                .Include(p => p.Supplier)
-                .Include(p => p.Warehouse)
+            var po = await _context.PurchaseMasters.Include(p => p.Supplier).Include(p => p.Warehouse)
                 .FirstOrDefaultAsync(p => p.PurchaseId == id && p.IsDeleted != true);
             if (po == null) return NotFound();
 
-            var details = await _context.PurchaseDetails
-                .Include(d => d.Product)
-                .Where(d => d.PurchaseId == id && d.IsDeleted != true)
-                .ToListAsync();
-
-            ViewBag.Details = details;
+            ViewBag.Details = await _context.PurchaseDetails.Include(d => d.Product)
+                .Where(d => d.PurchaseId == id && d.IsDeleted != true).ToListAsync();
             return View(po);
         }
 
-        // ---------------------------------------------------
-        // GET PURCHASE ITEMS
-        // ---------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetPurchaseItems(int purchaseId)
         {
             if (purchaseId <= 0) return Json(new List<object>());
-            var items = await _context.PurchaseDetails
-                .Include(d => d.Product)
+            var items = await _context.PurchaseDetails.Include(d => d.Product)
                 .Where(d => d.PurchaseId == purchaseId && d.IsDeleted != true)
                 .Select(d => new
                 {
@@ -422,142 +359,55 @@ namespace ERPWMS.Web.Controllers.Procurement
             return Json(items);
         }
 
-        // ---------------------------------------------------
-        // ALIASES
-        // ---------------------------------------------------
-        [HttpGet]
-        public Task<IActionResult> GetAll() => GetAllJson();
+        [HttpGet] public Task<IActionResult> GetAll() => GetAllJson();
+        [HttpGet] public Task<IActionResult> AddPurchasePartial() => GetCreatePartial();
+        [HttpGet] public Task<IActionResult> EditPurchasePartial(int id) => GetEditPartial(id);
 
-        [HttpGet]
-        public Task<IActionResult> AddPurchasePartial() => GetCreatePartial();
-
-        [HttpGet]
-        public Task<IActionResult> EditPurchasePartial(int id) => GetEditPartial(id);
-
-        // ---------------------------------------------------
-        // STATISTICS
-        // ---------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetStatistics()
         {
-            try
+            var now = DateTime.Now;
+            var q = _context.PurchaseMasters.Where(p => p.IsDeleted != true);
+            return Json(new
             {
-                var list = await _context.PurchaseMasters
-                    .Where(p => p.IsDeleted != true)
-                    .ToListAsync();
-                var now = DateTime.Now;
-                return Json(new
-                {
-                    total = list.Count,
-                    active = list.Count(p => p.Status == "Approved"),
-                    inactive = list.Count(p => p.Status == "Pending" || p.Status == "Draft"),
-                    addedThisMonth = list.Count(p =>
-                        p.CreatedDate.HasValue &&
-                        p.CreatedDate.Value.Month == now.Month &&
-                        p.CreatedDate.Value.Year == now.Year)
-                });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { total = 0, active = 0, inactive = 0, addedThisMonth = 0, error = ex.Message });
-            }
+                total = await q.CountAsync(),
+                active = await q.CountAsync(p => p.Status == "Approved"),
+                inactive = await q.CountAsync(p => p.Status == "Pending" || p.Status == "Draft"),
+                addedThisMonth = await q.CountAsync(p =>
+                    p.CreatedDate.HasValue &&
+                    p.CreatedDate.Value.Month == now.Month &&
+                    p.CreatedDate.Value.Year == now.Year)
+            });
         }
 
-        // ---------------------------------------------------
-        // PROFILE
-        // ---------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> Profile(int id)
         {
-            try
-            {
-                var pm = await _context.PurchaseMasters
-                    .Include(p => p.Supplier)
-                    .Include(p => p.Warehouse)
-                    .FirstOrDefaultAsync(p => p.PurchaseId == id);
+            var pm = await _context.PurchaseMasters.Include(p => p.Supplier).Include(p => p.Warehouse)
+                .FirstOrDefaultAsync(p => p.PurchaseId == id && p.IsDeleted != true);
+            if (pm == null) return NotFound();
 
-                if (pm == null) return NotFound();
-
-                var details = await _context.PurchaseDetails
-                    .Include(d => d.Product)
-                    .Where(d => d.PurchaseId == id && d.IsDeleted != true)
-                    .ToListAsync();
-
-                ViewBag.Details = details;
-
-                return View("Profile", pm);
-            }
-            catch (Exception)
-            {
-                return NotFound();
-            }
+            ViewBag.Details = await _context.PurchaseDetails.Include(d => d.Product)
+                .Where(d => d.PurchaseId == id && d.IsDeleted != true).ToListAsync();
+            return View("Profile", pm);
         }
 
-        // ---------------------------------------------------
-        // DROPDOWNS
-        // ---------------------------------------------------
         [HttpGet]
-        public async Task<IActionResult> GetSuppliers()
-        {
-            var l = await _context.Suppliers
-                .Where(s => s.IsActive == true && s.IsDeleted != true)
+        public async Task<IActionResult> GetSuppliers() =>
+            Json(await _context.Suppliers.Where(s => s.IsActive == true && s.IsDeleted != true)
                 .OrderBy(s => s.SupplierName)
-                .Select(s => new { supplierId = s.SupplierId, supplierName = s.SupplierName })
-                .ToListAsync();
-            return Json(l);
-        }
+                .Select(s => new { supplierId = s.SupplierId, supplierName = s.SupplierName }).ToListAsync());
 
         [HttpGet]
-        public async Task<IActionResult> GetWarehouses()
-        {
-            var l = await _context.Warehouses
-                .Where(w => w.IsActive == true && w.IsDeleted != true)
+        public async Task<IActionResult> GetWarehouses() =>
+            Json(await _context.Warehouses.Where(w => w.IsActive == true && w.IsDeleted != true)
                 .OrderBy(w => w.WarehouseName)
-                .Select(w => new { warehouseId = w.WarehouseId, warehouseName = w.WarehouseName })
-                .ToListAsync();
-            return Json(l);
-        }
+                .Select(w => new { warehouseId = w.WarehouseId, warehouseName = w.WarehouseName }).ToListAsync());
 
         [HttpGet]
-        public async Task<IActionResult> GetProducts()
-        {
-            var l = await _context.Products
-                .Where(p => p.IsActive == true && p.IsDeleted != true)
+        public async Task<IActionResult> GetProducts() =>
+            Json(await _context.Products.Where(p => p.IsActive == true && p.IsDeleted != true)
                 .OrderBy(p => p.ProductName)
-                .Select(p => new { productId = p.ProductId, productName = p.ProductName })
-                .ToListAsync();
-            return Json(l);
-        }
-
-        // ---------------------------------------------------
-        // TOGGLE STATUS
-        // ---------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleActive(int id)
-        {
-            try
-            {
-                var p = await _context.PurchaseMasters.FindAsync(id);
-                if (p == null)
-                    return Json(new { success = false, message = "Purchase order not found." });
-
-                if (p.Status == "Approved" || p.Status == "Completed")
-                    return Json(new { success = false, message = "Approved/Completed POs cannot be toggled." });
-
-                string oldStatus = p.Status ?? "Draft";
-                p.Status = "Approved";
-                p.ApprovalStatus = "Approved";
-                p.UpdatedBy = UserId.ToString();
-                p.UpdatedDate = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Status changed: " + oldStatus + " -> " + p.Status });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
-            }
-        }
+                .Select(p => new { productId = p.ProductId, productName = p.ProductName }).ToListAsync());
     }
 }

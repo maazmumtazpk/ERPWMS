@@ -1,3 +1,4 @@
+﻿using ERPWMS.Database;
 using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,401 +8,302 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ERPWMS.Database;
 
 namespace ERPWMS.Web.Controllers.Sales
 {
-    [Authorize]
+    [Authorize(Policy = "Invoice.Access")]
     public class InvoiceController : Controller
     {
         private readonly AppDbContext _context;
-
-        public InvoiceController(AppDbContext c)
-        {
-            _context = c;
-        }
+        public InvoiceController(AppDbContext c) { _context = c; }
 
         private int UserId
         {
             get
             {
                 var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (int.TryParse(cl, out int id) && id > 0) return id;
-                var u = _context.Users.FirstOrDefault();
-                return u != null ? u.Id : 1;
+                if (!int.TryParse(cl, out int id) || id <= 0)
+                    throw new UnauthorizedAccessException("User identity missing.");
+                return id;
             }
         }
 
-        [HttpGet]
+        private const int MaxLineItems = 500;
+
         public IActionResult Index() => View();
 
-        // -------------------------------------------------------
-        // STATISTICS
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetStatistics()
         {
-            try
+            var now = DateTime.Now;
+            var q = _context.Invoices.Where(i => i.IsDeleted != true);
+            return Json(new
             {
-                var list = await _context.Invoices.Where(i => i.IsDeleted != true).ToListAsync();
-                var now = DateTime.Now;
-                return Json(new
-                {
-                    total = list.Count,
-                    active = list.Count(i => i.Status == "Paid" || i.Status == "Approved"),
-                    inactive = list.Count(i => i.Status == "Pending" || i.Status == "Draft" || i.Status == "Unpaid"),
-                    addedThisMonth = list.Count(i =>
-                        i.CreatedDate.HasValue &&
-                        i.CreatedDate.Value.Month == now.Month &&
-                        i.CreatedDate.Value.Year == now.Year)
-                });
-            }
-            catch
-            {
-                return Json(new { total = 0, active = 0, inactive = 0, addedThisMonth = 0 });
-            }
+                total = await q.CountAsync(),
+                active = await q.CountAsync(i => i.Status == "Paid" || i.Status == "Approved"),
+                inactive = await q.CountAsync(i => i.Status == "Pending" || i.Status == "Draft" || i.Status == "Unpaid"),
+                addedThisMonth = await q.CountAsync(i =>
+                    i.CreatedDate.HasValue &&
+                    i.CreatedDate.Value.Month == now.Month &&
+                    i.CreatedDate.Value.Year == now.Year)
+            });
         }
 
-        // -------------------------------------------------------
-        // GET ALL
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var data = await (from i in _context.Invoices
-                                  join s in _context.SalesMasters on i.SalesId equals s.SalesId into sj
-                                  from s in sj.DefaultIfEmpty()
-                                  join c in _context.Customers on s.CustomerId equals c.CustomerId into cj
-                                  from c in cj.DefaultIfEmpty()
-                                  where i.IsDeleted != true
-                                  orderby i.InvoiceId
-                                  select new
-                                  {
-                                      invoiceId = i.InvoiceId,
-                                      invoiceNo = i.InvoiceNo,
-                                      salesId = i.SalesId,
-                                      salesOrderNo = s != null ? s.SalesOrderNo : "-",
-                                      customerName = c != null ? c.CustomerName : "-",
-                                      invoiceDate = i.InvoiceDate,
-                                      dueDate = i.DueDate,
-                                      netAmount = i.NetAmount,
-                                      paidAmount = i.PaidAmount.ToString(),      // ✅ decimal?
-                                      balanceDue = i.BalanceDue,                 // ✅ decimal?
-                                      status = i.Status ?? "Pending"
-                                  }).ToListAsync();
-                return Json(data);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { error = ex.Message });
-            }
+            var data = await (from i in _context.Invoices
+                              join s in _context.SalesMasters on i.SalesId equals s.SalesId into sj
+                              from s in sj.DefaultIfEmpty()
+                              join c in _context.Customers on s.CustomerId equals c.CustomerId into cj
+                              from c in cj.DefaultIfEmpty()
+                              where i.IsDeleted != true
+                              orderby i.InvoiceId descending
+                              select new
+                              {
+                                  invoiceId = i.InvoiceId,
+                                  invoiceNo = i.InvoiceNo,
+                                  salesId = i.SalesId,
+                                  salesOrderNo = s != null ? s.SalesOrderNo : "-",
+                                  customerName = c != null ? c.CustomerName : "-",
+                                  invoiceDate = i.InvoiceDate,
+                                  dueDate = i.DueDate,
+                                  netAmount = i.NetAmount,
+                                  paidAmount = i.PaidAmount,
+                                  balanceDue = i.BalanceDue,
+                                  status = i.Status ?? "Pending"
+                              }).ToListAsync();
+            return Json(data);
         }
 
-        // -------------------------------------------------------
-        // DROPDOWNS
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetSalesOrders()
         {
-            try
-            {
-                var invoicedSOIds = await _context.Invoices
-                    .Where(i => i.IsDeleted != true)
-                    .Select(i => i.SalesId)
-                    .Distinct()
-                    .ToListAsync();
-
-                var l = await _context.SalesMasters
-                    .Where(s => s.IsDeleted != true && !invoicedSOIds.Contains(s.SalesId))
-                    .OrderBy(s => s.SalesId)
-                    .Select(s => new { salesId = s.SalesId, salesOrderNo = s.SalesOrderNo })
-                    .ToListAsync();
-
-                return Json(l);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { error = ex.Message });
-            }
+            var invoicedIds = _context.Invoices.Where(i => i.IsDeleted != true).Select(i => i.SalesId);
+            var l = await _context.SalesMasters
+                .Where(s => s.IsDeleted != true && !invoicedIds.Contains(s.SalesId))
+                .OrderBy(s => s.SalesId)
+                .Select(s => new { salesId = s.SalesId, salesOrderNo = s.SalesOrderNo })
+                .ToListAsync();
+            return Json(l);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetSalesDetails(int salesId)
         {
-            try
-            {
-                var details = await _context.SalesDetails
-                    .Include(d => d.Product)
-                    .Where(d => d.SalesId == salesId && (d.IsDeleted == null || d.IsDeleted == false))
-                    .Select(d => new
-                    {
-                        salesDetailId = d.DetailId,
-                        productId = d.ProductId,
-                        productName = d.Product != null ? d.Product.ProductName : ("Product #" + d.ProductId),
-                        quantity = d.Quantity,
-                        unitPrice = d.UnitPrice,
-                        discountPercent = d.DiscountPercent,        // ✅ decimal?
-                        batchNo = d.BatchNo ?? ""
-                    })
-                    .ToListAsync();
-                return Json(details);
-            }
-            catch
-            {
-                return Json(new List<object>());
-            }
+            if (salesId <= 0) return Json(new List<object>());
+            var details = await _context.SalesDetails
+                .Include(d => d.Product)
+                .Where(d => d.SalesId == salesId && (d.IsDeleted == null || d.IsDeleted == false))
+                .Select(d => new
+                {
+                    salesDetailId = d.DetailId,
+                    productId = d.ProductId,
+                    productName = d.Product != null ? d.Product.ProductName : ("Product #" + d.ProductId),
+                    quantity = d.Quantity,
+                    unitPrice = d.UnitPrice,
+                    discountPercent = d.DiscountPercent,
+                    batchNo = d.BatchNo ?? ""
+                }).ToListAsync();
+            return Json(details);
         }
 
-        // -------------------------------------------------------
-        // AUTO-GENERATE INVOICE NO
-        // -------------------------------------------------------
         private async Task<string> GenerateNextInvoiceNo()
         {
-            try
-            {
-                var year = DateTime.Now.Year;
-                var prefix = "INV-" + year + "-";
-                var existing = await _context.Invoices
-                    .Where(i => i.InvoiceNo != null && i.InvoiceNo.StartsWith(prefix))
-                    .Select(i => i.InvoiceNo)
-                    .ToListAsync();
+            var year = DateTime.Now.Year;
+            var prefix = "INV-" + year + "-";
+            var existing = await _context.Invoices
+                .Where(i => i.InvoiceNo != null && i.InvoiceNo.StartsWith(prefix))
+                .Select(i => i.InvoiceNo).ToListAsync();
 
-                int maxNum = 0;
-                foreach (var no in existing)
-                {
-                    if (string.IsNullOrEmpty(no)) continue;
-                    var parts = no.Split('-');
-                    if (parts.Length >= 3 && int.TryParse(parts[2], out int n) && n > maxNum)
-                        maxNum = n;
-                }
-                return prefix + (maxNum + 1).ToString("D3");
-            }
-            catch
+            int max = 0;
+            foreach (var no in existing)
             {
-                return "INV-" + DateTime.Now.Year + "-" + DateTime.Now.ToString("HHmmss");
+                if (string.IsNullOrEmpty(no)) continue;
+                var parts = no.Split('-');
+                if (parts.Length >= 3 && int.TryParse(parts[2], out int n) && n > max) max = n;
             }
+            return prefix + (max + 1).ToString("D3");
         }
 
-        // -------------------------------------------------------
-        // ADD PARTIAL
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> AddPartial()
         {
             ViewBag.NextInvoiceNo = await GenerateNextInvoiceNo();
+            var invoicedIds = _context.Invoices.Where(i => i.IsDeleted != true).Select(i => i.SalesId);
             ViewBag.SalesOrders = await _context.SalesMasters
-                .Where(s => s.IsDeleted != true && !_context.Invoices.Where(i => i.IsDeleted != true).Select(i => i.SalesId).Contains(s.SalesId))
+                .Where(s => s.IsDeleted != true && !invoicedIds.Contains(s.SalesId))
                 .OrderBy(s => s.SalesId)
                 .Select(s => new { salesId = s.SalesId, salesOrderNo = s.SalesOrderNo })
                 .ToListAsync();
             return PartialView("_AddForm");
         }
 
-        // -------------------------------------------------------
-        // EDIT PARTIAL
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> EditPartial(int id)
         {
-            var inv = await _context.Invoices
-                .Include(i => i.InvoiceDetails)
+            var inv = await _context.Invoices.Include(i => i.InvoiceDetails)
                 .FirstOrDefaultAsync(i => i.InvoiceId == id && i.IsDeleted != true);
             if (inv == null) return NotFound();
 
             ViewBag.Invoice = inv;
+            var invoicedIds = _context.Invoices.Where(i => i.IsDeleted != true && i.InvoiceId != id).Select(i => i.SalesId);
             ViewBag.SalesOrders = await _context.SalesMasters
-                .Where(s => s.IsDeleted != true && !_context.Invoices.Where(i => i.IsDeleted != true).Select(i => i.SalesId).Contains(s.SalesId))
+                .Where(s => s.IsDeleted != true && !invoicedIds.Contains(s.SalesId))
                 .OrderBy(s => s.SalesId)
                 .Select(s => new { salesId = s.SalesId, salesOrderNo = s.SalesOrderNo })
                 .ToListAsync();
             return PartialView("_EditForm", inv);
         }
 
-        // -------------------------------------------------------
-        // REGISTER
-        // -------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Register()
         {
+            var f = Request.Form;
+
+            if (!int.TryParse(f["SalesId"], out int salesId) || salesId <= 0)
+                return Json(new { success = false, message = "Please select Sales Order." });
+
+            var invNo = (f["InvoiceNo"].ToString() ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(invNo)) invNo = await GenerateNextInvoiceNo();
+
+            var invDate = DateTime.TryParse(f["InvoiceDate"], out var idt) ? idt : DateTime.Now;
+            DateOnly dueDate = DateOnly.TryParse(f["DueDate"], out var dd)
+                ? dd : DateOnly.FromDateTime(DateTime.Now.AddDays(30));
+
+            if (!decimal.TryParse(f["Discount"], out decimal disc) || disc < 0)
+                return Json(new { success = false, message = "Invalid discount." });
+            if (!decimal.TryParse(f["TaxAmount"], out decimal tax) || tax < 0)
+                return Json(new { success = false, message = "Invalid tax." });
+            if (!decimal.TryParse(f["PaidAmount"], out decimal paid) || paid < 0)
+                return Json(new { success = false, message = "Invalid paid amount." });
+
+            var details = new List<InvoiceDetail>();
+            decimal subTotal = 0;
+
+            for (int i = 0; i < MaxLineItems; i++)
+            {
+                var pidStr = f["InvoiceDetails[" + i + "].ProductId"].ToString();
+                if (string.IsNullOrEmpty(pidStr)) break;
+                if (!int.TryParse(pidStr, out int pid) || pid <= 0) continue;
+
+                int.TryParse(f["InvoiceDetails[" + i + "].SalesDetailId"].ToString(), out int sdid);
+                if (!int.TryParse(f["InvoiceDetails[" + i + "].Quantity"].ToString(), out int qty) || qty <= 0) continue;
+                if (!decimal.TryParse(f["InvoiceDetails[" + i + "].UnitPrice"].ToString(), out decimal price) || price < 0) continue;
+
+                decimal.TryParse(f["InvoiceDetails[" + i + "].DiscountPercent"].ToString(), out decimal dp);
+                if (dp < 0 || dp > 100) dp = 0;
+
+                decimal line = qty * price;
+                decimal net = line - (line * dp / 100m);
+
+                details.Add(new InvoiceDetail
+                {
+                    SalesDetailId = sdid,
+                    ProductId = pid,
+                    Quantity = qty,
+                    UnitPrice = price,
+                    DiscountPercent = dp,
+                    TotalPrice = net,
+                    BatchNo = f["InvoiceDetails[" + i + "].BatchNo"].ToString(),
+                    CreatedBy = UserId.ToString(),
+                    CreatedDate = DateTime.Now,
+                    IsDeleted = false
+                });
+                subTotal += net;
+            }
+
+            if (details.Count == 0)
+                return Json(new { success = false, message = "At least one item required." });
+
+            decimal netAmount = subTotal - disc + tax;
+            decimal balance = netAmount - paid;
+
+            var inv = new Invoice
+            {
+                InvoiceNo = invNo,
+                SalesId = salesId,
+                InvoiceDate = invDate,
+                DueDate = dueDate,
+                TotalAmount = subTotal,
+                Discount = disc,
+                TaxAmount = tax,
+                NetAmount = netAmount,
+                PaidAmount = paid,
+                BalanceDue = balance < 0 ? 0 : balance,
+                Status = "Unpaid",
+                IsActive = true,
+                IsDeleted = false,
+                CreatedBy = UserId.ToString(),
+                CreatedDate = DateTime.Now
+            };
+
+            using var tx = await _context.Database.BeginTransactionAsync();
             try
             {
-                var f = Request.Form;
-
-                if (!int.TryParse(f["SalesId"], out int salesId) || salesId <= 0)
-                    return Json(new { success = false, message = "Please select Sales Order." });
-
-                var invNo = (f["InvoiceNo"].ToString() ?? "").Trim();
-                if (string.IsNullOrWhiteSpace(invNo) || await _context.Invoices.AnyAsync(i => i.InvoiceNo == invNo))
-                    invNo = await GenerateNextInvoiceNo();
-                if (await _context.Invoices.AnyAsync(i => i.InvoiceNo == invNo))
-                    invNo = "INV-" + DateTime.Now.Year + "-" + DateTime.Now.ToString("HHmmssfff");
-
-                var invDate = DateTime.TryParse(f["InvoiceDate"], out var idt) ? idt : DateTime.Now;
-                DateOnly dueDate = DateOnly.TryParse(f["DueDate"], out var dd) ? dd : DateOnly.FromDateTime(DateTime.Now.AddDays(30));
-
-                decimal.TryParse(f["Discount"], out decimal disc);
-                decimal.TryParse(f["TaxAmount"], out decimal tax);
-                decimal.TryParse(f["PaidAmount"], out decimal paid);
-
-                var details = new List<InvoiceDetail>();
-                decimal subTotal = 0;
-
-                for (int i = 0; ; i++)
-                {
-                    var pidStr = f["InvoiceDetails[" + i + "].ProductId"].ToString();
-                    if (string.IsNullOrEmpty(pidStr)) break;
-                    if (!int.TryParse(pidStr, out int pid) || pid <= 0) continue;
-
-                    int.TryParse(f["InvoiceDetails[" + i + "].SalesDetailId"].ToString(), out int sdid);
-                    int.TryParse(f["InvoiceDetails[" + i + "].Quantity"].ToString(), out int qty);
-                    decimal.TryParse(f["InvoiceDetails[" + i + "].UnitPrice"].ToString(), out decimal price);
-                    decimal.TryParse(f["InvoiceDetails[" + i + "].DiscountPercent"].ToString(), out decimal dp);
-                    if (qty <= 0) continue;
-
-                    decimal lineTotal = qty * price;
-                    decimal netLine = lineTotal - (lineTotal * dp / 100m);
-
-                    details.Add(new InvoiceDetail
-                    {
-                        SalesDetailId = sdid,
-                        ProductId = pid,
-                        Quantity = qty,
-                        UnitPrice = price,
-                        DiscountPercent = dp,
-                        TotalPrice = netLine,
-                        BatchNo = f["InvoiceDetails[" + i + "].BatchNo"].ToString(),
-                        CreatedBy = UserId.ToString(),
-                        CreatedDate = DateTime.Now,
-                        IsDeleted = false
-                    });
-                    subTotal += netLine;
-                }
-
-                if (details.Count == 0)
-                    return Json(new { success = false, message = "At least one item required." });
-
-                decimal netAmount = subTotal - disc + tax;
-                decimal balance = netAmount - paid;
-
-                var inv = new Invoice
-                {
-                    InvoiceNo = invNo,
-                    SalesId = salesId,
-                    InvoiceDate = invDate,
-                    DueDate = dueDate,
-                    TotalAmount = subTotal,
-                    Discount = disc,
-                    TaxAmount = tax,
-                    NetAmount = netAmount,
-                    PaidAmount = paid,
-                    BalanceDue = balance < 0 ? 0 : balance,
-                    Status = "Unpaid",
-                    IsActive = true,
-                    IsDeleted = false,
-                    CreatedBy = UserId.ToString(),
-                    CreatedDate = DateTime.Now
-                };
-
                 _context.Invoices.Add(inv);
                 await _context.SaveChangesAsync();
 
-                foreach (var d in details)
-                {
-                    d.InvoiceId = inv.InvoiceId;
-                    _context.InvoiceDetails.Add(d);
-                }
+                foreach (var d in details) { d.InvoiceId = inv.InvoiceId; }
+                _context.InvoiceDetails.AddRange(details);
                 await _context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Invoice created: " + inv.InvoiceNo, id = inv.InvoiceId });
+                await tx.CommitAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                await tx.RollbackAsync();
+                return Json(new { success = false, message = "Could not create invoice. Please try again." });
             }
+
+            return Json(new { success = true, message = "Invoice created: " + inv.InvoiceNo, id = inv.InvoiceId });
         }
 
-        // -------------------------------------------------------
-        // TOGGLE
-        // -------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Invoice.Edit")]
         public async Task<IActionResult> Toggle(int id)
         {
-            try
-            {
-                var inv = await _context.Invoices.FindAsync(id);
-                if (inv == null)
-                    return Json(new { success = false, message = "Not found." });
+            var inv = await _context.Invoices.FindAsync(id);
+            if (inv == null || inv.IsDeleted == true)
+                return Json(new { success = false, message = "Not found." });
 
-                string old = inv.Status ?? "Pending";
-                if (old == "Pending" || old == "Draft" || old == "Unpaid")
-                    inv.Status = "Paid";
-                else
-                    inv.Status = "Pending";
-
-                inv.UpdatedBy = UserId.ToString();
-                inv.UpdatedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Status: " + old + " -> " + inv.Status });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
-            }
+            string old = inv.Status ?? "Pending";
+            inv.Status = (old == "Pending" || old == "Draft" || old == "Unpaid") ? "Paid" : "Pending";
+            inv.UpdatedBy = UserId.ToString();
+            inv.UpdatedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Status: " + old + " -> " + inv.Status });
         }
 
-        // -------------------------------------------------------
-        // DELETE
-        // -------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Invoice.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var inv = await _context.Invoices
-                    .Include(i => i.InvoiceDetails)
-                    .FirstOrDefaultAsync(i => i.InvoiceId == id);
-                if (inv == null)
-                    return Json(new { success = false, message = "Not found." });
+            var inv = await _context.Invoices.Include(i => i.InvoiceDetails)
+                .FirstOrDefaultAsync(i => i.InvoiceId == id && i.IsDeleted != true);
+            if (inv == null) return Json(new { success = false, message = "Not found." });
 
-                if (inv.InvoiceDetails != null)
-                {
-                    foreach (var d in inv.InvoiceDetails)
-                        d.IsDeleted = true;
-                }
+            if (inv.InvoiceDetails != null)
+                foreach (var d in inv.InvoiceDetails) d.IsDeleted = true;
 
-                inv.IsDeleted = true;
-                inv.DeletedBy = UserId.ToString();
-                inv.DeletedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Invoice deleted." });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+            inv.IsDeleted = true;
+            inv.DeletedBy = UserId.ToString();
+            inv.DeletedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Invoice deleted." });
         }
 
-        // -------------------------------------------------------
-        // PROFILE
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> Profile(int id)
         {
-            var inv = await _context.Invoices
-                .Include(i => i.InvoiceDetails)
+            var inv = await _context.Invoices.Include(i => i.InvoiceDetails)
                 .FirstOrDefaultAsync(i => i.InvoiceId == id && i.IsDeleted != true);
             if (inv == null) return NotFound();
 
-            var details = await _context.InvoiceDetails
+            ViewBag.Details = await _context.InvoiceDetails
                 .Include(d => d.Product)
                 .Where(d => d.InvoiceId == id && (d.IsDeleted == null || d.IsDeleted == false))
                 .ToListAsync();
-            ViewBag.Details = details;
 
             var so = await _context.SalesMasters.FindAsync(inv.SalesId);
             ViewBag.SalesOrderNo = so != null ? so.SalesOrderNo : "-";
@@ -410,71 +312,56 @@ namespace ERPWMS.Web.Controllers.Sales
             if (so != null)
             {
                 var cust = await _context.Customers.FindAsync(so.CustomerId);
-                ViewBag.CustomerName = cust != null ? cust.CustomerName : "-";
-                ViewBag.CustomerPhone = cust != null ? cust.Phone : "-";
-                ViewBag.CustomerEmail = cust != null ? cust.Email : "-";
-                ViewBag.CustomerAddress = cust != null ? cust.Address : "-";
+                ViewBag.CustomerName = cust?.CustomerName ?? "-";
+                ViewBag.CustomerPhone = cust?.Phone ?? "-";
+                ViewBag.CustomerEmail = cust?.Email ?? "-";
+                ViewBag.CustomerAddress = cust?.Address ?? "-";
             }
-
             return View("Profile", inv);
         }
 
-        // -------------------------------------------------------
-        // EDIT
-        // -------------------------------------------------------
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Invoice.Edit")]
         public async Task<IActionResult> Edit()
         {
-            try
-            {
-                var f = Request.Form;
-                if (!int.TryParse(f["InvoiceId"], out int id) || id <= 0)
-                    return Json(new { success = false, message = "Invalid Invoice ID." });
+            var f = Request.Form;
+            if (!int.TryParse(f["InvoiceId"], out int id) || id <= 0)
+                return Json(new { success = false, message = "Invalid Invoice ID." });
 
-                var inv = await _context.Invoices
-                    .Include(i => i.InvoiceDetails)
-                    .FirstOrDefaultAsync(i => i.InvoiceId == id);
-                if (inv == null)
-                    return Json(new { success = false, message = "Invoice not found." });
+            var inv = await _context.Invoices.Include(i => i.InvoiceDetails)
+                .FirstOrDefaultAsync(i => i.InvoiceId == id && i.IsDeleted != true);
+            if (inv == null) return Json(new { success = false, message = "Invoice not found." });
 
-                if (DateTime.TryParse(f["InvoiceDate"], out var idate)) inv.InvoiceDate = idate;
-                if (DateOnly.TryParse(f["DueDate"], out var dueDate)) inv.DueDate = dueDate;
+            if (DateTime.TryParse(f["InvoiceDate"], out var idate)) inv.InvoiceDate = idate;
+            if (DateOnly.TryParse(f["DueDate"], out var dueDate)) inv.DueDate = dueDate;
 
-                decimal discount = 0, tax = 0, paid = 0;
-                decimal.TryParse(f["Discount"], out discount);
-                decimal.TryParse(f["TaxAmount"], out tax);
-                decimal.TryParse(f["PaidAmount"], out paid);
+            decimal discount = 0, tax = 0, paid = 0;
+            if (!decimal.TryParse(f["Discount"], out discount) || discount < 0)
+                return Json(new { success = false, message = "Invalid discount." });
+            if (!decimal.TryParse(f["TaxAmount"], out tax) || tax < 0)
+                return Json(new { success = false, message = "Invalid tax." });
+            if (!decimal.TryParse(f["PaidAmount"], out paid) || paid < 0)
+                return Json(new { success = false, message = "Invalid paid amount." });
 
-                inv.Discount = discount;
-                inv.TaxAmount = tax;
-                inv.PaidAmount = paid;
+            inv.Discount = discount;
+            inv.TaxAmount = tax;
+            inv.PaidAmount = paid;
 
-                var activeDetails = inv.InvoiceDetails
-                    .Where(d => d.IsDeleted == null || d.IsDeleted == false)
-                    .ToList();
+            var active = inv.InvoiceDetails.Where(d => d.IsDeleted == null || d.IsDeleted == false).ToList();
+            decimal total = active.Sum(d => d.TotalPrice);
+            inv.TotalAmount = total;
+            inv.NetAmount = total - discount + tax;
+            decimal balance = inv.NetAmount - paid;
+            inv.BalanceDue = balance < 0 ? 0 : balance;
 
-                decimal totalAmount = activeDetails.Sum(d => d.TotalPrice);
-                inv.TotalAmount = totalAmount;
-                inv.NetAmount = totalAmount - discount + tax;
+            string status = (f["Status"].ToString() ?? "").Trim();
+            inv.Status = string.IsNullOrEmpty(status) ? "Pending" : status;
 
-                decimal balance = inv.NetAmount - paid;
-                inv.BalanceDue = balance < 0 ? 0 : balance;
-
-                string status = (f["Status"].ToString() ?? "").Trim();
-                if (string.IsNullOrEmpty(status)) status = "Pending";
-                inv.Status = status;
-
-                inv.UpdatedBy = UserId.ToString();
-                inv.UpdatedDate = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Invoice updated successfully." });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
-            }
+            inv.UpdatedBy = UserId.ToString();
+            inv.UpdatedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Invoice updated successfully." });
         }
     }
 }
+

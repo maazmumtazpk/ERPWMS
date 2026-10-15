@@ -1,61 +1,55 @@
+﻿using ERPWMS.Database;
 using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ERPWMS.Database;
 
 namespace ERPWMS.Web.Controllers.HRTransaction
 {
-    [Authorize]
+    [Authorize(Policy = "Payroll.Access")]
     public class PayrollController : Controller
     {
         private readonly AppDbContext _context;
+        public PayrollController(AppDbContext c) { _context = c; }
 
-        public PayrollController(AppDbContext c)
+        private int UserId
         {
-            _context = c;
+            get
+            {
+                var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(cl, out int id) || id <= 0)
+                    throw new UnauthorizedAccessException("User identity missing.");
+                return id;
+            }
         }
 
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
-
-        // -------------------------------------------------------
-        // INDEX
-        // -------------------------------------------------------
-        [HttpGet]
         public IActionResult Index() => View();
 
-        // -------------------------------------------------------
-        // STATISTICS
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetStatistics()
         {
-            var l = await _context.EmployeePayrolls.ToListAsync();
+            var now = DateTime.Now;
+            var q = _context.EmployeePayrolls;
             return Json(new
             {
-                total = l.Count,
-                active = l.Count(p => p.Status == "Paid" || p.Status == "Approved"),
-                inactive = l.Count(p => p.Status == "Draft" || p.Status == "Submitted"),
-                addedThisMonth = l.Count(p =>
+                total = await q.CountAsync(),
+                active = await q.CountAsync(p => p.Status == "Paid" || p.Status == "Approved"),
+                inactive = await q.CountAsync(p => p.Status == "Draft" || p.Status == "Submitted"),
+                addedThisMonth = await q.CountAsync(p =>
                     p.CreatedDate.HasValue &&
-                    p.CreatedDate.Value.Month == DateTime.Now.Month &&
-                    p.CreatedDate.Value.Year == DateTime.Now.Year)
+                    p.CreatedDate.Value.Month == now.Month &&
+                    p.CreatedDate.Value.Year == now.Year)
             });
         }
 
-        // -------------------------------------------------------
-        // GET ALL
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var l = await _context.EmployeePayrolls
-                .Include(p => p.Employee)
+            var l = await _context.EmployeePayrolls.Include(p => p.Employee)
                 .OrderBy(p => p.PayrollId)
                 .Select(p => new
                 {
@@ -65,306 +59,222 @@ namespace ERPWMS.Web.Controllers.HRTransaction
                         : "N/A",
                     monthYear = p.MonthYear,
                     grossPay = p.GrossPay,
-                    totalDeductions = p.TotalDeductions,    // ✅ decimal?
+                    totalDeductions = p.TotalDeductions,
                     netPay = p.NetPay,
                     status = p.Status ?? "Draft",
                     paymentDate = p.PaymentDate
-                })
-                .ToListAsync();
+                }).ToListAsync();
             return Json(l);
         }
 
-        // -------------------------------------------------------
-        // GET EMPLOYEES
-        // -------------------------------------------------------
         [HttpGet]
-        public async Task<IActionResult> GetEmployees()
-        {
-            var l = await _context.Employees
+        public async Task<IActionResult> GetEmployees() =>
+            Json(await _context.Employees
                 .Where(e => e.IsActive == true && e.IsDeleted != true)
-                .Select(e => new
-                {
-                    employeeId = e.EmployeeId,
-                    employeeName = e.FirstName + " " + (e.LastName ?? "")
-                })
-                .ToListAsync();
-            return Json(l);
-        }
+                .Select(e => new { employeeId = e.EmployeeId, employeeName = e.FirstName + " " + (e.LastName ?? "") })
+                .ToListAsync());
 
-        // -------------------------------------------------------
-        // GET EMPLOYEE SALARY
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetEmployeeSalary(int employeeId)
         {
-            try
+            if (employeeId <= 0)
+                return Json(new { success = false, grossPay = 0 });
+
+            var salary = await _context.EmployeeSalaries
+                .Where(s => s.EmployeeId == employeeId && s.IsActive == true)
+                .OrderByDescending(s => s.EffectiveDate)
+                .FirstOrDefaultAsync();
+
+            if (salary == null)
             {
-                if (employeeId <= 0)
-                    return Json(new { success = false, grossPay = 0 });
-
-                var salary = await _context.EmployeeSalaries
-                    .Where(s => s.EmployeeId == employeeId && s.IsActive != false)
-                    .OrderByDescending(s => s.EffectiveDate)
-                    .FirstOrDefaultAsync();
-
-                if (salary == null)
-                {
-                    var emp = await _context.Employees.FindAsync(employeeId);
-                    decimal baseSal = emp != null ? emp.BaseSalary : 0;
-                    return Json(new { success = true, grossPay = baseSal, netPay = baseSal, totalDeductions = 0, salaryId = 0 });
-                }
-
-                // ✅ Debit/Credit decimal? hain
-                decimal gross = salary.BasicSalary
-                    + (salary.HouseRent ?? 0)
-                    + (salary.UtilityAllowance ?? 0)
-                    + (salary.MedicalAllowance ?? 0)
-                    + (salary.OtherAllowances ?? 0);
-
-                decimal deductions = (salary.IncomeTax ?? 0)
-                    + (salary.ProfessionalTax ?? 0)
-                    + (salary.OtherDeductions ?? 0);
-
-                decimal net = gross - deductions;
-
-                return Json(new
-                {
-                    success = true,
-                    salaryId = salary.SalaryId,
-                    grossPay = gross,
-                    totalDeductions = deductions,
-                    netPay = net
-                });
+                var emp = await _context.Employees.FindAsync(employeeId);
+                decimal baseSal = emp?.BaseSalary ?? 0;
+                return Json(new { success = true, grossPay = baseSal, netPay = baseSal, totalDeductions = 0m, salaryId = 0 });
             }
-            catch (Exception ex)
+
+            decimal gross = salary.BasicSalary
+                + (salary.HouseRent ?? 0)
+                + (salary.UtilityAllowance ?? 0)
+                + (salary.MedicalAllowance ?? 0)
+                + (salary.OtherAllowances ?? 0);
+
+            decimal deductions = (salary.IncomeTax ?? 0)
+                + (salary.ProfessionalTax ?? 0)
+                + (salary.OtherDeductions ?? 0);
+
+            decimal net = gross - deductions;
+
+            return Json(new
             {
-                return Json(new { success = false, message = ex.Message, grossPay = 0 });
-            }
+                success = true,
+                salaryId = salary.SalaryId,
+                grossPay = gross,
+                totalDeductions = deductions,
+                netPay = net
+            });
         }
 
-        // -------------------------------------------------------
-        // ADD / EDIT PARTIALS
-        // -------------------------------------------------------
         [HttpGet]
         public IActionResult AddPayrollPartial() => PartialView("_AddPayrollForm");
 
         [HttpGet]
         public async Task<IActionResult> EditPayrollPartial(int id)
         {
-            var p = await _context.EmployeePayrolls
-                .Include(x => x.Employee)
+            var p = await _context.EmployeePayrolls.Include(x => x.Employee)
                 .FirstOrDefaultAsync(x => x.PayrollId == id);
             if (p == null) return NotFound();
             return PartialView("_EditPayrollForm", p);
         }
 
-        // -------------------------------------------------------
-        // REGISTER
-        // -------------------------------------------------------
+        // ---------- REGISTER: server calculates amounts ----------
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(
-            int employeeId,
-            DateOnly monthYear,
-            decimal grossPay,
-            decimal? totalDeductions,
-            decimal netPay)
+        public async Task<IActionResult> Register(int employeeId, DateOnly monthYear)
         {
-            try
+            if (employeeId <= 0)
+                return Json(new { success = false, message = "Please select employee." });
+
+            var existing = await _context.EmployeePayrolls
+                .FirstOrDefaultAsync(p => p.EmployeeId == employeeId
+                    && p.MonthYear.Year == monthYear.Year
+                    && p.MonthYear.Month == monthYear.Month);
+            if (existing != null)
+                return Json(new { success = false, message = "Payroll already exists for this employee and month." });
+
+            var salary = await _context.EmployeeSalaries
+                .Where(s => s.EmployeeId == employeeId && s.IsActive == true)
+                .OrderByDescending(s => s.EffectiveDate)
+                .FirstOrDefaultAsync();
+            if (salary == null)
+                return Json(new { success = false, message = "No active salary record found for employee." });
+
+            decimal gross = salary.BasicSalary
+                + (salary.HouseRent ?? 0)
+                + (salary.UtilityAllowance ?? 0)
+                + (salary.MedicalAllowance ?? 0)
+                + (salary.OtherAllowances ?? 0);
+            decimal deductions = (salary.IncomeTax ?? 0)
+                + (salary.ProfessionalTax ?? 0)
+                + (salary.OtherDeductions ?? 0);
+            decimal net = gross - deductions;
+
+            _context.EmployeePayrolls.Add(new EmployeePayroll
             {
-                if (employeeId <= 0)
-                    return Json(new { success = false, message = "Please select employee." });
-
-                var existing = await _context.EmployeePayrolls
-                    .FirstOrDefaultAsync(p => p.EmployeeId == employeeId
-                        && p.MonthYear.Year == monthYear.Year
-                        && p.MonthYear.Month == monthYear.Month);
-                if (existing != null)
-                    return Json(new { success = false, message = "Payroll already exists for this employee and month." });
-
-                var salary = await _context.EmployeeSalaries
-                    .Where(s => s.EmployeeId == employeeId && s.IsActive != false)
-                    .OrderByDescending(s => s.EffectiveDate)
-                    .FirstOrDefaultAsync();
-
-                int salaryId = salary != null ? salary.SalaryId : 0;
-
-                if (salaryId == 0)
-                {
-                    var anySal = await _context.EmployeeSalaries.FirstOrDefaultAsync();
-                    if (anySal == null)
-                        return Json(new { success = false, message = "No salary record found. Please add salary first." });
-                    salaryId = anySal.SalaryId;
-                }
-
-                _context.EmployeePayrolls.Add(new EmployeePayroll
-                {
-                    EmployeeId = employeeId,
-                    SalaryId = salaryId,
-                    MonthYear = monthYear,
-                    GrossPay = grossPay,
-                    TotalDeductions = totalDeductions ?? 0,   // ✅ decimal?
-                    NetPay = netPay,
-                    Status = "Draft",
-                    CreatedBy = Uid().ToString(),
-                    CreatedDate = DateTime.Now
-                });
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Payroll created!" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
-            }
+                EmployeeId = employeeId,
+                SalaryId = salary.SalaryId,
+                MonthYear = monthYear,
+                GrossPay = gross,
+                TotalDeductions = deductions,
+                NetPay = net,
+                Status = "Draft",
+                CreatedBy = UserId.ToString(),
+                CreatedDate = DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Payroll created!" });
         }
 
-        // -------------------------------------------------------
-        // EDIT
-        // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int payrollId,
-            decimal grossPay,
-            decimal? totalDeductions,
-            decimal netPay,
-            string? status)
+        [Authorize(Policy = "Payroll.Edit")]
+        public async Task<IActionResult> Edit(int payrollId, decimal? totalDeductions)
         {
-            try
-            {
-                var p = await _context.EmployeePayrolls.FindAsync(payrollId);
-                if (p == null)
-                    return Json(new { success = false, message = "Not found" });
+            var p = await _context.EmployeePayrolls.FindAsync(payrollId);
+            if (p == null) return Json(new { success = false, message = "Not found" });
+            if (p.Status != "Draft" && p.Status != "Submitted")
+                return Json(new { success = false, message = "Only Draft/Submitted payroll can be edited." });
+            if (totalDeductions.HasValue && totalDeductions.Value < 0)
+                return Json(new { success = false, message = "Invalid deductions." });
 
-                p.GrossPay = grossPay;
-                p.TotalDeductions = totalDeductions;    // ✅ decimal?
-                p.NetPay = netPay;
-                p.Status = status;
-                if (status == "Paid") p.PaymentDate = DateTime.Now;
-                p.UpdatedBy = Uid().ToString();
-                p.UpdatedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Payroll updated!" });
-            }
-            catch (Exception ex)
+            if (totalDeductions.HasValue)
             {
-                return Json(new { success = false, message = ex.Message });
+                p.TotalDeductions = totalDeductions.Value;
+                p.NetPay = p.GrossPay - totalDeductions.Value;
             }
+            p.UpdatedBy = UserId.ToString();
+            p.UpdatedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Payroll updated!" });
         }
 
-        // -------------------------------------------------------
-        // DELETE
-        // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var p = await _context.EmployeePayrolls.FindAsync(id);
-                if (p == null)
-                    return Json(new { success = false, message = "Not found" });
+            var p = await _context.EmployeePayrolls.FindAsync(id);
+            if (p == null) return Json(new { success = false, message = "Not found" });
+            if (p.Status != "Draft")
+                return Json(new { success = false, message = "Only Draft payroll can be deleted." });
 
-                _context.EmployeePayrolls.Remove(p);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Deleted." });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+            p.Status = "Cancelled";
+            p.UpdatedBy = UserId.ToString();
+            p.UpdatedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Payroll cancelled." });
         }
 
-        // -------------------------------------------------------
-        // TOGGLE STATUS
-        // Draft -> Submitted -> Approved -> Paid -> Draft
-        // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Approve")]
         public async Task<IActionResult> ToggleActive(int id)
         {
-            try
-            {
-                var p = await _context.EmployeePayrolls.FindAsync(id);
-                if (p == null)
-                    return Json(new { success = false, message = "Not found" });
+            var p = await _context.EmployeePayrolls.FindAsync(id);
+            if (p == null) return Json(new { success = false, message = "Not found" });
 
-                if (p.Status == "Draft")
-                {
+            string old = p.Status ?? "Draft";
+            switch (old)
+            {
+                case "Draft":
                     p.Status = "Submitted";
-                }
-                else if (p.Status == "Submitted")
-                {
+                    break;
+                case "Submitted":
+                    if (p.CreatedBy == UserId.ToString())
+                        return Json(new { success = false, message = "You cannot approve your own payroll." });
                     p.Status = "Approved";
-                    p.ApprovedBy = Uid().ToString();
+                    p.ApprovedBy = UserId.ToString();
                     p.ApprovedDate = DateTime.Now;
-                }
-                else if (p.Status == "Approved")
-                {
+                    break;
+                case "Approved":
                     p.Status = "Paid";
                     p.PaymentDate = DateTime.Now;
-                }
-                else
-                {
-                    p.Status = "Draft";
-                    p.ApprovedBy = null;
-                    p.ApprovedDate = null;
-                    p.PaymentDate = null;
-                }
+                    break;
+                default:
+                    return Json(new { success = false, message = "Invalid status transition." });
+            }
 
-                p.UpdatedBy = Uid().ToString();
-                p.UpdatedDate = DateTime.Now;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Status: " + p.Status });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+            p.UpdatedBy = UserId.ToString();
+            p.UpdatedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Status: " + old + " -> " + p.Status });
         }
 
-        // -------------------------------------------------------
-        // PROFILE
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> Profile(int id)
         {
-            try
+            var p = await _context.EmployeePayrolls.Include(x => x.Employee)
+                .FirstOrDefaultAsync(x => x.PayrollId == id);
+            if (p == null) return NotFound();
+
+            if (int.TryParse(p.CreatedBy, out int cid))
             {
-                var p = await _context.EmployeePayrolls
-                    .Include(x => x.Employee)
-                    .FirstOrDefaultAsync(x => x.PayrollId == id);
-
-                if (p == null) return NotFound();
-
-                var creator = await _context.Users.FindAsync(p.CreatedBy);
-                ViewBag.CreatedByName = creator != null ? creator.UserName : "N/A";
-
-                // ✅ ApprovedBy string hai
-                if (!string.IsNullOrWhiteSpace(p.ApprovedBy))
-                {
-                    var approver = await _context.Users.FindAsync(p.ApprovedBy);
-                    ViewBag.ApprovedByName = approver != null ? approver.UserName : "N/A";
-                }
-                else
-                {
-                    ViewBag.ApprovedByName = "-";
-                }
-
-                // ✅ UpdatedBy string hai
-                if (!string.IsNullOrWhiteSpace(p.UpdatedBy))
-                {
-                    var upd = await _context.Users.FindAsync(p.UpdatedBy);
-                    ViewBag.UpdatedByName = upd != null ? upd.UserName : "N/A";
-                }
-                else
-                {
-                    ViewBag.UpdatedByName = "-";
-                }
-
-                return View("Profile", p);
+                var creator = await _context.Users.FindAsync(cid);
+                ViewBag.CreatedByName = creator?.UserName ?? "N/A";
             }
-            catch (Exception ex)
+            else ViewBag.CreatedByName = "N/A";
+
+            if (int.TryParse(p.ApprovedBy, out int aid))
             {
-                TempData["Error"] = ex.Message?.ToString();
-                return RedirectToAction("Index");
+                var approver = await _context.Users.FindAsync(aid);
+                ViewBag.ApprovedByName = approver?.UserName ?? "N/A";
             }
+            else ViewBag.ApprovedByName = "-";
+
+            if (int.TryParse(p.UpdatedBy, out int uid))
+            {
+                var upd = await _context.Users.FindAsync(uid);
+                ViewBag.UpdatedByName = upd?.UserName ?? "N/A";
+            }
+            else ViewBag.UpdatedByName = "-";
+
+            return View("Profile", p);
         }
     }
 }
+
