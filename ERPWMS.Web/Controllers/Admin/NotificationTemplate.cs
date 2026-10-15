@@ -64,7 +64,7 @@ namespace ERPWMS.Controllers.Admin
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SystemAdmin.Create")]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Create(CreateNotificationTemplateRequest request)
         {
             if (!ModelState.IsValid)
@@ -111,7 +111,7 @@ namespace ERPWMS.Controllers.Admin
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SystemAdmin.Edit")]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Edit(UpdateNotificationTemplateRequest request)
         {
             if (!ModelState.IsValid)
@@ -137,7 +137,7 @@ namespace ERPWMS.Controllers.Admin
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SystemAdmin.Delete")]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -185,3 +185,4 @@ namespace ERPWMS.Controllers.Admin
         }
     }
 }
+

@@ -1,11 +1,12 @@
-﻿using ERPWMS.Database.Models;
+﻿using ERPWMS.Database;
+using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using ERPWMS.Database;
 
 namespace ERPWMS.Controllers.Admin
 {
@@ -15,14 +16,40 @@ namespace ERPWMS.Controllers.Admin
         private readonly AppDbContext _context;
         public UserProfileController(AppDbContext c) { _context = c; }
 
+        private int CurrentUserId
+        {
+            get
+            {
+                var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(cl, out int id) || id <= 0)
+                    throw new UnauthorizedAccessException("User identity missing.");
+                return id;
+            }
+        }
+
+        private bool IsAdmin
+        {
+            get
+            {
+                return User.IsInRole("Admin")
+                    || User.IsInRole("SuperAdmin")
+                    || User.HasClaim("Permission", "SystemAdmin.View")
+                    || User.HasClaim("Permission", "SystemAdmin.Manage");
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Index(int id)
         {
-            if (id <= 0)
-            {
-                var u = await _context.Users.FirstOrDefaultAsync();
-                id = u != null ? u.Id : 0;
-            }
+            var currentUserId = CurrentUserId;
+
+            // Agar id provided nahi hai ya invalid hai, apna profile dikhao
+            if (id <= 0) id = currentUserId;
+
+            // Agar user apna profile nahi dekh raha, aur admin bhi nahi hai, to block
+            if (id != currentUserId && !IsAdmin)
+                return Forbid();
+
             ViewBag.UserId = id;
             return View();
         }
@@ -30,17 +57,23 @@ namespace ERPWMS.Controllers.Admin
         [HttpGet]
         public async Task<IActionResult> GetProfile(int userId)
         {
+            var currentUserId = CurrentUserId;
+
+            // IDOR protection: sirf apna ya (admin ke liye) kisi ka bhi
+            if (userId != currentUserId && !IsAdmin)
+                return Forbid();
+
             var u = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (u == null) return Json(null);
 
-            // Role name via many-to-many (User <-> AspNetRole)
             var roleName = await (from r in _context.AspNetRoles
                                   where r.Users.Any(x => x.Id == userId)
                                   select r.Name).FirstOrDefaultAsync();
 
             var fullName = ((u.FirstName ?? "") + " " + (u.LastName ?? "")).Trim();
 
-            return Json(new {
+            return Json(new
+            {
                 userId = u.Id,
                 userName = u.UserName,
                 fullName = fullName,
@@ -49,19 +82,29 @@ namespace ERPWMS.Controllers.Admin
                 roleName = roleName,
                 isActive = u.IsActive == true,
                 createdDate = (DateTime?)null,
-                assignments = _context.WorkflowAssignments.Count(a => a.UserId == u.Id),
-                actions = _context.WorkflowInstanceLogs.Count(l => l.UserId == u.Id)
+                assignments = await _context.WorkflowAssignments.CountAsync(a => a.UserId == u.Id),
+                actions = await _context.WorkflowInstanceLogs.CountAsync(l => l.UserId == u.Id)
             });
         }
 
         [HttpGet]
         public async Task<IActionResult> GetActivity(int userId, int take = 20)
         {
+            var currentUserId = CurrentUserId;
+
+            // IDOR protection
+            if (userId != currentUserId && !IsAdmin)
+                return Forbid();
+
+            if (take < 1) take = 20;
+            if (take > 100) take = 100;
+
             var list = await _context.WorkflowInstanceLogs
                 .Where(l => l.UserId == userId)
                 .OrderByDescending(l => l.ActionDate)
                 .Take(take)
-                .Select(l => new {
+                .Select(l => new
+                {
                     workflowInstId = l.WorkflowInstId,
                     actionName = l.Action != null ? l.Action.ActionName : "-",
                     toStage = l.StageTo != null ? l.StageTo.StageName : "-",

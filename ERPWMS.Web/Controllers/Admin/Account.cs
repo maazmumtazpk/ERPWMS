@@ -247,6 +247,7 @@ namespace ERPWMS.Web.Controllers.Admin
         // =========================================================
 
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
@@ -472,3 +473,4 @@ namespace ERPWMS.Web.Controllers.Admin
         }
     }
 }
+

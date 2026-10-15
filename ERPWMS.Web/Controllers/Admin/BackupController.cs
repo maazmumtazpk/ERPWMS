@@ -12,7 +12,7 @@ using ERPWMS.Database;
 
 namespace ERPWMS.Controllers.Admin
 {
-    [Authorize]
+    [Authorize(Policy = "SystemAdmin.Manage")]
     public class BackupController : Controller
     {
         private readonly AppDbContext _context;
@@ -195,3 +195,4 @@ namespace ERPWMS.Controllers.Admin
         public string DateFormatted { get; set; } = "";
     }
 }
+

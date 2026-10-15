@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.Audit;
+﻿using ERPWMS.Application.DTOs.Audit;
 using ERPWMS.Application.DTOs.Identity;
 using ERPWMS.Application.DTOs.System;
 using ERPWMS.Domain.Services;
@@ -255,7 +255,7 @@ namespace ERPWMS.Web.Controllers.Admin
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SystemAdmin.Delete")]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> TerminateSession(int id)
         {
             var result = await _sessionService.TerminateSessionAsync(id);

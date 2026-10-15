@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace ERPWMS.Controllers.Admin
 {
+    [Authorize]
     public class RoleController : Controller
     {
         private readonly IRoleService _roleService;
@@ -201,3 +202,4 @@ namespace ERPWMS.Controllers.Admin
         }
     }
 }
+

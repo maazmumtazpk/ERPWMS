@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.System;
+﻿using ERPWMS.Application.DTOs.System;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 
@@ -70,7 +70,7 @@ namespace ERPWMS.Web.Controllers.Admin
         // -------------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SystemAdmin.Edit")]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Edit(UpdateSystemSettingRequest request)
         {
             if (!ModelState.IsValid) return View(request);
@@ -94,7 +94,7 @@ namespace ERPWMS.Web.Controllers.Admin
             oldSetting.DataType = request.DataType;
             oldSetting.IsEncrypted = request.IsEncrypted;
             oldSetting.Description = request.Description;
-            oldSetting.UpdatedBy = request.UpdatedBy.ToString();   // ✅ UpdatedBy: int → string
+            oldSetting.UpdatedBy = request.UpdatedBy.ToString();   // âœ… UpdatedBy: int â†’ string
             oldSetting.UpdatedDate = DateTime.Now;
 
             await _settingService.UpdateSettingAsync(oldSetting);
@@ -103,7 +103,7 @@ namespace ERPWMS.Web.Controllers.Admin
                 request.SettingId,
                 oldValue,
                 request.SettingValue,
-                request.UpdatedBy                                  // ✅ int (no .ToString())
+                request.UpdatedBy                                  // âœ… int (no .ToString())
             );
 
             TempData["Success"] = "Setting updated successfully.";
@@ -115,7 +115,7 @@ namespace ERPWMS.Web.Controllers.Admin
         // -------------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "SystemAdmin.Delete")]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             var setting = await _settingService.GetSettingByIdAsync(id);
@@ -186,7 +186,7 @@ namespace ERPWMS.Web.Controllers.Admin
             {
                 settingId = s.SettingId,
                 settingKey = s.SettingKey,
-                settingValue = s.SettingValue,
+                settingValue = s.IsEncrypted == true ? "********" : s.SettingValue,
                 dataType = s.DataType,
                 isEncrypted = s.IsEncrypted == true,
                 description = s.Description
@@ -199,6 +199,7 @@ namespace ERPWMS.Web.Controllers.Admin
         // AJAX: QUICK EDIT
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> QuickEdit(int settingId, string settingKey, string settingValue,
             string dataType, string description, bool isEncrypted = false)
         {
@@ -229,6 +230,7 @@ namespace ERPWMS.Web.Controllers.Admin
         // AJAX: QUICK DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> QuickDelete(int id)
         {
             try

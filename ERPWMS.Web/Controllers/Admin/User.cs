@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace ERPWMS.Controllers.Admin
 {
+    [Authorize]
     public class UserController : Controller
     {
         private readonly IUserService _userService;
@@ -307,6 +308,10 @@ namespace ERPWMS.Controllers.Admin
         {
             try
             {
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (currentUserId == id.ToString())
+                    return Json(new { success = false, message = "You cannot toggle your own status." });
+
                 var u = await _userService.GetUserByIdAsync(id);
                 if (u == null) return Json(new { success = false, message = "Not found" });
                 u.IsActive = !(u.IsActive ?? false);
@@ -317,3 +322,4 @@ namespace ERPWMS.Controllers.Admin
         }
     }
 }
+
