@@ -112,3 +112,11 @@ _ReSharper*/
 *.svclog
 *.sbr
 *.svc
+# Backups (auto-generated)
+*.backup_*
+*.backup
+BuildLog-*.txt
+FixLog-*.txt
+PolicyCheck-*.txt
+GitPush-*.txt
+PermList.txt
