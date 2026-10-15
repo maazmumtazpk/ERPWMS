@@ -1,17 +1,21 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ERPWMS.Infrastructure.Services
 {
-    // ? FIX: Primary Constructor
     public class InvoiceService(
         IInvoiceRepository invoiceRepository,
         IInvoiceDetailRepository invoiceDetailRepository) : IInvoiceService
     {
+        // =========================================================
+        // QUERIES
+        // =========================================================
+
         public async Task<IEnumerable<Invoice>> GetAllAsync(int companyId, bool includeDeleted = false)
             => await invoiceRepository.GetAllAsync(companyId, includeDeleted);
 
@@ -30,16 +34,32 @@ namespace ERPWMS.Infrastructure.Services
         public async Task<IEnumerable<Invoice>> GetByDateRangeAsync(DateTime? fromDate, DateTime? toDate, int companyId)
             => await invoiceRepository.GetByDateRangeAsync(fromDate, toDate, companyId);
 
+        // =========================================================
+        // CREATE
+        // =========================================================
+
         public async Task<Invoice> CreateInvoiceAsync(
             Invoice invoice,
             List<InvoiceDetail> details,
             string createdBy)
         {
+            if (invoice is null)
+                throw new ArgumentNullException(nameof(invoice));
+
+            if (details is null || !details.Any())
+                throw new ArgumentException("Invoice must have at least one detail line.", nameof(details));
+
             if (!await invoiceRepository.IsInvoiceNoUniqueAsync(invoice.InvoiceNo, 0, null))
                 throw new Exception("Invoice Number already exists.");
 
+            // Validate details
+            foreach (var detail in details)
+            {
+                ValidateInvoiceDetail(detail);
+            }
+
             invoice.Status = "Draft";
-            invoice.CreatedBy = createdBy;   // ? already string
+            invoice.CreatedBy = createdBy;
             invoice.CreatedDate = DateTime.UtcNow;
 
             await invoiceRepository.AddAsync(invoice);
@@ -47,7 +67,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 detail.InvoiceId = invoice.InvoiceId;
-                detail.CreatedBy = createdBy;   // ? already string
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await invoiceDetailRepository.AddAsync(detail);
             }
@@ -55,12 +75,31 @@ namespace ERPWMS.Infrastructure.Services
             return invoice;
         }
 
+        private static void ValidateInvoiceDetail(InvoiceDetail detail)
+        {
+            if (detail is null)
+                throw new ArgumentException("Invoice detail cannot be null.");
+
+            if (detail.Quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero.");
+
+            if (detail.UnitPrice < 0)
+                throw new ArgumentException("Unit price cannot be negative.");
+        }
+
+        // =========================================================
+        // UPDATE
+        // =========================================================
+
         public async Task UpdateInvoiceAsync(
             Invoice invoice,
             List<InvoiceDetail> details,
             string updatedBy)
         {
-            invoice.UpdatedBy = updatedBy;   // ? already string
+            if (invoice is null)
+                throw new ArgumentNullException(nameof(invoice));
+
+            invoice.UpdatedBy = updatedBy;
             invoice.UpdatedDate = DateTime.UtcNow;
 
             await invoiceRepository.UpdateAsync(invoice);
@@ -72,14 +111,21 @@ namespace ERPWMS.Infrastructure.Services
                 await invoiceDetailRepository.DeleteAsync(existing.InvoiceDetailId);
             }
 
-            foreach (var detail in details)
+            if (details != null)
             {
-                detail.InvoiceId = invoice.InvoiceId;
-                detail.CreatedBy = updatedBy;   // ? already string
-                detail.CreatedDate = DateTime.UtcNow;
-                await invoiceDetailRepository.AddAsync(detail);
+                foreach (var detail in details)
+                {
+                    detail.InvoiceId = invoice.InvoiceId;
+                    detail.CreatedBy = updatedBy;
+                    detail.CreatedDate = DateTime.UtcNow;
+                    await invoiceDetailRepository.AddAsync(detail);
+                }
             }
         }
+
+        // =========================================================
+        // DELETE
+        // =========================================================
 
         public async Task<bool> DeleteInvoiceAsync(
             int invoiceId,
@@ -93,30 +139,45 @@ namespace ERPWMS.Infrastructure.Services
             return true;
         }
 
+        // =========================================================
+        // POST
+        // =========================================================
+
         public async Task<bool> PostInvoiceAsync(int invoiceId, int userId)
         {
             var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
-            if (invoice is null) return false;   // ? simplified
+            if (invoice is null) return false;
 
             invoice.Status = "Posted";
-            invoice.UpdatedBy = userId.ToString();   // ? int -> string
+            invoice.UpdatedBy = userId.ToString();
             invoice.UpdatedDate = DateTime.UtcNow;
 
             await invoiceRepository.UpdateAsync(invoice);
             return true;
         }
 
+        // =========================================================
+        // RECORD PAYMENT
+        // =========================================================
+
         public async Task<bool> RecordPaymentAsync(int invoiceId, decimal amount, int userId)
         {
+            if (amount <= 0)
+                throw new ArgumentException("Payment amount must be greater than zero.", nameof(amount));
+
             var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
             if (invoice is null) return false;
 
-            // ? FIX: BalanceDue nullable hai — safe calculation
             decimal currentBalance = (decimal?)invoice.BalanceDue ?? 0m;
+
+            if (amount > currentBalance)
+                throw new ArgumentException(
+                    $"Payment amount (${amount}) cannot exceed balance due (${currentBalance}).",
+                    nameof(amount));
+
             currentBalance -= amount;
             invoice.BalanceDue = currentBalance;
-
-            invoice.UpdatedBy = userId.ToString();   // ? int -> string
+            invoice.UpdatedBy = userId.ToString();
             invoice.UpdatedDate = DateTime.UtcNow;
 
             if (currentBalance <= 0)
@@ -128,6 +189,10 @@ namespace ERPWMS.Infrastructure.Services
             await invoiceRepository.UpdateAsync(invoice);
             return true;
         }
+
+        // =========================================================
+        // CHECKS
+        // =========================================================
 
         public async Task<bool> IsInvoiceNoUniqueAsync(string invoiceNo, int companyId, int? excludeId = null)
             => await invoiceRepository.IsInvoiceNoUniqueAsync(invoiceNo, companyId, excludeId);
@@ -141,8 +206,7 @@ namespace ERPWMS.Infrastructure.Services
             int? workflowInstanceId = null,
             int? currentStageId = null)
         {
-            await invoiceRepository.UpdateStatusAsync(
-                invoiceId, status, workflowInstanceId, currentStageId);
+            await invoiceRepository.UpdateStatusAsync(invoiceId, status, workflowInstanceId, currentStageId);
         }
 
         public async Task<decimal> CalculateBalanceDueAsync(int invoiceId)
@@ -150,7 +214,6 @@ namespace ERPWMS.Infrastructure.Services
             var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
             if (invoice is null) return 0m;
 
-            // ? FIX: Nullable-safe return
             return (decimal?)invoice.BalanceDue ?? 0m;
         }
 

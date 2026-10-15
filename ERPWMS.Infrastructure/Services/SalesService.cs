@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
@@ -25,45 +25,52 @@ namespace ERPWMS.Infrastructure.Services
         }
 
         public async Task<IEnumerable<SalesMaster>> GetAllAsync(int companyId, bool includeDeleted = false)
-        {
-            return await _salesMasterRepository.GetAllAsync(companyId, includeDeleted);
-        }
+            => await _salesMasterRepository.GetAllAsync(companyId, includeDeleted);
 
         public async Task<SalesMaster?> GetByIdAsync(int salesId, int companyId)
-        {
-            return await _salesMasterRepository.GetByIdAsync(salesId, companyId);
-        }
+            => await _salesMasterRepository.GetByIdAsync(salesId, companyId);
 
         public async Task<SalesMaster?> GetByOrderNoAsync(string orderNo, int companyId)
-        {
-            return await _salesMasterRepository.GetByOrderNoAsync(orderNo, companyId);
-        }
+            => await _salesMasterRepository.GetByOrderNoAsync(orderNo, companyId);
 
         public async Task<IEnumerable<SalesMaster>> GetByCustomerIdAsync(int customerId, int companyId)
-        {
-            return await _salesMasterRepository.GetByCustomerIdAsync(customerId, companyId);
-        }
+            => await _salesMasterRepository.GetByCustomerIdAsync(customerId, companyId);
 
         public async Task<IEnumerable<SalesMaster>> GetByDateRangeAsync(DateTime? fromDate, DateTime? toDate, int companyId)
-        {
-            return await _salesMasterRepository.GetByDateRangeAsync(fromDate, toDate, companyId);
-        }
+            => await _salesMasterRepository.GetByDateRangeAsync(fromDate, toDate, companyId);
 
         public async Task<IEnumerable<SalesMaster>> GetByStatusAsync(string status, int companyId)
-        {
-            return await _salesMasterRepository.GetByStatusAsync(status, companyId);
-        }
+            => await _salesMasterRepository.GetByStatusAsync(status, companyId);
+
+        // =========================================================
+        // CREATE
+        // =========================================================
 
         public async Task<SalesMaster> CreateSalesOrderAsync(
             SalesMaster sales,
             List<SalesDetail> details,
             string createdBy)
         {
-            if (!await _salesMasterRepository.IsOrderNoUniqueAsync(sales.SalesOrderNo, sales.Warehouse?.Branch?.CompanyId ?? 0, null))
+            if (sales is null)
+                throw new ArgumentNullException(nameof(sales));
+
+            if (details is null || !details.Any())
+                throw new ArgumentException("Sales order must have at least one detail line.", nameof(details));
+
+            var companyId = sales.Warehouse?.Branch?.CompanyId ?? 0;
+            if (companyId <= 0)
+                throw new ArgumentException("Sales order must have a valid company.");
+
+            if (!await _salesMasterRepository.IsOrderNoUniqueAsync(sales.SalesOrderNo, companyId, null))
                 throw new Exception("Sales Order Number already exists.");
 
+            foreach (var detail in details)
+            {
+                ValidateSalesDetail(detail);
+            }
+
             sales.Status = "Draft";
-            sales.CreatedBy = createdBy.ToString();
+            sales.CreatedBy = createdBy;
             sales.CreatedDate = DateTime.UtcNow;
 
             await _salesMasterRepository.AddAsync(sales);
@@ -71,7 +78,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 detail.SalesId = sales.SalesId;
-                detail.CreatedBy = createdBy.ToString();
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await _salesDetailRepository.AddAsync(detail);
             }
@@ -79,13 +86,37 @@ namespace ERPWMS.Infrastructure.Services
             return sales;
         }
 
-        // ? FIXED — MISSING METHOD
+        private static void ValidateSalesDetail(SalesDetail detail)
+        {
+            if (detail is null)
+                throw new ArgumentException("Sales detail cannot be null.");
+
+            if (detail.Quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero.");
+
+            if (detail.UnitPrice < 0)
+                throw new ArgumentException("Unit price cannot be negative.");
+
+            if ((detail.DiscountAmount ?? 0) < 0)
+                throw new ArgumentException("Discount cannot be negative.");
+
+            if ((detail.DiscountAmount ?? 0) > (detail.Quantity * detail.UnitPrice))
+                throw new ArgumentException("Discount cannot exceed line total.");
+        }
+
+        // =========================================================
+        // UPDATE
+        // =========================================================
+
         public async Task UpdateSalesOrderAsync(
             SalesMaster sales,
             List<SalesDetail> details,
             string updatedBy)
         {
-            sales.UpdatedBy = updatedBy.ToString();
+            if (sales is null)
+                throw new ArgumentNullException(nameof(sales));
+
+            sales.UpdatedBy = updatedBy;
             sales.UpdatedDate = DateTime.UtcNow;
 
             await _salesMasterRepository.UpdateAsync(sales);
@@ -97,16 +128,22 @@ namespace ERPWMS.Infrastructure.Services
                 await _salesDetailRepository.DeleteAsync(existing.SalesDetailId);
             }
 
-            foreach (var detail in details)
+            if (details != null)
             {
-                detail.SalesId = sales.SalesId;
-                detail.CreatedBy = updatedBy.ToString();
-                detail.CreatedDate = DateTime.UtcNow;
-                await _salesDetailRepository.AddAsync(detail);
+                foreach (var detail in details)
+                {
+                    detail.SalesId = sales.SalesId;
+                    detail.CreatedBy = updatedBy;
+                    detail.CreatedDate = DateTime.UtcNow;
+                    await _salesDetailRepository.AddAsync(detail);
+                }
             }
         }
 
-        // ? FIXED — MISSING METHOD
+        // =========================================================
+        // DELETE
+        // =========================================================
+
         public async Task<bool> DeleteSalesOrderAsync(
             int salesId,
             int companyId,
@@ -118,6 +155,10 @@ namespace ERPWMS.Infrastructure.Services
             await _salesMasterRepository.SoftDeleteAsync(salesId, companyId, deletedBy);
             return true;
         }
+
+        // =========================================================
+        // WORKFLOW
+        // =========================================================
 
         public async Task<bool> SubmitSalesOrderAsync(int salesId, int companyId, int userId)
         {
@@ -158,13 +199,18 @@ namespace ERPWMS.Infrastructure.Services
             return true;
         }
 
+        // =========================================================
+        // CHECKS
+        // =========================================================
+
         public async Task<bool> IsOrderNoUniqueAsync(string orderNo, int companyId, int? excludeId = null)
-        {
-            return await _salesMasterRepository.IsOrderNoUniqueAsync(orderNo, companyId, excludeId);
-        }
+            => await _salesMasterRepository.IsOrderNoUniqueAsync(orderNo, companyId, excludeId);
 
         public Task<decimal> CalculateTotalAmountAsync(List<SalesDetail> details)
         {
+            if (details is null || !details.Any())
+                return Task.FromResult(0m);
+
             decimal total = 0;
             foreach (var d in details)
             {
@@ -174,9 +220,7 @@ namespace ERPWMS.Infrastructure.Services
         }
 
         public async Task<bool> CanBeDeletedAsync(int salesId, int companyId)
-        {
-            return await _salesMasterRepository.CanBeDeletedAsync(salesId, companyId);
-        }
+            => await _salesMasterRepository.CanBeDeletedAsync(salesId, companyId);
 
         public async Task UpdateSalesOrderStatusAsync(
             int salesId,
@@ -187,6 +231,10 @@ namespace ERPWMS.Infrastructure.Services
             await _salesMasterRepository.UpdateStatusAsync(salesId, status, workflowInstanceId, currentStageId);
         }
 
+        // =========================================================
+        // PICKING LIST
+        // =========================================================
+
         public async Task<PickingList> GeneratePickingListAsync(int salesId, int warehouseId, string createdBy)
         {
             var sales = await _salesMasterRepository.GetByIdAsync(salesId, 0);
@@ -196,7 +244,8 @@ namespace ERPWMS.Infrastructure.Services
             if (sales.Status != "Approved")
                 throw new Exception("Only Approved Sales Orders can be picked.");
 
-            var pickingNo = $"PICK-{DateTime.Now:yyyyMMdd}-{new Random().Next(1000, 9999)}";
+            // Use GUID to avoid collision
+            var pickingNo = $"PICK-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
 
             var picking = new PickingList
             {
@@ -204,7 +253,7 @@ namespace ERPWMS.Infrastructure.Services
                 WarehouseId = warehouseId,
                 PickingNo = pickingNo,
                 Status = "Draft",
-                CreatedBy = createdBy.ToString(),
+                CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow
             };
 

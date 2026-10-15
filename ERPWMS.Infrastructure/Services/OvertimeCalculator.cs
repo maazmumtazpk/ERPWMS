@@ -25,20 +25,54 @@ namespace ERPWMS.Infrastructure.Services
     {
         private readonly AppDbContext _context;
 
-        public OvertimeCalculator(AppDbContext context) { _context = context; }
+        public OvertimeCalculator(AppDbContext context)
+        {
+            _context = context;
+        }
 
-        public async Task<OvertimeResult> CalculateAsync(int employeeId, decimal otHours, bool isHoliday, bool isWeeklyOff)
+        public async Task<OvertimeResult> CalculateAsync(
+            int employeeId, decimal otHours,
+            bool isHoliday, bool isWeeklyOff)
         {
             var result = new OvertimeResult { OTHours = otHours };
 
-            var emp = await _context.Employees.FirstOrDefaultAsync(e => e.EmployeeId == employeeId);
-            if (emp == null) { result.Summary = "Employee not found."; return result; }
+            // FIXED: Negative hours validation
+            if (otHours < 0)
+            {
+                result.Summary = "OT hours cannot be negative.";
+                return result;
+            }
 
-            var settings = await _context.PayrollSettings.OrderByDescending(p => p.SettingId).FirstOrDefaultAsync();
+            if (otHours == 0)
+            {
+                result.Summary = "No overtime hours.";
+                return result;
+            }
+
+            if (employeeId <= 0)
+            {
+                result.Summary = "Invalid employee ID.";
+                return result;
+            }
+
+            var emp = await _context.Employees
+                .FirstOrDefaultAsync(e => e.EmployeeId == employeeId);
+
+            if (emp == null)
+            {
+                result.Summary = "Employee not found.";
+                return result;
+            }
+
+            var settings = await _context.PayrollSettings
+                .OrderByDescending(p => p.SettingId)
+                .FirstOrDefaultAsync();
+
             int divisor = settings?.SalaryDivisor ?? 30;
             decimal baseMultiplier = settings?.OTMultiplier ?? 1.5m;
 
-            if (divisor == 0) divisor = 30;
+            if (divisor <= 0) divisor = 30;
+
             result.OTRate = emp.BaseSalary / divisor / 8; // per hour
 
             // Holiday / Weekly Off pe double
@@ -47,11 +81,11 @@ namespace ERPWMS.Infrastructure.Services
             else
                 result.OTMultiplier = baseMultiplier;
 
-            result.OTAmount = Math.Round(result.OTRate * result.OTMultiplier * otHours, 2);
+            result.OTAmount = Math.Round(
+                result.OTRate * result.OTMultiplier * otHours, 2);
 
-            result.Summary = $"{otHours} hrs × {result.OTRate:N2} × {result.OTMultiplier} = {result.OTAmount:N2}";
+            result.Summary = $"{otHours} hrs x {result.OTRate:N2} x {result.OTMultiplier} = {result.OTAmount:N2}";
             return result;
         }
     }
 }
-

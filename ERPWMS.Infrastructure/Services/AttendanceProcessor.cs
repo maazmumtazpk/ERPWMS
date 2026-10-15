@@ -22,6 +22,28 @@ namespace ERPWMS.Infrastructure.Services
         {
             var result = new AttendanceResult { Success = false };
 
+            // Validate input
+            if (input == null)
+            {
+                result.Message = "Input cannot be null.";
+                return result;
+            }
+
+            // FIXED: Future date validation
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            if (input.Date > today)
+            {
+                result.Message = "Cannot process attendance for future dates.";
+                return result;
+            }
+
+            // FIXED: CurrentUserId validation
+            if (input.CurrentUserId <= 0)
+            {
+                result.Message = "Invalid user ID.";
+                return result;
+            }
+
             // 1. Employee find
             var emp = await _context.Employees
                 .FirstOrDefaultAsync(e => e.EmployeeId == input.EmployeeId);
@@ -81,7 +103,7 @@ namespace ERPWMS.Infrastructure.Services
             if (!input.CheckIn.HasValue)
             {
                 result.Status = AttendanceStatuses.Absent;
-                result.Message = "No Check-In recorded — marked Absent.";
+                result.Message = "No Check-In recorded - marked Absent.";
                 result.IsHolidayWork = false;
                 result.IsWeeklyOffWork = false;
                 await SaveOrUpdateAttendance(input, result, isHoliday, isWeeklyOff);
@@ -146,11 +168,11 @@ namespace ERPWMS.Infrastructure.Services
 
             // 11. Half Day detection
             bool isHalfDay = false;
-            if (workingMinutes > 0 && workingMinutes < 240) // < 4 hours
+            if (workingMinutes > 0 && workingMinutes < 240)
             {
                 isHalfDay = true;
             }
-            else if (lateMinutes > 120) // > 2 hours late = half day
+            else if (lateMinutes > 120)
             {
                 isHalfDay = true;
             }
@@ -193,7 +215,9 @@ namespace ERPWMS.Infrastructure.Services
             return result;
         }
 
-        private async Task SaveOrUpdateAttendance(AttendanceInput input, AttendanceResult result, bool isHoliday, bool isWeeklyOff)
+        private async Task SaveOrUpdateAttendance(
+            AttendanceInput input, AttendanceResult result,
+            bool isHoliday, bool isWeeklyOff)
         {
             var existing = await _context.EmployeeAttendances
                 .FirstOrDefaultAsync(a =>

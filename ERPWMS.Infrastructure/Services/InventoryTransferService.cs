@@ -1,8 +1,9 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ERPWMS.Infrastructure.Services
@@ -28,11 +29,35 @@ namespace ERPWMS.Infrastructure.Services
             List<StockTransferDetail> details,
             string createdBy)
         {
+            if (transfer is null)
+                throw new ArgumentNullException(nameof(transfer));
+
+            if (details is null || !details.Any())
+                throw new ArgumentException("Transfer must have at least one detail.", nameof(details));
+
+            if (transfer.FromWarehouseId == transfer.ToWarehouseId)
+                throw new Exception("Source and destination warehouse cannot be the same.");
+
             if (!await _stockTransferRepository.IsTransferNoUniqueAsync(transfer.TransferNo, null))
                 throw new Exception("Transfer Number already exists.");
 
+            // Validate stock for each detail
+            foreach (var detail in details)
+            {
+                if (detail.Quantity <= 0)
+                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+
+                var currentBalance = await _stockLedgerRepository.GetCurrentBalanceAsync(
+                    detail.ProductId, transfer.FromWarehouseId, detail.FromBinId);
+
+                if (currentBalance < detail.Quantity)
+                    throw new Exception(
+                        $"Insufficient stock for product {detail.ProductId}. " +
+                        $"Available: {currentBalance}, Requested: {detail.Quantity}");
+            }
+
             transfer.Status = "Draft";
-            transfer.CreatedBy = createdBy.ToString();
+            transfer.CreatedBy = createdBy;
             transfer.CreatedDate = DateTime.UtcNow;
 
             await _stockTransferRepository.AddAsync(transfer);
@@ -40,7 +65,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 detail.TransferId = transfer.TransferId;
-                detail.CreatedBy = createdBy.ToString();
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await _stockTransferDetailRepository.AddAsync(detail);
             }
@@ -48,24 +73,41 @@ namespace ERPWMS.Infrastructure.Services
             return transfer;
         }
 
-        // ? FIXED — MISSING METHOD
         public async Task<StockTransfer> UpdateTransferAsync(
             StockTransfer transfer,
             List<StockTransferDetail> details,
             string updatedBy)
         {
-            transfer.UpdatedBy = updatedBy.ToString();
+            if (transfer is null)
+                throw new ArgumentNullException(nameof(transfer));
+
+            if (transfer.Status != "Draft")
+                throw new Exception("Only Draft transfers can be updated.");
+
+            transfer.UpdatedBy = updatedBy;
             transfer.UpdatedDate = DateTime.UtcNow;
 
             await _stockTransferRepository.UpdateAsync(transfer);
 
-            // Update details — remove existing, add new
-            if (details != null && details.Count > 0)
+            // Delete existing details
+            var existingDetails = await _stockTransferDetailRepository
+                .GetByTransferIdAsync(transfer.TransferId);
+
+            foreach (var existing in existingDetails)
+            {
+                await _stockTransferDetailRepository.DeleteAsync(existing.TransferDetailId);
+            }
+
+            // Add new details
+            if (details != null && details.Any())
             {
                 foreach (var detail in details)
                 {
+                    if (detail.Quantity <= 0)
+                        throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+
                     detail.TransferId = transfer.TransferId;
-                    detail.CreatedBy = updatedBy.ToString();
+                    detail.CreatedBy = updatedBy;
                     detail.CreatedDate = DateTime.UtcNow;
                     await _stockTransferDetailRepository.AddAsync(detail);
                 }
@@ -74,7 +116,6 @@ namespace ERPWMS.Infrastructure.Services
             return transfer;
         }
 
-        // ? FIXED — MISSING METHOD
         public async Task<bool> DeleteTransferAsync(int transferId, string deletedBy)
         {
             var transfer = await _stockTransferRepository.GetByIdAsync(transferId);
@@ -102,6 +143,9 @@ namespace ERPWMS.Infrastructure.Services
             var transfer = await _stockTransferRepository.GetByIdAsync(transferId);
             if (transfer == null) return false;
 
+            if (transfer.Status != "Draft")
+                throw new Exception("Only Draft transfers can be submitted.");
+
             transfer.Status = "Submitted";
             transfer.UpdatedBy = userId.ToString();
             transfer.UpdatedDate = DateTime.UtcNow;
@@ -114,6 +158,9 @@ namespace ERPWMS.Infrastructure.Services
         {
             var transfer = await _stockTransferRepository.GetByIdAsync(transferId);
             if (transfer == null) return false;
+
+            if (transfer.Status != "Submitted")
+                throw new Exception("Only Submitted transfers can be approved.");
 
             transfer.Status = "Approved";
             transfer.ApprovedBy = userId.ToString();
@@ -130,6 +177,9 @@ namespace ERPWMS.Infrastructure.Services
             var transfer = await _stockTransferRepository.GetByIdAsync(transferId);
             if (transfer == null) return false;
 
+            if (transfer.Status != "Submitted")
+                throw new Exception("Only Submitted transfers can be rejected.");
+
             transfer.Status = "Rejected";
             transfer.UpdatedBy = userId.ToString();
             transfer.UpdatedDate = DateTime.UtcNow;
@@ -143,6 +193,9 @@ namespace ERPWMS.Infrastructure.Services
             var transfer = await _stockTransferRepository.GetByIdAsync(transferId);
             if (transfer == null) return false;
 
+            if (transfer.Status != "Approved")
+                throw new Exception("Only Approved transfers can be dispatched.");
+
             transfer.Status = "InTransit";
             transfer.UpdatedBy = userId.ToString();
             transfer.UpdatedDate = DateTime.UtcNow;
@@ -155,6 +208,9 @@ namespace ERPWMS.Infrastructure.Services
         {
             var transfer = await _stockTransferRepository.GetByIdAsync(transferId);
             if (transfer == null) return false;
+
+            if (transfer.Status != "InTransit")
+                throw new Exception("Only InTransit transfers can be received.");
 
             transfer.Status = "Completed";
             transfer.ReceivedBy = userId.ToString();
@@ -188,10 +244,20 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer.FromWarehouseId == transfer.ToWarehouseId)
                 throw new Exception("Source and destination warehouse cannot be the same.");
 
+            if (details == null || !details.Any())
+                throw new Exception("Transfer must have at least one detail.");
+
+            foreach (var detail in details)
+            {
+                if (detail.Quantity <= 0)
+                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+            }
+
             await Task.CompletedTask;
         }
 
-        public Task<StockLedger> CreateLedgerEntryForTransferOutAsync(StockTransfer transfer, int userId)
+        public async Task<StockLedger> CreateLedgerEntryForTransferOutAsync(
+            StockTransfer transfer, int userId)
         {
             var ledger = new StockLedger
             {
@@ -200,13 +266,17 @@ namespace ERPWMS.Infrastructure.Services
                 Quantity = -transfer.Quantity,
                 TransactionType = "TransferOut",
                 ReferenceId = transfer.TransferId,
+                ReferenceDocNo = transfer.TransferId.ToString(),
+                ReferenceDocType = "StockTransfer",
                 CreatedBy = userId.ToString(),
                 CreatedDate = DateTime.UtcNow
             };
-            return Task.FromResult(ledger);
+
+            return await _stockLedgerRepository.AddAsync(ledger);
         }
 
-        public Task<StockLedger> CreateLedgerEntryForTransferInAsync(StockTransfer transfer, int userId)
+        public async Task<StockLedger> CreateLedgerEntryForTransferInAsync(
+            StockTransfer transfer, int userId)
         {
             var ledger = new StockLedger
             {
@@ -215,10 +285,13 @@ namespace ERPWMS.Infrastructure.Services
                 Quantity = transfer.Quantity,
                 TransactionType = "TransferIn",
                 ReferenceId = transfer.TransferId,
+                ReferenceDocNo = transfer.TransferId.ToString(),
+                ReferenceDocType = "StockTransfer",
                 CreatedBy = userId.ToString(),
                 CreatedDate = DateTime.UtcNow
             };
-            return Task.FromResult(ledger);
+
+            return await _stockLedgerRepository.AddAsync(ledger);
         }
     }
 }

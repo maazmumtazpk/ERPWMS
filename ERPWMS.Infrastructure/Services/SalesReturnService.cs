@@ -1,8 +1,9 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ERPWMS.Infrastructure.Services
@@ -49,11 +50,22 @@ namespace ERPWMS.Infrastructure.Services
             List<SalesReturnDetail> details,
             string createdBy)
         {
+            if (salesReturn is null)
+                throw new ArgumentNullException(nameof(salesReturn));
+
+            if (details is null || !details.Any())
+                throw new ArgumentException("Sales return must have at least one detail line.", nameof(details));
+
             if (!await _salesReturnRepository.IsReturnNoUniqueAsync(salesReturn.ReturnNo, 0, null))
                 throw new Exception("Sales Return Number already exists.");
 
+            foreach (var detail in details)
+            {
+                ValidateSalesReturnDetail(detail);
+            }
+
             salesReturn.Status = "Draft";
-            salesReturn.CreatedBy = createdBy.ToString();
+            salesReturn.CreatedBy = createdBy;
             salesReturn.CreatedDate = DateTime.UtcNow;
 
             await _salesReturnRepository.AddAsync(salesReturn);
@@ -61,7 +73,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 detail.ReturnId = salesReturn.ReturnId;
-                detail.CreatedBy = createdBy.ToString();
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await _salesReturnDetailRepository.AddAsync(detail);
             }
@@ -69,13 +81,27 @@ namespace ERPWMS.Infrastructure.Services
             return salesReturn;
         }
 
-        // ? FIXED — MISSING METHOD
+        private static void ValidateSalesReturnDetail(SalesReturnDetail detail)
+        {
+            if (detail is null)
+                throw new ArgumentException("Sales return detail cannot be null.");
+
+            if (detail.Quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero.");
+
+            if (detail.UnitPrice < 0)
+                throw new ArgumentException("Unit price cannot be negative.");
+        }
+
         public async Task UpdateSalesReturnAsync(
             SalesReturn salesReturn,
             List<SalesReturnDetail> details,
             string updatedBy)
         {
-            salesReturn.UpdatedBy = updatedBy.ToString();
+            if (salesReturn is null)
+                throw new ArgumentNullException(nameof(salesReturn));
+
+            salesReturn.UpdatedBy = updatedBy;
             salesReturn.UpdatedDate = DateTime.UtcNow;
 
             await _salesReturnRepository.UpdateAsync(salesReturn);
@@ -87,16 +113,18 @@ namespace ERPWMS.Infrastructure.Services
                 await _salesReturnDetailRepository.DeleteAsync(existing.ReturnDetailId);
             }
 
-            foreach (var detail in details)
+            if (details != null)
             {
-                detail.ReturnId = salesReturn.ReturnId;
-                detail.CreatedBy = updatedBy.ToString();
-                detail.CreatedDate = DateTime.UtcNow;
-                await _salesReturnDetailRepository.AddAsync(detail);
+                foreach (var detail in details)
+                {
+                    detail.ReturnId = salesReturn.ReturnId;
+                    detail.CreatedBy = updatedBy;
+                    detail.CreatedDate = DateTime.UtcNow;
+                    await _salesReturnDetailRepository.AddAsync(detail);
+                }
             }
         }
 
-        // ? FIXED — MISSING METHOD
         public async Task<bool> DeleteSalesReturnAsync(
             int returnId,
             int companyId,
@@ -158,16 +186,29 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task ValidateReturnAgainstInvoiceAsync(int invoiceId, List<SalesReturnDetail> details)
         {
+            if (details is null || !details.Any())
+                throw new ArgumentException("Return must have details.", nameof(details));
+
             var sales = await _salesMasterRepository.GetByIdAsync(invoiceId, 0);
             if (sales == null)
                 throw new Exception("Sales Order not found.");
+
+            foreach (var detail in details)
+            {
+                if (detail.Quantity <= 0)
+                    throw new Exception($"Invalid return quantity for item {detail.ProductId}.");
+
+                if (detail.UnitPrice < 0)
+                    throw new Exception($"Invalid return price for item {detail.ProductId}.");
+            }
 
             await Task.CompletedTask;
         }
 
         public async Task UpdateInventoryOnApproveAsync(int returnId)
         {
-            // Inventory ledger logic
+            // TODO: Implement inventory ledger updates
+            // This method should update the stock ledger when a return is approved
             await Task.CompletedTask;
         }
     }

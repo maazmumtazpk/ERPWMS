@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ERPWMS.Database;
 
-namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
+namespace ERPWMS.Infrastructure.Services
 {
     public class InventoryAdjustmentService(
         IStockAdjustmentRepository adjustmentRepository,
@@ -16,13 +16,20 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
         IStockLedgerRepository ledgerRepository,
         AppDbContext context) : IInventoryAdjustmentService
     {
-        // ✅ Primary Constructor - fields ki zaroorat nahi
-
         public async Task<StockAdjustment> CreateAdjustmentAsync(
             StockAdjustment adjustment,
             List<StockAdjustmentDetail> details,
-            string createdBy)   // ✅ FIX: parameter lowercase (body se match)
+            string createdBy)
         {
+            if (adjustment is null)
+                throw new ArgumentNullException(nameof(adjustment));
+
+            if (details is null || !details.Any())
+                throw new ArgumentException("Adjustment must have at least one detail.", nameof(details));
+
+            if (adjustment.Quantity <= 0)
+                throw new Exception("Quantity must be greater than zero.");
+
             if (adjustment.AdjustmentType == "Decrease")
             {
                 await ValidateStockAvailabilityAsync(
@@ -42,19 +49,22 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
                 : adjustment.PreviousQty - adjustment.Quantity;
 
             adjustment.Status = "Draft";
-            adjustment.CreatedBy = createdBy;   // ✅ already string
+            adjustment.CreatedBy = createdBy;
             adjustment.CreatedDate = DateTime.UtcNow;
 
             await adjustmentRepository.AddAsync(adjustment);
 
             foreach (var detail in details)
             {
+                if (detail.Quantity <= 0)
+                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+
                 detail.AdjustmentId = adjustment.AdjustmentId;
                 detail.PreviousQty = (int)currentBalance;
                 detail.NewQty = adjustment.AdjustmentType == "Increase"
                     ? detail.PreviousQty + detail.Quantity
                     : detail.PreviousQty - detail.Quantity;
-                detail.CreatedBy = createdBy;   // ✅ already string
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await adjustmentDetailRepository.AddAsync(detail);
             }
@@ -67,8 +77,25 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
             List<StockAdjustmentDetail> details,
             string updatedBy)
         {
+            if (adjustment is null)
+                throw new ArgumentNullException(nameof(adjustment));
+
             if (adjustment.Status != "Draft")
                 throw new Exception("Only Draft adjustments can be updated.");
+
+            if (adjustment.Quantity <= 0)
+                throw new Exception("Quantity must be greater than zero.");
+
+            // FIXED: Validate stock on update too
+            if (adjustment.AdjustmentType == "Decrease")
+            {
+                await ValidateStockAvailabilityAsync(
+                    adjustment.ProductId,
+                    adjustment.WarehouseId,
+                    adjustment.BinId,
+                    adjustment.Quantity,
+                    adjustment.AdjustmentType);
+            }
 
             var currentBalance = await ledgerRepository.GetCurrentBalanceAsync(
                 adjustment.ProductId, adjustment.WarehouseId, adjustment.BinId);
@@ -78,7 +105,7 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
                 ? adjustment.PreviousQty + adjustment.Quantity
                 : adjustment.PreviousQty - adjustment.Quantity;
 
-            adjustment.UpdatedBy = updatedBy;   // ✅ already string
+            adjustment.UpdatedBy = updatedBy;
             adjustment.UpdatedDate = DateTime.UtcNow;
             await adjustmentRepository.UpdateAsync(adjustment);
 
@@ -92,12 +119,15 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
 
             foreach (var detail in details)
             {
+                if (detail.Quantity <= 0)
+                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+
                 detail.AdjustmentId = adjustment.AdjustmentId;
                 detail.PreviousQty = (int)currentBalance;
                 detail.NewQty = adjustment.AdjustmentType == "Increase"
                     ? detail.PreviousQty + detail.Quantity
                     : detail.PreviousQty - detail.Quantity;
-                detail.CreatedBy = updatedBy;   // ✅ already string
+                detail.CreatedBy = updatedBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await adjustmentDetailRepository.AddAsync(detail);
             }
@@ -119,7 +149,7 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
         public async Task<bool> SubmitAdjustmentAsync(int adjustmentId, int userId)
         {
             var adjustment = await adjustmentRepository.GetByIdAsync(adjustmentId);
-            if (adjustment is null)   // ✅ simplified null check
+            if (adjustment is null)
                 throw new Exception("Adjustment not found.");
 
             if (adjustment.Status != "Draft")
@@ -134,7 +164,6 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
             if (!await CanBeApprovedAsync(adjustmentId))
                 throw new Exception("Adjustment cannot be approved.");
 
-            // ✅ FIX: userId.ToString() (repo string leta hai)
             await adjustmentRepository.ApproveAsync(
                 adjustmentId, userId.ToString(), DateTime.UtcNow);
             return true;
@@ -149,7 +178,6 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
             if (adjustment.Status != "Submitted")
                 throw new Exception("Only Submitted adjustments can be rejected.");
 
-            // ✅ FIX: userId.ToString()
             await adjustmentRepository.RejectAsync(adjustmentId, userId.ToString());
             return true;
         }
@@ -163,9 +191,7 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
             if (adjustment is null)
                 throw new Exception("Adjustment not found.");
 
-            // ✅ FIX: userId.ToString()
             await adjustmentRepository.PostAsync(adjustmentId, userId.ToString());
-
             await CreateLedgerEntryForAdjustmentAsync(adjustment, userId);
 
             return true;
@@ -229,7 +255,7 @@ namespace ERPWMS.Infrastructure.Services   // ✅ FIX: Folder ke saath match
                 Balance = adjustment.NewQty,
                 UnitCost = 0,
                 TransactionDate = DateTime.UtcNow,
-                CreatedBy = userId.ToString(),   // ✅ int -> string
+                CreatedBy = userId.ToString(),
                 CreatedDate = DateTime.UtcNow
             };
 

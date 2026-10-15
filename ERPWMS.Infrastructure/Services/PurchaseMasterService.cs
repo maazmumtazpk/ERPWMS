@@ -1,8 +1,9 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ERPWMS.Infrastructure.Services
@@ -31,11 +32,22 @@ namespace ERPWMS.Infrastructure.Services
             List<PurchaseDetail> details,
             string createdBy)
         {
+            if (purchase is null)
+                throw new ArgumentNullException(nameof(purchase));
+
+            if (details is null || !details.Any())
+                throw new ArgumentException("Purchase order must have at least one detail line.", nameof(details));
+
             if (!await _purchaseMasterRepository.IsPurchaseOrderNoUniqueAsync(purchase.PurchaseOrderNo, 0, null))
                 throw new Exception("Purchase Order Number already exists.");
 
+            foreach (var detail in details)
+            {
+                ValidatePurchaseDetail(detail);
+            }
+
             purchase.Status = "Draft";
-            purchase.CreatedBy = createdBy.ToString();
+            purchase.CreatedBy = createdBy;
             purchase.CreatedDate = DateTime.UtcNow;
 
             await _purchaseMasterRepository.AddAsync(purchase);
@@ -43,7 +55,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 detail.PurchaseId = purchase.PurchaseId;
-                detail.CreatedBy = createdBy.ToString();
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await _purchaseDetailRepository.AddAsync(detail);
             }
@@ -51,13 +63,27 @@ namespace ERPWMS.Infrastructure.Services
             return purchase;
         }
 
-        // ? FIXED — MISSING METHOD
+        private static void ValidatePurchaseDetail(PurchaseDetail detail)
+        {
+            if (detail is null)
+                throw new ArgumentException("Purchase detail cannot be null.");
+
+            if (detail.Quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than zero.");
+
+            if (detail.UnitPrice < 0)
+                throw new ArgumentException("Unit price cannot be negative.");
+        }
+
         public async Task UpdatePurchaseOrderAsync(
             PurchaseMaster purchase,
             List<PurchaseDetail> details,
             string updatedBy)
         {
-            purchase.UpdatedBy = updatedBy.ToString();
+            if (purchase is null)
+                throw new ArgumentNullException(nameof(purchase));
+
+            purchase.UpdatedBy = updatedBy;
             purchase.UpdatedDate = DateTime.UtcNow;
 
             await _purchaseMasterRepository.UpdateAsync(purchase);
@@ -69,16 +95,18 @@ namespace ERPWMS.Infrastructure.Services
                 await _purchaseDetailRepository.DeleteAsync(existing.DetailId);
             }
 
-            foreach (var detail in details)
+            if (details != null)
             {
-                detail.PurchaseId = purchase.PurchaseId;
-                detail.CreatedBy = updatedBy.ToString();
-                detail.CreatedDate = DateTime.UtcNow;
-                await _purchaseDetailRepository.AddAsync(detail);
+                foreach (var detail in details)
+                {
+                    detail.PurchaseId = purchase.PurchaseId;
+                    detail.CreatedBy = updatedBy;
+                    detail.CreatedDate = DateTime.UtcNow;
+                    await _purchaseDetailRepository.AddAsync(detail);
+                }
             }
         }
 
-        // ? FIXED — MISSING METHOD
         public async Task<bool> DeletePurchaseOrderAsync(
             int purchaseId,
             int companyId,
@@ -147,6 +175,9 @@ namespace ERPWMS.Infrastructure.Services
 
         public Task<decimal> CalculateTotalAmountAsync(List<PurchaseDetail> details)
         {
+            if (details is null || !details.Any())
+                return Task.FromResult(0m);
+
             decimal total = 0;
             foreach (var d in details)
             {

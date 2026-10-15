@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -16,86 +17,146 @@ namespace ERPWMS.Infrastructure.Services
     public class PayrollCalculationEngine : IPayrollCalculationEngine
     {
         private readonly AppDbContext _context;
-        public PayrollCalculationEngine(AppDbContext context) { _context = context; }
+
+        public PayrollCalculationEngine(AppDbContext context)
+        {
+            _context = context;
+        }
 
         public async Task<PayrollRun> CalculateAsync(int year, int month, int userId)
         {
-            var settings = await _context.PayrollSettings.OrderByDescending(p => p.SettingId).FirstOrDefaultAsync();
-            int divisor = settings?.SalaryDivisor ?? 30;
-            int workingDays = settings?.WorkingDays ?? 26;
-            decimal otMultiplier = settings?.OTMultiplier ?? 1.5m;
-            int lateHalfDayCount = settings?.LateHalfDayCount ?? 3;
-            int lateFullDayCount = settings?.LateFullDayCount ?? 6;
-            if (divisor <= 0) divisor = 30;
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            var period = await _context.PayrollPeriods.FirstOrDefaultAsync(p => p.Year == year && p.Month == month);
-            if (period == null) {
-                period = new PayrollPeriod {
-                    PeriodCode = $"{year}-{month:D2}", Year = year, Month = month,
-                    StartDate = new DateOnly(year, month, 1),
-                    EndDate = new DateOnly(year, month, DateTime.DaysInMonth(year, month)),
-                    Status = "Open", IsActive = true, IsDeleted = false,
-                    CreatedBy = userId.ToString(), CreatedDate = DateTime.Now
-                };
-                _context.PayrollPeriods.Add(period);
+            try
+            {
+                var settings = await _context.PayrollSettings
+                    .OrderByDescending(p => p.SettingId)
+                    .FirstOrDefaultAsync();
+
+                int divisor = settings?.SalaryDivisor ?? 30;
+                int workingDays = settings?.WorkingDays ?? 26;
+                decimal otMultiplier = settings?.OTMultiplier ?? 1.5m;
+                int lateHalfDayCount = settings?.LateHalfDayCount ?? 3;
+                int lateFullDayCount = settings?.LateFullDayCount ?? 6;
+
+                if (divisor <= 0) divisor = 30;
+                if (workingDays <= 0) workingDays = 26;
+
+                var period = await _context.PayrollPeriods
+                    .FirstOrDefaultAsync(p => p.Year == year && p.Month == month);
+
+                if (period == null)
+                {
+                    period = new PayrollPeriod
+                    {
+                        PeriodCode = $"{year}-{month:D2}",
+                        Year = year,
+                        Month = month,
+                        StartDate = new DateOnly(year, month, 1),
+                        EndDate = new DateOnly(year, month, DateTime.DaysInMonth(year, month)),
+                        Status = "Open",
+                        IsActive = true,
+                        IsDeleted = false,
+                        CreatedBy = userId.ToString(),
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.PayrollPeriods.Add(period);
+                    await _context.SaveChangesAsync();
+                }
+
+                var run = await _context.PayrollRuns
+                    .FirstOrDefaultAsync(r =>
+                        r.Year == year && r.Month == month &&
+                        r.Status != "Locked" && r.IsDeleted != true);
+
+                if (run == null)
+                {
+                    run = new PayrollRun
+                    {
+                        RunNo = $"PR-{year}{month:D2}-{DateTime.Now:HHmmss}",
+                        PeriodId = period.PeriodId,
+                        Year = year,
+                        Month = month,
+                        Status = "Draft",
+                        IsActive = true,
+                        IsDeleted = false,
+                        CreatedBy = userId.ToString(),
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.PayrollRuns.Add(run);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    var oldRegs = await _context.PayrollRegisters
+                        .Where(r => r.RunId == run.RunId)
+                        .ToListAsync();
+                    _context.PayrollRegisters.RemoveRange(oldRegs);
+                    await _context.SaveChangesAsync();
+                }
+
+                var employees = await _context.Employees
+                    .Where(e => e.IsDeleted != true && e.IsActive == true)
+                    .ToListAsync();
+
+                var monthStart = new DateOnly(year, month, 1);
+                var monthEnd = new DateOnly(year, month, DateTime.DaysInMonth(year, month));
+
+                decimal totalGross = 0, totalDeduct = 0, totalNet = 0;
+                int processed = 0;
+
+                foreach (var emp in employees)
+                {
+                    try
+                    {
+                        var reg = await CalculateEmployeeAsync(
+                            emp, year, month, monthStart, monthEnd,
+                            divisor, workingDays, otMultiplier,
+                            lateHalfDayCount, lateFullDayCount);
+
+                        reg.RunId = run.RunId;
+                        _context.PayrollRegisters.Add(reg);
+
+                        totalGross += reg.TotalEarnings;
+                        totalDeduct += reg.TotalDeductions;
+                        totalNet += reg.NetPay;
+                        processed++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Payroll error for employee {emp.EmployeeId}: {ex.Message}");
+                    }
+                }
+
+                run.TotalEmployees = processed;
+                run.TotalGross = totalGross;
+                run.TotalDeductions = totalDeduct;
+                run.TotalNet = totalNet;
+                run.Status = "Calculated";
+                run.CalculatedDate = DateTime.Now;
+                run.UpdatedBy = userId.ToString();
+                run.UpdatedDate = DateTime.Now;
+
+                _context.PayrollApprovalHistories.Add(new PayrollApprovalHistory
+                {
+                    RunId = run.RunId,
+                    Action = "Calculated",
+                    ToStatus = "Calculated",
+                    Remarks = $"Calculated for {processed} employees",
+                    ActionBy = userId.ToString(),
+                    ActionDate = DateTime.Now
+                });
+
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return run;
             }
-
-            var run = await _context.PayrollRuns.FirstOrDefaultAsync(r =>
-                r.Year == year && r.Month == month && r.Status != "Locked" && r.IsDeleted != true);
-            if (run == null) {
-                run = new PayrollRun {
-                    RunNo = $"PR-{year}{month:D2}-{DateTime.Now:HHmmss}",
-                    PeriodId = period.PeriodId, Year = year, Month = month,
-                    Status = "Draft", IsActive = true, IsDeleted = false,
-                    CreatedBy = userId.ToString(), CreatedDate = DateTime.Now
-                };
-                _context.PayrollRuns.Add(run);
-                await _context.SaveChangesAsync();
-            } else {
-                var oldRegs = await _context.PayrollRegisters.Where(r => r.RunId == run.RunId).ToListAsync();
-                _context.PayrollRegisters.RemoveRange(oldRegs);
-                await _context.SaveChangesAsync();
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            var employees = await _context.Employees
-                .Where(e => e.IsDeleted != true && e.IsActive == true)
-                .ToListAsync();
-
-            var monthStart = new DateOnly(year, month, 1);
-            var monthEnd = new DateOnly(year, month, DateTime.DaysInMonth(year, month));
-
-            decimal totalGross = 0, totalDeduct = 0, totalNet = 0;
-            int processed = 0;
-
-            foreach (var emp in employees) {
-                var reg = await CalculateEmployeeAsync(emp, year, month, monthStart, monthEnd,
-                    divisor, workingDays, otMultiplier, lateHalfDayCount, lateFullDayCount);
-                reg.RunId = run.RunId;
-                _context.PayrollRegisters.Add(reg);
-                totalGross += reg.TotalEarnings;
-                totalDeduct += reg.TotalDeductions;
-                totalNet += reg.NetPay;
-                processed++;
-            }
-
-            run.TotalEmployees = processed;
-            run.TotalGross = totalGross;
-            run.TotalDeductions = totalDeduct;
-            run.TotalNet = totalNet;
-            run.Status = "Calculated";
-            run.CalculatedDate = DateTime.Now;
-            run.UpdatedBy = userId.ToString();
-            run.UpdatedDate = DateTime.Now;
-
-            _context.PayrollApprovalHistories.Add(new PayrollApprovalHistory {
-                RunId = run.RunId, Action = "Calculated", ToStatus = "Calculated",
-                Remarks = $"Calculated for {processed} employees",
-                ActionBy = userId.ToString(), ActionDate = DateTime.Now
-            });
-
-            await _context.SaveChangesAsync();
-            return run;
         }
 
         private async Task<PayrollRegister> CalculateEmployeeAsync(
@@ -104,19 +165,22 @@ namespace ERPWMS.Infrastructure.Services
             int divisor, int workingDays,
             decimal otMultiplier, int lateHalfDayCount, int lateFullDayCount)
         {
-            var reg = new PayrollRegister {
+            var reg = new PayrollRegister
+            {
                 EmployeeId = emp.EmployeeId,
                 WorkingDays = workingDays,
                 CreatedDate = DateTime.Now
             };
 
-            // ===== 1. BASIC SALARY =====
+            // 1. BASIC SALARY
             var salary = await _context.EmployeeSalaries1
-                .Where(s => s.EmployeeId == emp.EmployeeId && s.IsDeleted != true && s.IsActive == true)
+                .Where(s => s.EmployeeId == emp.EmployeeId &&
+                            s.IsDeleted != true && s.IsActive == true)
                 .OrderByDescending(s => s.EffectiveDate)
                 .FirstOrDefaultAsync();
 
-            if (salary != null) {
+            if (salary != null)
+            {
                 reg.BasicSalary = salary.BasicSalary;
                 reg.HouseRent = salary.HouseRent ?? 0;
                 reg.UtilityAllowance = salary.UtilityAllowance ?? 0;
@@ -124,7 +188,9 @@ namespace ERPWMS.Infrastructure.Services
                 reg.OtherAllowances = salary.OtherAllowances ?? 0;
                 reg.IncomeTax = salary.IncomeTax ?? 0;
                 reg.ProfessionalTax = salary.ProfessionalTax ?? 0;
-            } else {
+            }
+            else
+            {
                 reg.BasicSalary = emp.BaseSalary;
             }
 
@@ -134,7 +200,7 @@ namespace ERPWMS.Infrastructure.Services
             decimal dailyRate = divisor > 0 ? reg.BasicSalary / divisor : 0;
             decimal hourlyRate = dailyRate / 8;
 
-            // ===== 2. HOLIDAYS =====
+            // 2. HOLIDAYS
             var holidays = await _context.Holidays
                 .Where(h => h.HolidayDate >= monthStart && h.HolidayDate <= monthEnd
                     && h.IsDeleted != true && h.IsActive == true
@@ -143,29 +209,29 @@ namespace ERPWMS.Infrastructure.Services
                 .ToListAsync();
             var holidaySet = holidays.ToHashSet();
 
-            // ===== 3. WEEKLY OFF =====
+            // 3. WEEKLY OFF
             var weeklyOff = await _context.WeeklyOffs
-                .Where(w => w.EmployeeId == emp.EmployeeId && w.IsActive == true && w.IsDeleted != true
-                    && w.EffectiveFrom <= monthEnd
-                    && (w.EffectiveTo == null || w.EffectiveTo >= monthStart))
+                .Where(w => w.EmployeeId == emp.EmployeeId &&
+                            w.IsActive == true && w.IsDeleted != true &&
+                            w.EffectiveFrom <= monthEnd &&
+                            (w.EffectiveTo == null || w.EffectiveTo >= monthStart))
                 .OrderByDescending(w => w.EffectiveFrom)
                 .FirstOrDefaultAsync();
             string weeklyOffDay = weeklyOff?.DayOfWeek ?? "None";
 
-            // ===== 4. ATTENDANCE (DEDUPLICATED!) =====
+            // 4. ATTENDANCE
             var att = await _context.EmployeeAttendances
                 .Where(a => a.EmployeeId == emp.EmployeeId
                     && a.AttendanceDate >= monthStart && a.AttendanceDate <= monthEnd)
                 .ToListAsync();
 
-            // Deduplicate by date — keep latest record
             var attDict = att
                 .GroupBy(a => a.AttendanceDate)
                 .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.AttendanceId).First());
 
             var attendedDates = attDict.Keys.ToHashSet();
 
-            // ===== 5. APPROVED LEAVES =====
+            // 5. APPROVED LEAVES
             var leaves = await _context.LeaveRequests
                 .Include(l => l.LeaveType)
                 .Where(l => l.EmployeeId == emp.EmployeeId
@@ -175,54 +241,54 @@ namespace ERPWMS.Infrastructure.Services
 
             var paidLeaveDates = new HashSet<DateOnly>();
             var unpaidLeaveDates = new HashSet<DateOnly>();
-            foreach (var lv in leaves) {
+
+            foreach (var lv in leaves)
+            {
                 var start = lv.FromDate < monthStart ? monthStart : lv.FromDate;
                 var end = lv.ToDate > monthEnd ? monthEnd : lv.ToDate;
-                for (var d = start; d <= end; d = d.AddDays(1)) {
+                for (var d = start; d <= end; d = d.AddDays(1))
+                {
                     if (lv.LeaveType != null && lv.LeaveType.IsPaid)
                         paidLeaveDates.Add(d);
                     else
                         unpaidLeaveDates.Add(d);
                 }
             }
+
             reg.UnpaidLeaveDeduction = Math.Round(unpaidLeaveDates.Count * dailyRate, 2);
             reg.LeaveDays = paidLeaveDates.Count + unpaidLeaveDates.Count;
 
-            // ===== 6. AUTO ABSENT DETECTION (unique dates only) =====
+            // 6. AUTO ABSENT DETECTION
             var absentDates = new HashSet<DateOnly>();
             var today = DateOnly.FromDateTime(DateTime.Today);
             var cutoffDate = monthEnd < today ? monthEnd : today;
 
-            for (var d = monthStart; d <= cutoffDate; d = d.AddDays(1)) {
-                // Skip if before hire date
+            for (var d = monthStart; d <= cutoffDate; d = d.AddDays(1))
+            {
                 if (d < emp.HireDate) continue;
-                // Skip if holiday
                 if (holidaySet.Contains(d)) continue;
-                // Skip if weekly off
-                if (weeklyOffDay != "None"
-                    && string.Equals(d.DayOfWeek.ToString(), weeklyOffDay, StringComparison.OrdinalIgnoreCase))
+                if (weeklyOffDay != "None" &&
+                    string.Equals(d.DayOfWeek.ToString(), weeklyOffDay, StringComparison.OrdinalIgnoreCase))
                     continue;
-                // Skip if approved leave
                 if (paidLeaveDates.Contains(d) || unpaidLeaveDates.Contains(d)) continue;
-                // Skip if attended
                 if (attendedDates.Contains(d)) continue;
 
                 absentDates.Add(d);
             }
 
-            // ===== 7. MANUAL ABSENCE (merge with auto, dedupe) =====
+            // 7. MANUAL ABSENCE
             var manualAbsences = await _context.AbsenceRecords
                 .Where(a => a.EmployeeId == emp.EmployeeId
                     && a.AbsenceDate >= monthStart && a.AbsenceDate <= monthEnd
                     && a.IsDeleted != true)
                 .ToListAsync();
 
-            // Merge manual into set (skip holidays/weekly off/attended)
-            foreach (var ma in manualAbsences) {
+            foreach (var ma in manualAbsences)
+            {
                 var d = ma.AbsenceDate;
                 if (holidaySet.Contains(d)) continue;
-                if (weeklyOffDay != "None"
-                    && string.Equals(d.DayOfWeek.ToString(), weeklyOffDay, StringComparison.OrdinalIgnoreCase))
+                if (weeklyOffDay != "None" &&
+                    string.Equals(d.DayOfWeek.ToString(), weeklyOffDay, StringComparison.OrdinalIgnoreCase))
                     continue;
                 if (attendedDates.Contains(d)) continue;
                 if (paidLeaveDates.Contains(d) || unpaidLeaveDates.Contains(d)) continue;
@@ -232,42 +298,45 @@ namespace ERPWMS.Infrastructure.Services
             reg.AbsentDays = absentDates.Count;
             reg.AbsenceDeduction = Math.Round(reg.AbsentDays * dailyRate, 2);
 
-            // ===== 8. PRESENT / LATE =====
+            // 8. PRESENT / LATE
             reg.PresentDays = attDict.Values.Count(a => (a.LateMinutes ?? 0) < 120 && a.Status != "Absent");
             reg.LateDays = attDict.Values.Count(a => (a.LateMinutes ?? 0) > 0);
 
-            // Late deduction
             decimal lateDeduct = 0;
-            if (reg.LateDays > 0 && lateHalfDayCount > 0 && lateFullDayCount > 0) {
+            if (reg.LateDays > 0 && lateHalfDayCount > 0 && lateFullDayCount > 0)
+            {
                 int fullDays = reg.LateDays / lateFullDayCount;
                 int halfDays = (reg.LateDays % lateFullDayCount) / lateHalfDayCount;
                 lateDeduct = (fullDays * dailyRate) + (halfDays * dailyRate * 0.5m);
             }
             reg.LateDeduction = Math.Round(lateDeduct, 2);
 
-            // ===== 9. OVERTIME — from BOTH sources =====
+            // 9. OVERTIME
             decimal totalOTHours = 0;
             decimal totalOTAmount = 0;
 
-            // From Attendance OT hours
-            foreach (var a in attDict.Values) {
-                if ((a.OTHours ?? 0) > 0) {
-                    decimal mult = (a.IsHolidayWork == true || a.IsWeeklyOffWork == true) ? otMultiplier * 2 : otMultiplier;
+            foreach (var a in attDict.Values)
+            {
+                if ((a.OTHours ?? 0) > 0)
+                {
+                    decimal mult = (a.IsHolidayWork == true || a.IsWeeklyOffWork == true)
+                        ? otMultiplier * 2 : otMultiplier;
                     totalOTHours += a.OTHours ?? 0;
                     totalOTAmount += Math.Round(hourlyRate * mult * (a.OTHours ?? 0), 2);
                 }
             }
 
-            // From Overtimes table (approved)
             var ots = await _context.Overtimes
                 .Where(o => o.EmployeeId == emp.EmployeeId
                     && o.OvertimeDate >= monthStart && o.OvertimeDate <= monthEnd
-                    && o.Status == "Approved" && o.IsDeleted != true && o.IsProcessedInPayroll == false)
+                    && o.Status == "Approved" && o.IsDeleted != true
+                    && o.IsProcessedInPayroll == false)
                 .ToListAsync();
 
-            // Only add if not already counted from attendance
-            foreach (var ot in ots) {
-                if (!attendedDates.Contains(ot.OvertimeDate)) {
+            foreach (var ot in ots)
+            {
+                if (!attendedDates.Contains(ot.OvertimeDate))
+                {
                     decimal mult = ot.IsHolidayWork || ot.IsWeeklyOffWork ? otMultiplier * 2 : otMultiplier;
                     totalOTHours += ot.OTHours;
                     totalOTAmount += Math.Round(hourlyRate * mult * ot.OTHours, 2);
@@ -277,44 +346,51 @@ namespace ERPWMS.Infrastructure.Services
             reg.OvertimeHours = totalOTHours;
             reg.OvertimeAmount = totalOTAmount;
 
-            // ===== 10. BONUS =====
+            // 10. BONUS
             var bonuses = await _context.Bonuses
                 .Where(b => b.EmployeeId == emp.EmployeeId
                     && b.BonusDate >= monthStart && b.BonusDate <= monthEnd
-                    && b.Status == "Approved" && b.IsProcessedInPayroll == false && b.IsDeleted != true)
+                    && b.Status == "Approved" && b.IsProcessedInPayroll == false
+                    && b.IsDeleted != true)
                 .ToListAsync();
             reg.BonusAmount = bonuses.Sum(b => b.Amount);
 
-            // ===== 11. COMMISSION =====
+            // 11. COMMISSION
             var commissions = await _context.Commissions
                 .Where(c => c.EmployeeId == emp.EmployeeId
                     && c.CommissionDate >= monthStart && c.CommissionDate <= monthEnd
-                    && c.Status == "Approved" && c.IsProcessedInPayroll == false && c.IsDeleted != true)
+                    && c.Status == "Approved" && c.IsProcessedInPayroll == false
+                    && c.IsDeleted != true)
                 .ToListAsync();
             reg.CommissionAmount = commissions.Sum(c => c.CommissionAmount);
 
             reg.TotalEarnings = reg.GrossSalary + reg.OvertimeAmount + reg.BonusAmount + reg.CommissionAmount;
 
-            // ===== 12. LOAN RECOVERY (capped at remaining) =====
+            // 12. LOAN RECOVERY (capped)
             var loans = await _context.Loans
                 .Where(l => l.EmployeeId == emp.EmployeeId
                     && l.Status == "Active" && l.IsDeleted != true)
                 .ToListAsync();
+
             decimal loanRecovery = 0;
-            foreach (var l in loans) {
+            foreach (var l in loans)
+            {
                 decimal rec = Math.Min(l.MonthlyRecovery, l.RemainingAmount);
                 loanRecovery += rec;
             }
             reg.LoanRecovery = loanRecovery;
 
-            // ===== 13. ADVANCE RECOVERY =====
+            // 13. ADVANCE RECOVERY (simplified - no MonthlyRecovery)
             var advances = await _context.Advances
                 .Where(a => a.EmployeeId == emp.EmployeeId
-                    && a.Status == "Approved" && a.IsRecovered == false && a.IsDeleted != true)
+                    && a.Status == "Approved" && a.IsRecovered == false
+                    && a.IsDeleted != true)
                 .ToListAsync();
-            reg.AdvanceRecovery = advances.Sum(a => a.Amount);
 
-            // ===== 14. TOTALS =====
+            decimal advanceRecovery = advances.Sum(a => a.Amount);
+            reg.AdvanceRecovery = advanceRecovery;
+
+            // 14. TOTALS
             reg.OtherDeductions = 0;
             reg.TotalDeductions = reg.IncomeTax + reg.ProfessionalTax
                                 + reg.LateDeduction + reg.AbsenceDeduction
