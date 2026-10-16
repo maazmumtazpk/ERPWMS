@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +20,9 @@ namespace ERPWMS.Web.Controllers
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         [HttpGet] public IActionResult Index() => View();
@@ -172,6 +172,7 @@ namespace ERPWMS.Web.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Create")]
         public async Task<IActionResult> Register()
         {
             try
@@ -237,10 +238,11 @@ namespace ERPWMS.Web.Controllers
 
                 return Json(new { success = true, message = "Picking list created with " + details.Count + " items!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Edit")]
         public async Task<IActionResult> Edit(int pickingId, string pickingNo, int salesId, int warehouseId, string status)
         {
             try
@@ -256,10 +258,11 @@ namespace ERPWMS.Web.Controllers
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Picking updated!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -272,23 +275,27 @@ namespace ERPWMS.Web.Controllers
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Deleted." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Approve")]
         public async Task<IActionResult> Toggle(int id)
         {
             try
             {
                 var p = await _context.PickingLists.FindAsync(id);
                 if (p == null) return Json(new { success = false });
+                var currentUid = Uid().ToString();
+                if (p.CreatedBy == currentUid)
+                    return Json(new { success = false, message = "You cannot approve your own picking list." });
                 p.Status = p.Status == "Created" ? "Verified" : p.Status == "Verified" ? "Completed" : "Created";
                 p.UpdatedBy = Uid().ToString();
                 p.UpdatedDate = DateTime.Now;
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Status: " + p.Status });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // PROFILE
@@ -324,6 +331,7 @@ namespace ERPWMS.Web.Controllers
         }
     }
 }
+
 
 
 

@@ -1,4 +1,4 @@
-using ERPWMS.Application.Common;
+﻿using ERPWMS.Application.Common;
 using ERPWMS.Application.DTOs.Sales;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
@@ -30,17 +30,17 @@ namespace ERPWMS.Web.Controllers.Sales
             _context = context;
         }
 
-        // ✅ FIX: CompanyId int? hai — direct use karo
+        // âœ… FIX: CompanyId int? hai â€” direct use karo
         private int GetCurrentCompanyId()
         {
             return _currentUserService.CompanyId ?? 0;
         }
 
-        // ✅ FIX: UserId string? hai — TryParse use karo
+        // âœ… FIX: UserId string? hai â€” TryParse use karo
         private int GetCurrentUserId()
         {
-            if (int.TryParse(_currentUserService.UserId, out var id)) return id;
-            return 0;
+            if (int.TryParse(_currentUserService.UserId, out var id) && id > 0) return id;
+            throw new UnauthorizedAccessException("User identity missing.");
         }
 
         // ============================================================

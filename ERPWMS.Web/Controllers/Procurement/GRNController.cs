@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,20 +21,16 @@ namespace ERPWMS.Web.Controllers.Procurement
             _context = c;
         }
 
-        private int UserId
+                private int UserId
         {
             get
             {
                 var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (int.TryParse(cl, out int id) && id > 0) return id;
-                var u = _context.Users.FirstOrDefault();
-                return u != null ? u.Id : 1;
+                if (!int.TryParse(cl, out int id) || id <= 0)
+                    throw new UnauthorizedAccessException("User identity missing.");
+                return id;
             }
         }
-
-        // ---------------------------------------------------
-        // INDEX
-        // ---------------------------------------------------
         [HttpGet]
         public IActionResult Index() => View();
 
@@ -91,7 +87,7 @@ namespace ERPWMS.Web.Controllers.Procurement
                                       receiptDate = g.ReceiptDate,
                                       totalReceived = g.TotalReceivedQty,
                                       totalAccepted = g.TotalAcceptedQty,
-                                      totalRejected = g.TotalRejectedQty ?? 0,   // ✅ int?
+                                      totalRejected = g.TotalRejectedQty ?? 0,   // âœ… int?
                                       status = g.Status ?? "Pending"
                                   }).ToListAsync();
 
@@ -253,6 +249,7 @@ namespace ERPWMS.Web.Controllers.Procurement
         // ---------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Create")]
         public async Task<IActionResult> Register()
         {
             try
@@ -335,7 +332,7 @@ namespace ERPWMS.Web.Controllers.Procurement
                     ReceiptDate = receiptDate,
                     TotalReceivedQty = totalRec,
                     TotalAcceptedQty = totalAcc,
-                    TotalRejectedQty = totalRej,              // ✅ int?
+                    TotalRejectedQty = totalRej,              // âœ… int?
                     Status = "Pending",
                     IsDeleted = false,
                     CreatedBy = UserId.ToString(),
@@ -382,7 +379,7 @@ namespace ERPWMS.Web.Controllers.Procurement
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -391,6 +388,7 @@ namespace ERPWMS.Web.Controllers.Procurement
         // ---------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Edit")]
         public async Task<IActionResult> Edit()
         {
             try
@@ -408,7 +406,7 @@ namespace ERPWMS.Web.Controllers.Procurement
                 if (DateTime.TryParse(f["ReceiptDate"], out var rd)) grn.ReceiptDate = rd;
                 if (int.TryParse(f["TotalReceivedQty"], out int tr)) grn.TotalReceivedQty = tr;
                 if (int.TryParse(f["TotalAcceptedQty"], out int ta)) grn.TotalAcceptedQty = ta;
-                if (int.TryParse(f["TotalRejectedQty"], out int tj)) grn.TotalRejectedQty = tj;   // ✅ int?
+                if (int.TryParse(f["TotalRejectedQty"], out int tj)) grn.TotalRejectedQty = tj;   // âœ… int?
 
                 var newStatus = f["Status"].ToString();
                 if (!string.IsNullOrEmpty(newStatus)) grn.Status = newStatus;
@@ -422,7 +420,7 @@ namespace ERPWMS.Web.Controllers.Procurement
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -431,6 +429,7 @@ namespace ERPWMS.Web.Controllers.Procurement
         // ---------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Approve")]
         public async Task<IActionResult> Toggle(int id)
         {
             try
@@ -440,6 +439,10 @@ namespace ERPWMS.Web.Controllers.Procurement
                     return Json(new { success = false, message = "Grn not found." });
 
                 string oldStatus = g.Status ?? "Pending";
+
+                var currentUid = UserId.ToString();
+                if (g.CreatedBy == currentUid)
+                    return Json(new { success = false, message = "You cannot approve your own GRN." });
 
                 if (oldStatus == "Pending")
                     g.Status = "Completed";
@@ -459,7 +462,7 @@ namespace ERPWMS.Web.Controllers.Procurement
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -468,6 +471,7 @@ namespace ERPWMS.Web.Controllers.Procurement
         // ---------------------------------------------------
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Purchase.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -497,7 +501,7 @@ namespace ERPWMS.Web.Controllers.Procurement
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -537,3 +541,4 @@ namespace ERPWMS.Web.Controllers.Procurement
         }
     }
 }
+

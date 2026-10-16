@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.Sales;
+﻿using ERPWMS.Application.DTOs.Sales;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -32,14 +32,14 @@ namespace ERPWMS.Web.Controllers.Sales
             _context = context;
         }
 
-        // ✅ FIX: UserId string? hai — TryParse sahi hai
+        // âœ… FIX: UserId string? hai â€” TryParse sahi hai
         private int GetUserId()
         {
-            if (int.TryParse(_currentUserService.UserId, out var id)) return id;
-            return 0;
+            if (int.TryParse(_currentUserService.UserId, out var id) && id > 0) return id;
+            throw new UnauthorizedAccessException("User identity missing.");
         }
 
-        // ✅ FIX: CompanyId int? hai — direct use karo
+        // âœ… FIX: CompanyId int? hai â€” direct use karo
         private int GetCompanyId()
         {
             return _currentUserService.CompanyId ?? 0;
@@ -121,6 +121,7 @@ namespace ERPWMS.Web.Controllers.Sales
         // ============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Create")]
         public async Task<IActionResult> Create(CreateSalesReturnRequest request)
         {
             try
@@ -296,7 +297,7 @@ namespace ERPWMS.Web.Controllers.Sales
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -305,6 +306,7 @@ namespace ERPWMS.Web.Controllers.Sales
         // ============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Edit")]
         public async Task<IActionResult> Submit(int id)
         {
             try
@@ -324,6 +326,7 @@ namespace ERPWMS.Web.Controllers.Sales
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Approve")]
         [PreventSelfApproval(TransactionType = "SalesReturn")]
         public async Task<IActionResult> Approve(int id)
         {
@@ -346,6 +349,7 @@ namespace ERPWMS.Web.Controllers.Sales
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Approve")]
         public async Task<IActionResult> Reject(int id)
         {
             try
@@ -365,6 +369,7 @@ namespace ERPWMS.Web.Controllers.Sales
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
             try

@@ -17,14 +17,14 @@ namespace ERPWMS.Web.Controllers.Sales
         private readonly AppDbContext _context;
         public DispatchController(AppDbContext c) { _context = c; }
 
-        private int UserId
+                private int UserId
         {
             get
             {
                 var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (int.TryParse(cl, out int id) && id > 0) return id;
-                var u = _context.Users.FirstOrDefault();
-                return u != null ? u.Id : 1;
+                if (!int.TryParse(cl, out int id) || id <= 0)
+                    throw new UnauthorizedAccessException("User identity missing.");
+                return id;
             }
         }
 
@@ -251,6 +251,7 @@ namespace ERPWMS.Web.Controllers.Sales
         // --- REGISTER ---
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Create")]
         public async Task<IActionResult> Register()
         {
             try
@@ -370,15 +371,15 @@ namespace ERPWMS.Web.Controllers.Sales
                     await _context.SaveChangesAsync();
                 }
                 catch { }
-
                 return Json(new { success = true, message = "Dispatch created: " + dsp.DispatchNo, id = dsp.DispatchId });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // --- EDIT ---
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Edit")]
         public async Task<IActionResult> Edit()
         {
             try
@@ -439,12 +440,13 @@ namespace ERPWMS.Web.Controllers.Sales
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Dispatch updated." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // --- TOGGLE ---
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Approve")]
         public async Task<IActionResult> Toggle(int id)
         {
             try
@@ -463,12 +465,13 @@ namespace ERPWMS.Web.Controllers.Sales
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Status: " + old + " ? " + dsp.Status });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // --- DELETE ---
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "Sales.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -487,7 +490,7 @@ namespace ERPWMS.Web.Controllers.Sales
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Dispatch deleted." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // --- PROFILE ---
@@ -523,3 +526,5 @@ namespace ERPWMS.Web.Controllers.Sales
         }
     }
 }
+
+
