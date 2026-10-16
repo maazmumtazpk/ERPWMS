@@ -62,7 +62,7 @@ namespace ERPWMS.Infrastructure.Repositories.Inventory
         {
             var entity = await GetByIdAsync(detailId);
             if (entity == null) return false;
-            _context.CycleCountDetails.Remove(entity);
+            entity.IsDeleted = true;
             await _context.SaveChangesAsync();
             return true;
         }
@@ -75,3 +75,4 @@ namespace ERPWMS.Infrastructure.Repositories.Inventory
         }
     }
 }
+

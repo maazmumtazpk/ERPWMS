@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -58,14 +58,14 @@ namespace ERPWMS.Infrastructure.Services
             return await query.AnyAsync();
         }
 
-        // ✅ FIXED: ParentId property remove kar di
+        // âœ… FIXED: ParentId property remove kar di
         public Task<bool> HasChildrenAsync(int accountId, int companyId)
         {
             // TODO: Implement once ParentAccountId column is available
             return Task.FromResult(false);
         }
 
-        // ✅ FIXED: ParentId property remove kar di
+        // âœ… FIXED: ParentId property remove kar di
         public Task<bool> IsParentValidAsync(int companyId, int? parentId)
         {
             if (!parentId.HasValue) return Task.FromResult(true);

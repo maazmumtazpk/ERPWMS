@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;   // ? Typo fix: Intfaces ? Interfaces
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -239,6 +239,7 @@ namespace ERPWMS.Infrastructure.Repositories
                 await _context.Grns
                     .AnyAsync(g =>
                         g.PurchaseId == purchaseId &&
+                        g.Warehouse.Branch.CompanyId == companyId &&
                         g.IsDeleted != true);
 
             if (hasGrn)

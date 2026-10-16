@@ -64,9 +64,10 @@ namespace ERPWMS.Infrastructure.Repositories
         {
             var entity = await GetByIdAsync(detailId);
             if (entity == null) return false;
-            _context.StockTransferDetails.Remove(entity);
+            entity.IsDeleted = true;
             await _context.SaveChangesAsync();
             return true;
         }
     }
 }
+

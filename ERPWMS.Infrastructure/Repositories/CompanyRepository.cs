@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Infrastructure.Data;
 using ERPWMS.Database.Models;
 
@@ -521,3 +521,4 @@ namespace ERPWMS.Infrastructure.Repositories
         }
     }
 }
+

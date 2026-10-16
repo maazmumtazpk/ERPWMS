@@ -62,9 +62,10 @@ namespace ERPWMS.Infrastructure.Repositories.Inventory
         {
             var entity = await GetByIdAsync(detailId);
             if (entity == null) return false;
-            _context.StockAdjustmentDetails.Remove(entity);
+            entity.IsDeleted = true;
             await _context.SaveChangesAsync();
             return true;
         }
     }
 }
+

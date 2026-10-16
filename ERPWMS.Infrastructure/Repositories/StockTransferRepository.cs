@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Database.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -143,7 +143,7 @@ namespace ERPWMS.Infrastructure.Repositories.Inventory
             }
         }
 
-        // ✅ FIXED: int dispatchedBy → string dispatchedBy
+        // âœ… FIXED: int dispatchedBy â†’ string dispatchedBy
         public async Task DispatchAsync(int transferId, string dispatchedBy)
         {
             var transfer = await _context.StockTransfers.FindAsync(transferId);

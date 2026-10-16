@@ -117,7 +117,7 @@ namespace ERPWMS.Infrastructure.Repositories
             if (detail == null)
                 return false;
 
-            _context.Grndetails.Remove(detail);
+            detail.IsDeleted = true;
 
             await _context.SaveChangesAsync();
 
@@ -137,3 +137,5 @@ namespace ERPWMS.Infrastructure.Repositories
         }
     }
 }
+
+

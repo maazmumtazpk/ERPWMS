@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -67,7 +67,7 @@ namespace ERPWMS.Infrastructure.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        // ✅ NEW METHOD - Add this
+        // âœ… NEW METHOD - Add this
         public async Task<IEnumerable<Branch>> GetAllActiveBranchesAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet
@@ -232,3 +232,4 @@ namespace ERPWMS.Infrastructure.Repositories
         }
     }
 }
+
