@@ -10,7 +10,8 @@ namespace ERPWMS.Infrastructure.Services
 {
     public class InvoiceService(
         IInvoiceRepository invoiceRepository,
-        IInvoiceDetailRepository invoiceDetailRepository) : IInvoiceService
+        IInvoiceDetailRepository invoiceDetailRepository,
+        ERPWMS.Application.Common.ICurrentUserService currentUserService) : IInvoiceService
     {
         // =========================================================
         // QUERIES
@@ -145,7 +146,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<bool> PostInvoiceAsync(int invoiceId, int userId)
         {
-            var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
+            var invoice = await invoiceRepository.GetByIdAsync(invoiceId, currentUserService.GetCompanyId());
             if (invoice is null) return false;
 
             invoice.Status = "Posted";
@@ -165,7 +166,7 @@ namespace ERPWMS.Infrastructure.Services
             if (amount <= 0)
                 throw new ArgumentException("Payment amount must be greater than zero.", nameof(amount));
 
-            var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
+            var invoice = await invoiceRepository.GetByIdAsync(invoiceId, currentUserService.GetCompanyId());
             if (invoice is null) return false;
 
             decimal currentBalance = (decimal?)invoice.BalanceDue ?? 0m;
@@ -211,7 +212,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<decimal> CalculateBalanceDueAsync(int invoiceId)
         {
-            var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
+            var invoice = await invoiceRepository.GetByIdAsync(invoiceId, currentUserService.GetCompanyId());
             if (invoice is null) return 0m;
 
             return (decimal?)invoice.BalanceDue ?? 0m;
@@ -227,4 +228,5 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+
 

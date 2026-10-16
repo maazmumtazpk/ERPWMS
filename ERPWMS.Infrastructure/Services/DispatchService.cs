@@ -16,6 +16,7 @@ namespace ERPWMS.Infrastructure.Services
         private readonly IInvoiceRepository _invoiceRepository;
         private readonly IInvoiceDetailRepository _invoiceDetailRepository;
         private readonly AppDbContext _context;
+        private readonly ERPWMS.Application.Common.ICurrentUserService _currentUserService;
 
         public DispatchService(
             IDispatchMasterRepository dispatchMasterRepository,
@@ -23,7 +24,8 @@ namespace ERPWMS.Infrastructure.Services
             ISalesDetailRepository salesDetailRepository,
             IInvoiceRepository invoiceRepository,
             IInvoiceDetailRepository invoiceDetailRepository,
-            AppDbContext context)
+            AppDbContext context,
+            ERPWMS.Application.Common.ICurrentUserService currentUserService)
         {
             _dispatchMasterRepository = dispatchMasterRepository;
             _dispatchDetailRepository = dispatchDetailRepository;
@@ -31,6 +33,7 @@ namespace ERPWMS.Infrastructure.Services
             _invoiceRepository = invoiceRepository;
             _invoiceDetailRepository = invoiceDetailRepository;
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<DispatchMaster>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -118,7 +121,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<bool> DispatchOrderAsync(int dispatchId, string dispatchedBy)
         {
-            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, _currentUserService.GetCompanyId());
             if (dispatch == null) return false;
 
             if (dispatch.Status != "Draft")
@@ -148,7 +151,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<bool> UpdateTrackingAsync(int dispatchId, string trackingNo)
         {
-            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, _currentUserService.GetCompanyId());
             if (dispatch == null) return false;
 
             dispatch.TrackingNo = trackingNo;
@@ -159,7 +162,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<bool> ConfirmDeliveryAsync(int dispatchId, DateTime deliveryDate)
         {
-            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, _currentUserService.GetCompanyId());
             if (dispatch == null) return false;
 
             if (dispatch.Status != "Dispatched")
@@ -186,7 +189,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<Invoice> GenerateInvoiceFromDispatchAsync(int dispatchId, string createdBy)
         {
-            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+            var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, _currentUserService.GetCompanyId());
             if (dispatch == null)
                 throw new InvalidOperationException("Dispatch not found.");
 
@@ -254,3 +257,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

@@ -16,17 +16,20 @@ namespace ERPWMS.Infrastructure.Services
         private readonly IPurchaseReturnDetailRepository _purchaseReturnDetailRepository;
         private readonly IPurchaseMasterRepository _purchaseMasterRepository;
         private readonly AppDbContext _context;
+        private readonly ERPWMS.Application.Common.ICurrentUserService _currentUserService;
 
         public PurchaseReturnService(
             IPurchaseReturnRepository purchaseReturnRepository,
             IPurchaseReturnDetailRepository purchaseReturnDetailRepository,
             IPurchaseMasterRepository purchaseMasterRepository,
-            AppDbContext context)
+            AppDbContext context,
+            ERPWMS.Application.Common.ICurrentUserService currentUserService)
         {
             _purchaseReturnRepository = purchaseReturnRepository;
             _purchaseReturnDetailRepository = purchaseReturnDetailRepository;
             _purchaseMasterRepository = purchaseMasterRepository;
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<PurchaseReturn>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -190,7 +193,7 @@ namespace ERPWMS.Infrastructure.Services
             if (details is null || !details.Any())
                 throw new ArgumentException("Return must have details.", nameof(details));
 
-            var purchase = await _purchaseMasterRepository.GetByIdAsync(purchaseId, 0);
+            var purchase = await _purchaseMasterRepository.GetByIdAsync(purchaseId, _currentUserService.GetCompanyId());
             if (purchase == null)
                 throw new InvalidOperationException("Purchase Order not found.");
 
@@ -211,7 +214,7 @@ namespace ERPWMS.Infrastructure.Services
         // =========================================================
         public async Task UpdateInventoryOnApproveAsync(int returnId)
         {
-            var returnHeader = await _purchaseReturnRepository.GetByIdAsync(returnId, 0);
+            var returnHeader = await _purchaseReturnRepository.GetByIdAsync(returnId, _currentUserService.GetCompanyId());
             if (returnHeader == null) return;
 
             var details = await _context.PurchaseReturnDetails
@@ -254,3 +257,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

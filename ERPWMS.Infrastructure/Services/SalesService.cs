@@ -13,15 +13,18 @@ namespace ERPWMS.Infrastructure.Services
         private readonly ISalesMasterRepository _salesMasterRepository;
         private readonly ISalesDetailRepository _salesDetailRepository;
         private readonly IPickingListRepository _pickingListRepository;
+        private readonly ERPWMS.Application.Common.ICurrentUserService _currentUserService;
 
         public SalesService(
             ISalesMasterRepository salesMasterRepository,
             ISalesDetailRepository salesDetailRepository,
-            IPickingListRepository pickingListRepository)
+            IPickingListRepository pickingListRepository,
+            ERPWMS.Application.Common.ICurrentUserService currentUserService)
         {
             _salesMasterRepository = salesMasterRepository;
             _salesDetailRepository = salesDetailRepository;
             _pickingListRepository = pickingListRepository;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<SalesMaster>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -237,7 +240,7 @@ namespace ERPWMS.Infrastructure.Services
 
         public async Task<PickingList> GeneratePickingListAsync(int salesId, int warehouseId, string createdBy)
         {
-            var sales = await _salesMasterRepository.GetByIdAsync(salesId, 0);
+            var sales = await _salesMasterRepository.GetByIdAsync(salesId, _currentUserService.GetCompanyId());
             if (sales == null)
                 throw new InvalidOperationException("Sales Order not found.");
 
@@ -262,4 +265,5 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+
 

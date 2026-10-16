@@ -1,0 +1,55 @@
+﻿
+=== COMPANYID FIX — 2026-10-16 21:15:17 ===
+Backup: C:\Users\AT\Downloads\ERPWMS_New\backup_cid_20261016_211517
+
+PROCESSING: ERPWMS.Infrastructure\Services\DispatchService.cs
+  Class: DispatchService
+  Style: TRADITIONAL CONSTRUCTOR
+  [OK] Field added
+  [OK] Param added
+  [OK] Assignment added
+  Replacements: 4
+
+PROCESSING: ERPWMS.Infrastructure\Services\GRNService.cs
+  Class: GrnService
+  Style: TRADITIONAL CONSTRUCTOR
+  [OK] Field added
+  [OK] Param added
+  [OK] Assignment added
+  Replacements: 1
+
+PROCESSING: ERPWMS.Infrastructure\Services\InvoiceService.cs
+  Class: InvoiceService
+  Style: PRIMARY CONSTRUCTOR
+  Replacements: 3
+
+PROCESSING: ERPWMS.Infrastructure\Services\PurchaseReturnService.cs
+  Class: PurchaseReturnService
+  Style: TRADITIONAL CONSTRUCTOR
+  [OK] Field added
+  [OK] Param added
+  [OK] Assignment added
+  Replacements: 2
+
+PROCESSING: ERPWMS.Infrastructure\Services\SalesReturnService.cs
+  Class: SalesReturnService
+  Style: TRADITIONAL CONSTRUCTOR
+  [OK] Field added
+  [OK] Param added
+  [OK] Assignment added
+  Replacements: 1
+
+PROCESSING: ERPWMS.Infrastructure\Services\SalesService.cs
+  Class: SalesService
+  Style: TRADITIONAL CONSTRUCTOR
+  [OK] Field added
+  [OK] Param added
+  [OK] Assignment added
+  Replacements: 1
+
+--- BUILD ---
+Exit: 0
+Errors: 0
+Warnings (unique): 195
+
+[SUCCESS] BUILD PASSED

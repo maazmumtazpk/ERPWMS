@@ -1,0 +1,622 @@
+﻿########## 1. BASELINE BUILD ##########
+Errors  : 4
+Warnings: 50
+
+--- UNIQUE ERRORS ---
+C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\SystemSettingService.cs(224,27): error CS0234: The type or namespace name 'Security' does not exist in the namespace 'ERPWMS.Infrastructure.Services.System' (are you missing an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\SystemSettingService.cs(229,28): error CS0234: The type or namespace name 'Text' does not exist in the namespace 'ERPWMS.Infrastructure.Services.System' (are you missing an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+
+########## 2. TARGET FRAMEWORKS + PKCS ##########
+
+=== ERPWMS.Application.csproj ===
+<TargetFramework>net10.0</TargetFramework>
+
+=== ERPWMS.Database.csproj ===
+<TargetFramework>net10.0</TargetFramework>
+
+=== ERPWMS.Domain.csproj ===
+<TargetFramework>net10.0</TargetFramework>
+
+=== ERPWMS.Infrastructure.csproj ===
+<TargetFramework>net10.0</TargetFramework>
+
+=== ERPWMS.Web.csproj ===
+<TargetFramework>net10.0</TargetFramework>
+
+########## 3. INTERFACE ##########
+
+=== C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Services\ISystemSettingService.cs ===
+using ERPWMS.Database.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ERPWMS.Domain.Services
+{
+    public interface ISystemSettingService
+    {
+        // Setting management
+        Task<IEnumerable<SystemSetting>> GetAllSettingsAsync();
+        Task<SystemSetting?> GetSettingByIdAsync(int settingId);
+        Task<SystemSetting?> GetSettingByKeyAsync(string settingKey);
+        Task<SystemSetting> CreateSettingAsync(SystemSetting setting);
+        Task UpdateSettingAsync(SystemSetting setting);
+        Task<bool> DeleteSettingAsync(int settingId);
+
+        // Setting value operations
+        Task<string?> GetSettingValueAsync(string settingKey);
+        Task<T?> GetSettingValueAsync<T>(string settingKey, T defaultValue = default!);
+        Task<bool> SettingExistsAsync(string settingKey, int? excludeId = null);
+
+        // Encrypted settings
+        Task<string?> GetEncryptedSettingValueAsync(string settingKey);
+        Task SetEncryptedSettingValueAsync(string settingKey, string value);
+
+        // Audit
+        Task LogSettingChangeAsync(int settingId, string? oldValue, string? newValue, int changedBy);
+    }
+}
+
+########## 4. AUDITLOG MODEL ##########
+
+=== C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\Models\AuditLog.cs ===
+using System;
+using System.Collections.Generic;
+
+namespace ERPWMS.Database.Models;
+
+public partial class AuditLog
+{
+    public int AuditId { get; set; }
+
+    public int UserId { get; set; }
+
+    public int? ModuleId { get; set; }
+
+    public string Action { get; set; } = null!;
+
+    public int RecordId { get; set; }
+
+    public string RecordType { get; set; } = null!;
+
+    public string? OldValue { get; set; }
+
+    public string? NewValue { get; set; }
+
+    public string? IPAddress { get; set; }
+
+    public string? UserAgent { get; set; }
+
+    public DateTime? Timestamp { get; set; }
+
+    public virtual Module? Module { get; set; }
+
+    public virtual User User { get; set; } = null!;
+}
+
+########## 5. SYSTEMSETTING MODEL ##########
+
+=== C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\Models\SystemSetting.cs ===
+using System;
+using System.Collections.Generic;
+
+namespace ERPWMS.Database.Models;
+
+public partial class SystemSetting
+{
+    public int SettingId { get; set; }
+
+    public string SettingKey { get; set; } = null!;
+
+    public string SettingValue { get; set; } = null!;
+
+    public string? DataType { get; set; }
+
+    public bool? IsEncrypted { get; set; }
+
+    public string? Description { get; set; }
+
+    public string? UpdatedBy { get; set; }
+
+    public DateTime? UpdatedDate { get; set; }
+}
+
+=== C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\Controllers\Admin\SystemSetting.cs ===
+using ERPWMS.Application.DTOs.System;
+using ERPWMS.Domain.Services;
+using ERPWMS.Database.Models;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace ERPWMS.Web.Controllers.Admin
+{
+    [Authorize(Policy = "SystemAdmin.View")]
+    public class SystemSettingController : Controller
+    {
+        private readonly ISystemSettingService _settingService;
+        private readonly IUserService _userService;
+
+        public SystemSettingController(ISystemSettingService settingService, IUserService userService)
+        {
+            _settingService = settingService;
+            _userService = userService;
+        }
+
+        // -------------------------------------------------------
+        // INDEX
+        // -------------------------------------------------------
+        public async Task<IActionResult> Index(string? searchTerm)
+        {
+            var settings = await _settingService.GetAllSettingsAsync();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                settings = settings.Where(s =>
+                    s.SettingKey.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (s.Description != null && s.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                );
+            }
+
+            return View(settings);
+        }
+
+        // -------------------------------------------------------
+        // EDIT - GET
+        // -------------------------------------------------------
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var setting = await _settingService.GetSettingByIdAsync(id);
+            if (setting == null) return NotFound();
+
+            var model = new UpdateSystemSettingRequest
+            {
+                SettingId = setting.SettingId,
+                SettingKey = setting.SettingKey,
+                SettingValue = setting.IsEncrypted == true ? "" : setting.SettingValue,
+                DataType = setting.DataType,
+                IsEncrypted = setting.IsEncrypted,
+                Description = setting.Description,
+                UpdatedBy = 0
+            };
+
+            return View(model);
+        }
+
+        // -------------------------------------------------------
+        // EDIT - POST
+        // -------------------------------------------------------
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
+        public async Task<IActionResult> Edit(UpdateSystemSettingRequest request)
+        {
+            if (!ModelState.IsValid) return View(request);
+
+            if (request.UpdatedBy == 0)
+            {
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int userId))
+                    request.UpdatedBy = userId;
+            }
+
+            var oldSetting = await _settingService.GetSettingByIdAsync(request.SettingId);
+            if (oldSetting == null) return NotFound();
+
+            var oldValue = oldSetting.IsEncrypted == true ? "********" : oldSetting.SettingValue;
+
+            oldSetting.SettingKey = request.SettingKey;
+            oldSetting.SettingValue = request.IsEncrypted == true
+                ? Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(request.SettingValue ?? ""))
+                : request.SettingValue;
+            oldSetting.DataType = request.DataType;
+            oldSetting.IsEncrypted = request.IsEncrypted;
+            oldSetting.Description = request.Description;
+            oldSetting.UpdatedBy = request.UpdatedBy.ToString();   // âœ… UpdatedBy: int â†’ string
+            oldSetting.UpdatedDate = DateTime.Now;
+
+            await _settingService.UpdateSettingAsync(oldSetting);
+
+            await _settingService.LogSettingChangeAsync(
+                request.SettingId,
+                oldValue,
+                request.SettingValue,
+                request.UpdatedBy                                  // âœ… int (no .ToString())
+            );
+
+            TempData["Success"] = "Setting updated successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // -------------------------------------------------------
+        // DELETE
+        // -------------------------------------------------------
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var setting = await _settingService.GetSettingByIdAsync(id);
+            if (setting == null)
+            {
+                TempData["Error"] = "Setting not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var criticalKeys = new[] { "SystemName", "DefaultCurrency", "MaintenanceMode" };
+            if (criticalKeys.Contains(setting.SettingKey))
+            {
+                TempData["Error"] = "Cannot delete critical system settings.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            await _settingService.DeleteSettingAsync(id);
+            TempData["Success"] = "Setting deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // -------------------------------------------------------
+        // AJAX: ADD/EDIT PARTIALS
+        // -------------------------------------------------------
+        [HttpGet]
+        public IActionResult AddPartial() => PartialView("_AddForm");
+
+        [HttpGet]
+        public async Task<IActionResult> EditPartial(int id)
+        {
+            var s = await _settingService.GetSettingByIdAsync(id);
+            if (s == null) return NotFound();
+            return PartialView("_EditForm", s);
+        }
+
+        // -------------------------------------------------------
+        // AJAX: STATISTICS
+        // -------------------------------------------------------
+        [HttpGet]
+        public async Task<IActionResult> GetStatistics()
+        {
+            var settings = (await _settingService.GetAllSettingsAsync())?.ToList()
+                ?? new List<SystemSetting>();
+            var now = DateTime.Now;
+
+            return Json(new
+            {
+                total = settings.Count,
+                active = settings.Count(s => s.IsEncrypted != true),
+                inactive = settings.Count(s => s.IsEncrypted == true),
+                addedThisMonth = settings.Count(s =>
+                    s.UpdatedDate.HasValue &&
+                    s.UpdatedDate.Value.Month == now.Month &&
+                    s.UpdatedDate.Value.Year == now.Year)
+            });
+        }
+
+        // -------------------------------------------------------
+        // AJAX: GET ALL
+        // -------------------------------------------------------
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var settings = (await _settingService.GetAllSettingsAsync())?.ToList()
+                ?? new List<SystemSetting>();
+
+            var list = settings.Select(s => new
+            {
+                settingId = s.SettingId,
+                settingKey = s.SettingKey,
+                settingValue = s.IsEncrypted == true ? "********" : s.SettingValue,
+                dataType = s.DataType,
+                isEncrypted = s.IsEncrypted == true,
+                description = s.Description
+            }).ToList();
+
+            return Json(list);
+        }
+
+        // -------------------------------------------------------
+        // AJAX: QUICK EDIT
+        // -------------------------------------------------------
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
+        public async Task<IActionResult> QuickEdit(int settingId, string settingKey, string settingValue,
+            string dataType, string description, bool isEncrypted = false)
+        {
+            try
+            {
+                var s = await _settingService.GetSettingByIdAsync(settingId);
+                if (s == null) return Json(new { success = false, message = "Not found" });
+
+                s.SettingKey = settingKey;
+                s.SettingValue = isEncrypted
+                    ? Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(settingValue ?? ""))
+                    : settingValue;
+                s.DataType = dataType;
+                s.IsEncrypted = isEncrypted;
+                s.Description = description;
+                s.UpdatedDate = DateTime.Now;
+
+                await _settingService.UpdateSettingAsync(s);
+                return Json(new { success = true, message = "Setting updated" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+            }
+        }
+
+        // -------------------------------------------------------
+        // AJAX: QUICK DELETE
+        // -------------------------------------------------------
+        [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
+        public async Task<IActionResult> QuickDelete(int id)
+        {
+            try
+            {
+                await _settingService.DeleteSettingAsync(id);
+                return Json(new { success = true, message = "Setting deleted" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+            }
+        }
+    }
+}
+
+########## 6. PROGRAM.CS DATAPROTECTION ##########
+
+=== C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\Program.cs ===
+builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
+
+########## 7. SYSTEMSETTINGSERVICE CURRENT ##########
+using ERPWMS.Domain.Services;
+using ERPWMS.Database.Models;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using ERPWMS.Database;
+
+namespace ERPWMS.Infrastructure.Services
+{
+    public class SystemSettingService : ISystemSettingService
+    {
+        private const string ProtectorPurpose = "ERPWMS.SystemSettings.v1";
+
+        private readonly AppDbContext _context;
+        private readonly IDataProtector _protector;
+
+        public SystemSettingService(
+            AppDbContext context,
+            IDataProtectionProvider dataProtectionProvider)
+        {
+            _context = context;
+            _protector = dataProtectionProvider.CreateProtector(ProtectorPurpose);
+        }
+
+        // =========================================================
+        // GET ALL
+        // =========================================================
+        public async Task<IEnumerable<SystemSetting>> GetAllSettingsAsync()
+        {
+            return await _context.SystemSettings
+                .OrderBy(s => s.SettingKey)
+                .ToListAsync();
+        }
+
+        // =========================================================
+        // GET BY ID
+        // =========================================================
+        public async Task<SystemSetting?> GetSettingByIdAsync(int settingId)
+        {
+            return await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingId == settingId);
+        }
+
+        // =========================================================
+        // GET BY KEY
+        // =========================================================
+        public async Task<SystemSetting?> GetSettingByKeyAsync(string settingKey)
+        {
+            if (string.IsNullOrWhiteSpace(settingKey)) return null;
+
+            return await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingKey == settingKey);
+        }
+
+        // =========================================================
+        // CREATE
+        // =========================================================
+        public async Task<SystemSetting> CreateSettingAsync(SystemSetting setting)
+        {
+            if (setting == null) throw new ArgumentNullException(nameof(setting));
+
+            // Encrypt value if marked as encrypted
+            if (setting.IsEncrypted == true && !string.IsNullOrEmpty(setting.SettingValue))
+            {
+                setting.SettingValue = _protector.Protect(setting.SettingValue);
+            }
+
+            setting.UpdatedDate = DateTime.UtcNow;
+
+            _context.SystemSettings.Add(setting);
+            await _context.SaveChangesAsync();
+
+            return setting;
+        }
+
+        // =========================================================
+        // UPDATE
+        // =========================================================
+        public async Task UpdateSettingAsync(SystemSetting setting)
+        {
+            if (setting == null) throw new ArgumentNullException(nameof(setting));
+
+            // Encrypt if marked
+            if (setting.IsEncrypted == true && !string.IsNullOrEmpty(setting.SettingValue))
+            {
+                // Only encrypt if not already encrypted
+                if (!IsEncrypted(setting.SettingValue))
+                {
+                    setting.SettingValue = _protector.Protect(setting.SettingValue);
+                }
+            }
+
+            setting.UpdatedDate = DateTime.UtcNow;
+
+            _context.SystemSettings.Update(setting);
+            await _context.SaveChangesAsync();
+        }
+
+        // =========================================================
+        // DELETE
+        // =========================================================
+        public async Task<bool> DeleteSettingAsync(int settingId)
+        {
+            var setting = await GetSettingByIdAsync(settingId);
+            if (setting == null) return false;
+
+            _context.SystemSettings.Remove(setting);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        // =========================================================
+        // GET VALUE
+        // =========================================================
+        public async Task<string?> GetSettingValueAsync(string settingKey)
+        {
+            var setting = await GetSettingByKeyAsync(settingKey);
+            if (setting == null) return null;
+
+            if (setting.IsEncrypted == true)
+            {
+                return SafeDecrypt(setting.SettingValue);
+            }
+
+            return setting.SettingValue;
+        }
+
+        // =========================================================
+        // GET TYPED VALUE
+        // =========================================================
+        public async Task<T?> GetSettingValueAsync<T>(string settingKey, T defaultValue = default!)
+        {
+            var value = await GetSettingValueAsync(settingKey);
+            if (string.IsNullOrEmpty(value)) return defaultValue;
+
+            try
+            {
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        // =========================================================
+        // EXISTS
+        // =========================================================
+        public async Task<bool> SettingExistsAsync(string settingKey, int? excludeId = null)
+        {
+            if (string.IsNullOrWhiteSpace(settingKey)) return false;
+
+            IQueryable<SystemSetting> query = _context.SystemSettings
+                .Where(s => s.SettingKey == settingKey);
+
+            if (excludeId.HasValue)
+                query = query.Where(s => s.SettingId != excludeId);
+
+            return await query.AnyAsync();
+        }
+
+        // =========================================================
+        // ENCRYPTED VALUE
+        // =========================================================
+        public async Task<string?> GetEncryptedSettingValueAsync(string settingKey)
+        {
+            var setting = await GetSettingByKeyAsync(settingKey);
+            if (setting == null || setting.IsEncrypted != true) return null;
+
+            return SafeDecrypt(setting.SettingValue);
+        }
+
+        public async Task SetEncryptedSettingValueAsync(string settingKey, string value)
+        {
+            var setting = await GetSettingByKeyAsync(settingKey);
+            if (setting == null)
+                throw new InvalidOperationException($"Setting '{settingKey}' not found.");
+
+            setting.SettingValue = _protector.Protect(value);
+            setting.IsEncrypted = true;
+            setting.UpdatedDate = DateTime.UtcNow;
+
+            await UpdateSettingAsync(setting);
+        }
+
+        // =========================================================
+        // AUDIT LOG
+        // =========================================================
+        public async Task LogSettingChangeAsync(int settingId, string? oldValue, string? newValue, int changedBy)
+        {
+            var auditLog = new AuditLog
+            {
+                UserId = changedBy,
+                ModuleId = null,
+                Action = "SETTINGS_UPDATE",
+                RecordId = settingId,
+                RecordType = "SystemSetting",
+                OldValue = oldValue,
+                NewValue = newValue,
+                IPAddress = null,
+                UserAgent = null,
+                Timestamp = DateTime.UtcNow
+            };
+
+            _context.AuditLogs.Add(auditLog);
+            await _context.SaveChangesAsync();
+        }
+
+        // =========================================================
+        // HELPERS
+        // =========================================================
+        private string? SafeDecrypt(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+
+            try
+            {
+                return _protector.Unprotect(value);
+            }
+            catch (System.Security.Cryptography.CryptographicException)
+            {
+                // Legacy value (base64) ya plain text
+                try
+                {
+                    return System.Text.Encoding.UTF8.GetString(
+                        Convert.FromBase64String(value));
+                }
+                catch
+                {
+                    return value; // Plain text fallback
+                }
+            }
+        }
+
+        private static bool IsEncrypted(string value)
+        {
+            // DataProtection values start with "CfDJ8" (base64 encoded magic)
+            return value.StartsWith("CfDJ8", StringComparison.Ordinal);
+        }
+    }
+}

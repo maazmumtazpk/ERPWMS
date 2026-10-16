@@ -16,17 +16,20 @@ namespace ERPWMS.Infrastructure.Services
         private readonly ISalesReturnDetailRepository _salesReturnDetailRepository;
         private readonly ISalesMasterRepository _salesMasterRepository;
         private readonly AppDbContext _context;
+        private readonly ERPWMS.Application.Common.ICurrentUserService _currentUserService;
 
         public SalesReturnService(
             ISalesReturnRepository salesReturnRepository,
             ISalesReturnDetailRepository salesReturnDetailRepository,
             ISalesMasterRepository salesMasterRepository,
-            AppDbContext context)
+            AppDbContext context,
+            ERPWMS.Application.Common.ICurrentUserService currentUserService)
         {
             _salesReturnRepository = salesReturnRepository;
             _salesReturnDetailRepository = salesReturnDetailRepository;
             _salesMasterRepository = salesMasterRepository;
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<SalesReturn>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -207,7 +210,7 @@ namespace ERPWMS.Infrastructure.Services
         // =========================================================
         public async Task UpdateInventoryOnApproveAsync(int returnId)
         {
-            var returnHeader = await _salesReturnRepository.GetByIdAsync(returnId, 0);
+            var returnHeader = await _salesReturnRepository.GetByIdAsync(returnId, _currentUserService.GetCompanyId());
             if (returnHeader == null) return;
 
             var details = await _context.SalesReturnDetails
@@ -250,3 +253,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

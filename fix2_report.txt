@@ -1,0 +1,503 @@
+﻿
+=== FIX 2 REPORT — 2026-10-16 20:52:24 ===
+
+Backup: C:\Users\AT\Downloads\ERPWMS_New\backup_fix2_20261016_205224
+
+--- Program.cs TOP 20 lines (BEFORE) ---
+  using AutoMapper;
+  using ERPWMS.Application.Common;
+  using ERPWMS.Application.Interfaces;
+  using Microsoft.AspNetCore.Authentication;
+  using ERPWMS.Database;
+  using ERPWMS.Database.Models;
+  using ERPWMS.Domain.Interfaces;
+  using ERPWMS.Domain.Services;
+  using ERPWMS.Domain.Services.Workflow;
+  using ERPWMS.Infrastructure;
+  using ERPWMS.Infrastructure.Repositories;
+  using ERPWMS.Infrastructure.Repositories.Inventory;
+  using ERPWMS.Infrastructure.Repositories.Sales;
+  using ERPWMS.Infrastructure.Repositories.Workflow;
+  using ERPWMS.Infrastructure.Services;
+  using ERPWMS.Infrastructure.Services.Audit;
+  using ERPWMS.Infrastructure.Services.Identity;
+  using ERPWMS.Infrastructure.Services.Notification;
+  using ERPWMS.Infrastructure.Services.Reports;
+  using ERPWMS.Infrastructure.Services.Workflow;
+
+[OK] Added: using Microsoft.AspNetCore.DataProtection;
+
+--- Program.cs DataProtection block (AFTER) ---
+  L25: using Microsoft.AspNetCore.DataProtection;
+  L28: // === ERPWMS DataProtection (auto-added) ===
+  L29: builder.Services.AddDataProtection()
+  L30: .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Keys\ERPWMS"))
+  L31: .SetApplicationName("ERPWMS");
+
+--- BUILD ---
+Exit Code : 0
+Errors    : 0
+Warnings  : 428
+
+[SUCCESS] BUILD PASSED
+
+============================================================
+ AUDIT: Pkcs 9.0.4 SOURCE SEARCH
+============================================================
+
+--- [1] Central Package Management files ---
+  (none found)
+
+--- [2] Grep every .csproj for Pkcs ---
+  (not found in any csproj)
+
+--- [3] Transitive Pkcs source (dotnet list package --include-transitive) ---
+PROJECT: ERPWMS.Database\ERPWMS.Database.csproj
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx
+     Top-level Package                              Requested   Resolved
+     > Microsoft.EntityFrameworkCore.Design         10.0.10     10.0.10
+     > Microsoft.EntityFrameworkCore.SqlServer      10.0.10     10.0.10
+     > Microsoft.EntityFrameworkCore.Tools          10.0.10     10.0.10
+     Transitive Package                                           Resolved
+     > Azure.Core                                                 1.47.1
+     > Azure.Identity                                             1.14.2
+     > Humanizer.Core                                             2.14.1
+     > Microsoft.Bcl.AsyncInterfaces                              8.0.0
+     > Microsoft.Bcl.Cryptography                                 9.0.4
+     > Microsoft.Build.Framework                                  18.0.2
+     > Microsoft.CodeAnalysis.Analyzers                           3.11.0
+     > Microsoft.CodeAnalysis.Common                              5.0.0
+     > Microsoft.CodeAnalysis.CSharp                              5.0.0
+     > Microsoft.CodeAnalysis.CSharp.Workspaces                   5.0.0
+     > Microsoft.CodeAnalysis.Workspaces.Common                   5.0.0
+     > Microsoft.CodeAnalysis.Workspaces.MSBuild                  5.0.0
+     > Microsoft.Data.SqlClient                                   6.1.1
+     > Microsoft.Data.SqlClient.SNI.runtime                       6.0.2
+     > Microsoft.EntityFrameworkCore                              10.0.10
+     > Microsoft.EntityFrameworkCore.Abstractions                 10.0.10
+     > Microsoft.EntityFrameworkCore.Analyzers                    10.0.10
+     > Microsoft.EntityFrameworkCore.Relational                   10.0.10
+     > Microsoft.Extensions.Caching.Abstractions                  10.0.10
+     > Microsoft.Extensions.Caching.Memory                        10.0.10
+     > Microsoft.Extensions.Configuration.Abstractions            10.0.10
+     > Microsoft.Extensions.DependencyInjection                   10.0.10
+     > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.10
+     > Microsoft.Extensions.DependencyModel                       10.0.10
+     > Microsoft.Extensions.Logging                               10.0.10
+     > Microsoft.Extensions.Logging.Abstractions                  10.0.10
+     > Microsoft.Extensions.Options                               10.0.10
+     > Microsoft.Extensions.Primitives                            10.0.10
+     > Microsoft.Identity.Client                                  4.73.1
+     > Microsoft.Identity.Client.Extensions.Msal                  4.73.1
+     > Microsoft.IdentityModel.Abstractions                       7.7.1
+     > Microsoft.IdentityModel.JsonWebTokens                      7.7.1
+     > Microsoft.IdentityModel.Logging                            7.7.1
+     > Microsoft.IdentityModel.Protocols                          7.7.1
+     > Microsoft.IdentityModel.Protocols.OpenIdConnect            7.7.1
+     > Microsoft.IdentityModel.Tokens                             7.7.1
+     > Microsoft.SqlServer.Server                                 1.0.0
+     > Microsoft.VisualStudio.SolutionPersistence                 1.0.52
+     > Mono.TextTemplating                                        3.0.0
+     > Newtonsoft.Json                                            13.0.3
+     > System.ClientModel                                         1.5.1
+     > System.CodeDom                                             6.0.0
+     > System.Composition                                         9.0.0
+     > System.Composition.AttributedModel                         9.0.0
+     > System.Composition.Convention                              9.0.0
+     > System.Composition.Hosting                                 9.0.0
+     > System.Composition.Runtime                                 9.0.0
+     > System.Composition.TypedParts                              9.0.0
+     > System.Configuration.ConfigurationManager                  9.0.4
+     > System.Diagnostics.EventLog                                9.0.4
+     > System.IdentityModel.Tokens.Jwt                            7.7.1
+     > System.Memory.Data                                         8.0.1
+     > System.Security.Cryptography.Pkcs                          9.0.4
+     > System.Security.Cryptography.ProtectedData                 9.0.4
+
+PROJECT: ERPWMS.Domain\ERPWMS.Domain.csproj
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj]
+     Top-level Package                                Requested   Resolved
+     > MediatR                                        12.2.0      12.2.0
+     > Microsoft.Extensions.Logging.Abstractions      10.0.10     10.0.10
+     Transitive Package                                           Resolved
+     > Azure.Core                                                 1.47.1
+     > Azure.Identity                                             1.14.2
+     > MediatR.Contracts                                          2.0.1
+     > Microsoft.Bcl.AsyncInterfaces                              8.0.0
+     > Microsoft.Bcl.Cryptography                                 9.0.4
+     > Microsoft.Data.SqlClient                                   6.1.1
+     > Microsoft.Data.SqlClient.SNI.runtime                       6.0.2
+     > Microsoft.EntityFrameworkCore                              10.0.10
+     > Microsoft.EntityFrameworkCore.Abstractions                 10.0.10
+     > Microsoft.EntityFrameworkCore.Analyzers                    10.0.10
+     > Microsoft.EntityFrameworkCore.Relational                   10.0.10
+     > Microsoft.EntityFrameworkCore.SqlServer                    10.0.10
+     > Microsoft.Extensions.Caching.Abstractions                  10.0.10
+     > Microsoft.Extensions.Caching.Memory                        10.0.10
+     > Microsoft.Extensions.Configuration.Abstractions            10.0.10
+     > Microsoft.Extensions.DependencyInjection                   10.0.10
+     > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.10
+     > Microsoft.Extensions.Logging                               10.0.10
+     > Microsoft.Extensions.Options                               10.0.10
+     > Microsoft.Extensions.Primitives                            10.0.10
+     > Microsoft.Identity.Client                                  4.73.1
+     > Microsoft.Identity.Client.Extensions.Msal                  4.73.1
+     > Microsoft.IdentityModel.Abstractions                       7.7.1
+     > Microsoft.IdentityModel.JsonWebTokens                      7.7.1
+     > Microsoft.IdentityModel.Logging                            7.7.1
+     > Microsoft.IdentityModel.Protocols                          7.7.1
+     > Microsoft.IdentityModel.Protocols.OpenIdConnect            7.7.1
+     > Microsoft.IdentityModel.Tokens                             7.7.1
+     > Microsoft.SqlServer.Server                                 1.0.0
+     > System.ClientModel                                         1.5.1
+     > System.Configuration.ConfigurationManager                  9.0.4
+     > System.Diagnostics.EventLog                                9.0.4
+     > System.IdentityModel.Tokens.Jwt                            7.7.1
+     > System.Memory.Data                                         8.0.1
+     > System.Security.Cryptography.Pkcs                          9.0.4
+     > System.Security.Cryptography.ProtectedData                 9.0.4
+
+PROJECT: ERPWMS.Application\ERPWMS.Application.csproj
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx
+     Top-level Package                                            Requested   Resolved
+     > AutoMapper                                                 16.2.0      16.2.0
+     > FluentValidation                                           11.9.0      11.9.0
+     > FluentValidation.DependencyInjectionExtensions             11.9.0      11.9.0
+     > Humanizer                                                  2.14.1      2.14.1
+     > MediatR                                                    12.2.0      12.2.0
+     > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.10     10.0.10
+     > Microsoft.Extensions.Logging.Abstractions                  10.0.10     10.0.10
+     Transitive Package                                     Resolved
+     > Azure.Core                                           1.47.1
+     > Azure.Identity                                       1.14.2
+     > Humanizer.Core                                       2.14.1
+     > Humanizer.Core.af                                    2.14.1
+     > Humanizer.Core.ar                                    2.14.1
+     > Humanizer.Core.az                                    2.14.1
+     > Humanizer.Core.bg                                    2.14.1
+     > Humanizer.Core.bn-BD                                 2.14.1
+     > Humanizer.Core.cs                                    2.14.1
+     > Humanizer.Core.da                                    2.14.1
+     > Humanizer.Core.de                                    2.14.1
+     > Humanizer.Core.el                                    2.14.1
+     > Humanizer.Core.es                                    2.14.1
+     > Humanizer.Core.fa                                    2.14.1
+     > Humanizer.Core.fi-FI                                 2.14.1
+     > Humanizer.Core.fr                                    2.14.1
+     > Humanizer.Core.fr-BE                                 2.14.1
+     > Humanizer.Core.he                                    2.14.1
+     > Humanizer.Core.hr                                    2.14.1
+     > Humanizer.Core.hu                                    2.14.1
+     > Humanizer.Core.hy                                    2.14.1
+     > Humanizer.Core.id                                    2.14.1
+     > Humanizer.Core.is                                    2.14.1
+     > Humanizer.Core.it                                    2.14.1
+     > Humanizer.Core.ja                                    2.14.1
+     > Humanizer.Core.ko-KR                                 2.14.1
+     > Humanizer.Core.ku                                    2.14.1
+     > Humanizer.Core.lv                                    2.14.1
+     > Humanizer.Core.ms-MY                                 2.14.1
+     > Humanizer.Core.mt                                    2.14.1
+     > Humanizer.Core.nb                                    2.14.1
+     > Humanizer.Core.nb-NO                                 2.14.1
+     > Humanizer.Core.nl                                    2.14.1
+     > Humanizer.Core.pl                                    2.14.1
+     > Humanizer.Core.pt                                    2.14.1
+     > Humanizer.Core.ro                                    2.14.1
+     > Humanizer.Core.ru                                    2.14.1
+     > Humanizer.Core.sk                                    2.14.1
+     > Humanizer.Core.sl                                    2.14.1
+     > Humanizer.Core.sr                                    2.14.1
+     > Humanizer.Core.sr-Latn                               2.14.1
+     > Humanizer.Core.sv                                    2.14.1
+     > Humanizer.Core.th-TH                                 2.14.1
+     > Humanizer.Core.tr                                    2.14.1
+     > Humanizer.Core.uk                                    2.14.1
+     > Humanizer.Core.uz-Cyrl-UZ                            2.14.1
+     > Humanizer.Core.uz-Latn-UZ                            2.14.1
+     > Humanizer.Core.vi                                    2.14.1
+     > Humanizer.Core.zh-CN                                 2.14.1
+     > Humanizer.Core.zh-Hans                               2.14.1
+     > Humanizer.Core.zh-Hant                               2.14.1
+     > MediatR.Contracts                                    2.0.1
+     > Microsoft.Bcl.AsyncInterfaces                        8.0.0
+     > Microsoft.Bcl.Cryptography                           9.0.4
+     > Microsoft.Data.SqlClient                             6.1.1
+     > Microsoft.Data.SqlClient.SNI.runtime                 6.0.2
+     > Microsoft.EntityFrameworkCore                        10.0.10
+     > Microsoft.EntityFrameworkCore.Abstractions           10.0.10
+     > Microsoft.EntityFrameworkCore.Analyzers              10.0.10
+     > Microsoft.EntityFrameworkCore.Relational             10.0.10
+     > Microsoft.EntityFrameworkCore.SqlServer              10.0.10
+     > Microsoft.Identity.Client                            4.73.1
+     > Microsoft.Identity.Client.Extensions.Msal            4.73.1
+     > Microsoft.IdentityModel.Abstractions                 8.14.0
+     > Microsoft.IdentityModel.JsonWebTokens                8.14.0
+     > Microsoft.IdentityModel.Logging                      8.14.0
+     > Microsoft.IdentityModel.Protocols                    7.7.1
+     > Microsoft.IdentityModel.Protocols.OpenIdConnect      7.7.1
+     > Microsoft.IdentityModel.Tokens                       8.14.0
+     > Microsoft.SqlServer.Server                           1.0.0
+     > System.ClientModel                                   1.5.1
+     > System.Configuration.ConfigurationManager            9.0.4
+     > System.IdentityModel.Tokens.Jwt                      7.7.1
+     > System.Memory.Data                                   8.0.1
+     > System.Security.Cryptography.Pkcs                    9.0.4
+     > System.Security.Cryptography.ProtectedData           9.0.4
+
+PROJECT: ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj]
+     Top-level Package                                            Requested   Resolved
+     > BCrypt.Net-Next                                            4.2.0       4.2.0
+     > Microsoft.EntityFrameworkCore.SqlServer                    10.0.10     10.0.10
+     > Microsoft.Extensions.Configuration.Abstractions            10.0.10     10.0.10
+     > Microsoft.Extensions.DependencyInjection.Abstractions      10.0.10     10.0.10
+     > Microsoft.Extensions.Logging.Abstractions                  10.0.10     10.0.10
+     Transitive Package                                     Resolved
+     > AutoMapper                                           16.2.0
+     > Azure.Core                                           1.47.1
+     > Azure.Identity                                       1.14.2
+     > FluentValidation                                     11.9.0
+     > FluentValidation.DependencyInjectionExtensions       11.9.0
+     > Humanizer                                            2.14.1
+     > Humanizer.Core                                       2.14.1
+     > Humanizer.Core.af                                    2.14.1
+     > Humanizer.Core.ar                                    2.14.1
+     > Humanizer.Core.az                                    2.14.1
+     > Humanizer.Core.bg                                    2.14.1
+     > Humanizer.Core.bn-BD                                 2.14.1
+     > Humanizer.Core.cs                                    2.14.1
+     > Humanizer.Core.da                                    2.14.1
+     > Humanizer.Core.de                                    2.14.1
+     > Humanizer.Core.el                                    2.14.1
+     > Humanizer.Core.es                                    2.14.1
+     > Humanizer.Core.fa                                    2.14.1
+     > Humanizer.Core.fi-FI                                 2.14.1
+     > Humanizer.Core.fr                                    2.14.1
+     > Humanizer.Core.fr-BE                                 2.14.1
+     > Humanizer.Core.he                                    2.14.1
+     > Humanizer.Core.hr                                    2.14.1
+     > Humanizer.Core.hu                                    2.14.1
+     > Humanizer.Core.hy                                    2.14.1
+     > Humanizer.Core.id                                    2.14.1
+     > Humanizer.Core.is                                    2.14.1
+     > Humanizer.Core.it                                    2.14.1
+     > Humanizer.Core.ja                                    2.14.1
+     > Humanizer.Core.ko-KR                                 2.14.1
+     > Humanizer.Core.ku                                    2.14.1
+     > Humanizer.Core.lv                                    2.14.1
+     > Humanizer.Core.ms-MY                                 2.14.1
+     > Humanizer.Core.mt                                    2.14.1
+     > Humanizer.Core.nb                                    2.14.1
+     > Humanizer.Core.nb-NO                                 2.14.1
+     > Humanizer.Core.nl                                    2.14.1
+     > Humanizer.Core.pl                                    2.14.1
+     > Humanizer.Core.pt                                    2.14.1
+     > Humanizer.Core.ro                                    2.14.1
+     > Humanizer.Core.ru                                    2.14.1
+     > Humanizer.Core.sk                                    2.14.1
+     > Humanizer.Core.sl                                    2.14.1
+     > Humanizer.Core.sr                                    2.14.1
+     > Humanizer.Core.sr-Latn                               2.14.1
+     > Humanizer.Core.sv                                    2.14.1
+     > Humanizer.Core.th-TH                                 2.14.1
+     > Humanizer.Core.tr                                    2.14.1
+     > Humanizer.Core.uk                                    2.14.1
+     > Humanizer.Core.uz-Cyrl-UZ                            2.14.1
+     > Humanizer.Core.uz-Latn-UZ                            2.14.1
+     > Humanizer.Core.vi                                    2.14.1
+     > Humanizer.Core.zh-CN                                 2.14.1
+     > Humanizer.Core.zh-Hans                               2.14.1
+     > Humanizer.Core.zh-Hant                               2.14.1
+     > MediatR                                              12.2.0
+     > MediatR.Contracts                                    2.0.1
+     > Microsoft.Bcl.AsyncInterfaces                        8.0.0
+     > Microsoft.Bcl.Cryptography                           9.0.4
+     > Microsoft.Data.SqlClient                             6.1.1
+     > Microsoft.Data.SqlClient.SNI.runtime                 6.0.2
+     > Microsoft.EntityFrameworkCore                        10.0.10
+     > Microsoft.EntityFrameworkCore.Abstractions           10.0.10
+     > Microsoft.EntityFrameworkCore.Analyzers              10.0.10
+     > Microsoft.EntityFrameworkCore.Relational             10.0.10
+     > Microsoft.Extensions.Caching.Abstractions            10.0.10
+     > Microsoft.Extensions.Caching.Memory                  10.0.10
+     > Microsoft.Extensions.DependencyInjection             10.0.10
+     > Microsoft.Extensions.Logging                         10.0.10
+     > Microsoft.Extensions.Options                         10.0.10
+     > Microsoft.Extensions.Primitives                      10.0.10
+     > Microsoft.Identity.Client                            4.73.1
+     > Microsoft.Identity.Client.Extensions.Msal            4.73.1
+     > Microsoft.IdentityModel.Abstractions                 8.14.0
+     > Microsoft.IdentityModel.JsonWebTokens                8.14.0
+     > Microsoft.IdentityModel.Logging                      8.14.0
+     > Microsoft.IdentityModel.Protocols                    7.7.1
+     > Microsoft.IdentityModel.Protocols.OpenIdConnect      7.7.1
+     > Microsoft.IdentityModel.Tokens                       8.14.0
+     > Microsoft.SqlServer.Server                           1.0.0
+     > System.ClientModel                                   1.5.1
+     > System.Configuration.ConfigurationManager            9.0.4
+     > System.Diagnostics.EventLog                          9.0.4
+     > System.IdentityModel.Tokens.Jwt                      7.7.1
+     > System.Memory.Data                                   8.0.1
+     > System.Security.Cryptography.Pkcs                    9.0.4
+     > System.Security.Cryptography.ProtectedData           9.0.4
+
+PROJECT: ERPWMS.Web\ERPWMS.Web.csproj
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\ERPWMS.Database.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1902: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-2fmv-rv2c-59x7 [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\ERPWMS.Domain.csproj : warning NU1903: Package 'System.Security.Cryptography.Pkcs' 9.0.4 has a known high severity vulnerability, https://github.com/advisories/GHSA-846f-f764-76mx [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\ERPWMS.Web.csproj]
+     Top-level Package                                        Requested   Resolved
+     > FluentValidation.AspNetCore                            11.3.0      11.3.0
+     > MediatR                                                12.2.0      12.2.0
+     > Microsoft.AspNetCore.Identity.EntityFrameworkCore      10.0.10     10.0.10
+     > Microsoft.EntityFrameworkCore.Design                   10.0.10     10.0.10
+     Transitive Package                                     Resolved
+     > AutoMapper                                           16.2.0
+     > Azure.Core                                           1.47.1
+     > Azure.Identity                                       1.14.2
+     > BCrypt.Net-Next                                      4.2.0
+     > FluentValidation                                     11.9.0
+     > FluentValidation.DependencyInjectionExtensions       11.9.0
+     > Humanizer                                            2.14.1
+     > Humanizer.Core                                       2.14.1
+     > Humanizer.Core.af                                    2.14.1
+     > Humanizer.Core.ar                                    2.14.1
+     > Humanizer.Core.az                                    2.14.1
+     > Humanizer.Core.bg                                    2.14.1
+     > Humanizer.Core.bn-BD                                 2.14.1
+     > Humanizer.Core.cs                                    2.14.1
+     > Humanizer.Core.da                                    2.14.1
+     > Humanizer.Core.de                                    2.14.1
+     > Humanizer.Core.el                                    2.14.1
+     > Humanizer.Core.es                                    2.14.1
+     > Humanizer.Core.fa                                    2.14.1
+     > Humanizer.Core.fi-FI                                 2.14.1
+     > Humanizer.Core.fr                                    2.14.1
+     > Humanizer.Core.fr-BE                                 2.14.1
+     > Humanizer.Core.he                                    2.14.1
+     > Humanizer.Core.hr                                    2.14.1
+     > Humanizer.Core.hu                                    2.14.1
+     > Humanizer.Core.hy                                    2.14.1
+     > Humanizer.Core.id                                    2.14.1
+     > Humanizer.Core.is                                    2.14.1
+     > Humanizer.Core.it                                    2.14.1
+     > Humanizer.Core.ja                                    2.14.1
+     > Humanizer.Core.ko-KR                                 2.14.1
+     > Humanizer.Core.ku                                    2.14.1
+     > Humanizer.Core.lv                                    2.14.1
+     > Humanizer.Core.ms-MY                                 2.14.1
+     > Humanizer.Core.mt                                    2.14.1
+     > Humanizer.Core.nb                                    2.14.1
+     > Humanizer.Core.nb-NO                                 2.14.1
+     > Humanizer.Core.nl                                    2.14.1
+     > Humanizer.Core.pl                                    2.14.1
+     > Humanizer.Core.pt                                    2.14.1
+     > Humanizer.Core.ro                                    2.14.1
+     > Humanizer.Core.ru                                    2.14.1
+     > Humanizer.Core.sk                                    2.14.1
+     > Humanizer.Core.sl                                    2.14.1
+     > Humanizer.Core.sr                                    2.14.1
+     > Humanizer.Core.sr-Latn                               2.14.1
+     > Humanizer.Core.sv                                    2.14.1
+     > Humanizer.Core.th-TH                                 2.14.1
+     > Humanizer.Core.tr                                    2.14.1
+     > Humanizer.Core.uk                                    2.14.1
+     > Humanizer.Core.uz-Cyrl-UZ                            2.14.1
+     > Humanizer.Core.uz-Latn-UZ                            2.14.1
+     > Humanizer.Core.vi                                    2.14.1
+     > Humanizer.Core.zh-CN                                 2.14.1
+     > Humanizer.Core.zh-Hans                               2.14.1
+     > Humanizer.Core.zh-Hant                               2.14.1
+     > MediatR.Contracts                                    2.0.1
+     > Microsoft.Bcl.AsyncInterfaces                        8.0.0
+     > Microsoft.Bcl.Cryptography                           9.0.4
+     > Microsoft.Build.Framework                            18.0.2
+     > Microsoft.CodeAnalysis.Analyzers                     3.11.0
+     > Microsoft.CodeAnalysis.Common                        5.0.0
+     > Microsoft.CodeAnalysis.CSharp                        5.0.0
+     > Microsoft.CodeAnalysis.CSharp.Workspaces             5.0.0
+     > Microsoft.CodeAnalysis.Workspaces.Common             5.0.0
+     > Microsoft.CodeAnalysis.Workspaces.MSBuild            5.0.0
+     > Microsoft.Data.SqlClient                             6.1.1
+     > Microsoft.Data.SqlClient.SNI.runtime                 6.0.2
+     > Microsoft.EntityFrameworkCore                        10.0.10
+     > Microsoft.EntityFrameworkCore.Abstractions           10.0.10
+     > Microsoft.EntityFrameworkCore.Analyzers              10.0.10
+     > Microsoft.EntityFrameworkCore.Relational             10.0.10
+     > Microsoft.EntityFrameworkCore.SqlServer              10.0.10
+     > Microsoft.Extensions.DependencyModel                 10.0.10
+     > Microsoft.Identity.Client                            4.73.1
+     > Microsoft.Identity.Client.Extensions.Msal            4.73.1
+     > Microsoft.IdentityModel.Abstractions                 8.14.0
+     > Microsoft.IdentityModel.JsonWebTokens                8.14.0
+     > Microsoft.IdentityModel.Logging                      8.14.0
+     > Microsoft.IdentityModel.Protocols                    7.7.1
+     > Microsoft.IdentityModel.Protocols.OpenIdConnect      7.7.1
+     > Microsoft.IdentityModel.Tokens                       8.14.0
+     > Microsoft.SqlServer.Server                           1.0.0
+     > Microsoft.VisualStudio.SolutionPersistence           1.0.52
+     > Mono.TextTemplating                                  3.0.0
+     > Newtonsoft.Json                                      13.0.3
+     > System.ClientModel                                   1.5.1
+     > System.CodeDom                                       6.0.0
+     > System.Composition                                   9.0.0
+     > System.Composition.AttributedModel                   9.0.0
+     > System.Composition.Convention                        9.0.0
+     > System.Composition.Hosting                           9.0.0
+     > System.Composition.Runtime                           9.0.0
+     > System.Composition.TypedParts                        9.0.0
+     > System.Configuration.ConfigurationManager            9.0.4
+     > System.IdentityModel.Tokens.Jwt                      7.7.1
+     > System.Memory.Data                                   8.0.1
+     > System.Security.Cryptography.Pkcs                    9.0.4
+     > System.Security.Cryptography.ProtectedData           9.0.4
+
+--- [4] project.assets.json search (obj folder) ---
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\obj\project.assets.json
+  L749: "System.Security.Cryptography.Pkcs": "9.0.4"
+  L3350: "libraryId": "System.Security.Cryptography.Pkcs",
+  L3360: "libraryId": "System.Security.Cryptography.Pkcs",
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\obj\project.assets.json
+  L426: "System.Security.Cryptography.Pkcs": "9.0.4"
+  L4038: "libraryId": "System.Security.Cryptography.Pkcs",
+  L4048: "libraryId": "System.Security.Cryptography.Pkcs",
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\obj\project.assets.json
+  L112: "System.Security.Cryptography.Pkcs": "9.0.4"
+  L2120: "libraryId": "System.Security.Cryptography.Pkcs",
+  L2130: "libraryId": "System.Security.Cryptography.Pkcs",
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\obj\project.assets.json
+  L763: "System.Security.Cryptography.Pkcs": "9.0.4"
+  L3683: "libraryId": "System.Security.Cryptography.Pkcs",
+  L3693: "libraryId": "System.Security.Cryptography.Pkcs",
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\obj\project.assets.json
+  L1120: "System.Security.Cryptography.Pkcs": "9.0.4"
+  L5257: "libraryId": "System.Security.Cryptography.Pkcs",
+  L5267: "libraryId": "System.Security.Cryptography.Pkcs",
+

@@ -1,0 +1,1410 @@
+﻿
+=== COMPANYID AUDIT — 2026-10-16 21:04:37 ===
+
+===== [1] ICurrentUserService / CurrentUserService =====
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Common\ICurrentUserService.cs
+  using System.Security.Principal;
+  
+  namespace ERPWMS.Application.Common
+  {
+      public interface ICurrentUserService
+      {
+          string? UserId { get; }                          // ✅ int? → string?
+          string? UserName { get; }
+          string? Email { get; }
+  
+          int? CompanyId { get; }                          // int? rakha
+          string? CompanyName { get; }
+  
+          string[]? Roles { get; }
+  
+          bool IsAuthenticated { get; }
+  
+          bool IsInRole(string role);
+  
+          IPrincipal? User { get; }
+  
+          string GetValidatedUserId();                     // ✅ int → string
+          string GetValidatedUserName();
+  
+          int GetCompanyId();
+          string GetCompanyName();
+  
+          string GetUserId();                              // ✅ int → string
+      }
+  }
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Services\ICurrentUserService.cs
+  using System.Threading.Tasks;
+  
+  namespace ERPWMS.Domain.Services
+  {
+      public interface ICurrentUserService
+      {
+          string? UserId { get; }                          // ✅ int? → string?
+          string? UserName { get; }
+          string? Email { get; }
+  
+          int? CompanyId { get; }                          // int? rakha
+          string? CompanyName { get; }
+  
+          bool IsAuthenticated { get; }
+          bool IsInRole(string role);
+  
+          Task<string> GetUserIdAsync();                   // ✅ Task<int> → Task<string>
+          Task<string> GetUserNameAsync();
+      }
+  }
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\CurrentUserService.cs
+  using ERPWMS.Application.Common;
+  using Microsoft.AspNetCore.Http;
+  using System;
+  using System.Linq;
+  using System.Security.Claims;
+  using System.Security.Principal;
+  using System.Threading.Tasks;
+  using ERPWMS.Database.Models;
+  
+  namespace ERPWMS.Infrastructure.Services
+  {
+      public class CurrentUserService :
+          ERPWMS.Application.Common.ICurrentUserService,
+          ERPWMS.Domain.Services.ICurrentUserService
+      {
+          private readonly IHttpContextAccessor _httpContextAccessor;
+  
+          public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+          {
+              _httpContextAccessor = httpContextAccessor;
+          }
+  
+          public string? UserId
+          {
+              get
+              {
+                  if (!IsAuthenticated)
+                      return null;
+  
+                  return _httpContextAccessor.HttpContext?
+                      .User?
+                      .FindFirst(ClaimTypes.NameIdentifier)?
+                      .Value;
+              }
+          }
+  
+          public string? UserName
+          {
+              get
+              {
+                  if (!IsAuthenticated)
+                      return null;
+  
+                  return _httpContextAccessor.HttpContext?
+                      .User?
+                      .FindFirst(ClaimTypes.Name)?
+                      .Value;
+              }
+          }
+  
+          public string? Email
+          {
+              get
+              {
+                  if (!IsAuthenticated)
+                      return null;
+  
+                  return _httpContextAccessor.HttpContext?
+                      .User?
+                      .FindFirst(ClaimTypes.Email)?
+                      .Value;
+              }
+          }
+  
+          public int? CompanyId
+          {
+              get
+              {
+                  if (!IsAuthenticated)
+                      return null;
+  
+                  var companyIdClaim = _httpContextAccessor.HttpContext?
+                      .User?
+                      .FindFirst("CompanyId")?
+                      .Value;
+  
+                  return int.TryParse(companyIdClaim, out var companyId)
+                      ? companyId
+                      : null;
+              }
+          }
+  
+          public string? CompanyName
+          {
+              get
+              {
+                  if (!IsAuthenticated)
+                      return null;
+  
+                  return _httpContextAccessor.HttpContext?
+                      .User?
+                      .FindFirst("CompanyName")?
+                      .Value;
+              }
+          }
+  
+          public string[]? Roles
+          {
+              get
+              {
+                  if (!IsAuthenticated)
+                      return Array.Empty<string>();
+  
+                  return _httpContextAccessor.HttpContext?
+                      .User?
+                      .FindAll(ClaimTypes.Role)
+                      .Select(c => c.Value)
+                      .ToArray();
+              }
+          }
+  
+          public bool IsAuthenticated
+          {
+              get
+              {
+                  return _httpContextAccessor.HttpContext?
+                      .User?
+                      .Identity?
+                      .IsAuthenticated ?? false;
+              }
+          }
+  
+          public IPrincipal? User
+          {
+              get
+              {
+                  return _httpContextAccessor.HttpContext?.User;
+              }
+          }
+  
+          public bool IsInRole(string role)
+          {
+              if (!IsAuthenticated)
+                  return false;
+  
+              return _httpContextAccessor.HttpContext?
+                  .User?
+                  .IsInRole(role) ?? false;
+          }
+  
+          public string GetValidatedUserId()
+          {
+              if (!IsAuthenticated)
+                  throw new UnauthorizedAccessException("User is not authenticated.");
+  
+              if (string.IsNullOrEmpty(UserId))
+                  throw new UnauthorizedAccessException("User ID could not be determined.");
+  
+              if (!int.TryParse(UserId, out _))
+                  throw new UnauthorizedAccessException("User ID is not valid.");
+  
+              return UserId;
+          }
+  
+          public string GetValidatedUserName()
+          {
+              if (!IsAuthenticated)
+                  throw new UnauthorizedAccessException("User is not authenticated.");
+  
+              if (string.IsNullOrEmpty(UserName))
+                  throw new UnauthorizedAccessException("User name could not be determined.");
+  
+              return UserName;
+          }
+  
+          public int GetValidatedCompanyId()
+          {
+              if (!IsAuthenticated)
+                  throw new UnauthorizedAccessException("User is not authenticated.");
+  
+              if (!CompanyId.HasValue || CompanyId <= 0)
+                  throw new UnauthorizedAccessException("Company ID could not be determined.");
+  
+              return CompanyId.Value;
+          }
+  
+          public string GetValidatedCompanyName()
+          {
+              if (!IsAuthenticated)
+                  throw new UnauthorizedAccessException("User is not authenticated.");
+  
+              if (string.IsNullOrWhiteSpace(CompanyName))
+                  throw new UnauthorizedAccessException("Company name could not be determined.");
+  
+              return CompanyName;
+          }
+  
+          public string GetUserId() => GetValidatedUserId();
+          public int GetCompanyId() => GetValidatedCompanyId();
+          public string GetCompanyName() => GetValidatedCompanyName();
+  
+          public Task<string> GetUserIdAsync()
+          {
+              return Task.FromResult(GetValidatedUserId());
+          }
+  
+          public Task<string> GetUserNameAsync()
+          {
+              return Task.FromResult(GetValidatedUserName());
+          }
+      }
+  }
+
+
+===== [2] User Model =====
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\Models\User.cs
+  using System;
+  using System.Collections.Generic;
+  
+  namespace ERPWMS.Database.Models;
+  
+  public partial class User
+  {
+      public int Id { get; set; }
+  
+      public string UserName { get; set; } = null!;
+  
+      public string NormalizedUserName { get; set; } = null!;
+  
+      public string Email { get; set; } = null!;
+  
+      public string NormalizedEmail { get; set; } = null!;
+  
+      public bool? EmailConfirmed { get; set; }
+  
+      public string PasswordHash { get; set; } = null!;
+  
+      public string? SecurityStamp { get; set; }
+  
+      public string? ConcurrencyStamp { get; set; }
+  
+      public string? PhoneNumber { get; set; }
+  
+      public bool? PhoneNumberConfirmed { get; set; }
+  
+      public bool? TwoFactorEnabled { get; set; }
+  
+      public DateTime? LockoutEnd { get; set; }
+  
+      public bool? LockoutEnabled { get; set; }
+  
+      public int? AccessFailedCount { get; set; }
+  
+      public string FirstName { get; set; } = null!;
+  
+      public string LastName { get; set; } = null!;
+  
+      public string? EmployeeCode { get; set; }
+  
+      public int? WarehouseId { get; set; }
+  
+      public bool? IsActive { get; set; }
+  
+      public bool? IsDeleted { get; set; }
+  
+      public string? DeletedBy { get; set; }
+  
+      public DateTime? DeletedDate { get; set; }
+  
+      public DateTime? CreatedDate { get; set; }
+  
+      public DateTime? LastLoginDate { get; set; }
+  
+      public int? CompanyId { get; set; }
+  
+      public string? DeletedByName { get; set; }
+  
+      public string? CreatedByName { get; set; }
+  
+      public string? UpdatedByName { get; set; }
+  
+      public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
+  
+      public virtual ICollection<AspNetUserLogin> AspNetUserLogins { get; set; } = new List<AspNetUserLogin>();
+  
+      public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; } = new List<AspNetUserToken>();
+  
+      public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+  
+      public virtual ICollection<CustomerComplaint> CustomerComplaintAssignedToNavigations { get; set; } = new List<CustomerComplaint>();
+  
+      public virtual ICollection<CustomerComplaint> CustomerComplaintEscalatedToNavigations { get; set; } = new List<CustomerComplaint>();
+  
+      public virtual ICollection<CustomerComplaint> CustomerComplaintResolvedByNavigations { get; set; } = new List<CustomerComplaint>();
+  
+      public virtual ICollection<CustomerInquiry> CustomerInquiryAssignedToNavigations { get; set; } = new List<CustomerInquiry>();
+  
+      public virtual ICollection<CustomerInquiry> CustomerInquiryResolvedByNavigations { get; set; } = new List<CustomerInquiry>();
+  
+      public virtual ICollection<CycleCount> CycleCountCountedByNavigations { get; set; } = new List<CycleCount>();
+  
+      public virtual ICollection<CycleCount> CycleCountVerifiedByNavigations { get; set; } = new List<CycleCount>();
+  
+      public virtual ICollection<DispatchMaster> DispatchMasters { get; set; } = new List<DispatchMaster>();
+  
+      public virtual ICollection<EmployeeLeaf> EmployeeLeaves { get; set; } = new List<EmployeeLeaf>();
+  
+      public virtual ICollection<EmployeeLeave> EmployeeLeavesNavigation { get; set; } = new List<EmployeeLeave>();
+  
+      public virtual ICollection<EmployeePayroll> EmployeePayrolls { get; set; } = new List<EmployeePayroll>();
+  
+      public virtual ICollection<JournalVoucher> JournalVouchers { get; set; } = new List<JournalVoucher>();
+  
+      public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
+  
+      public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+  
+      public virtual ICollection<PaymentVoucher> PaymentVouchers { get; set; } = new List<PaymentVoucher>();
+  
+      public virtual ICollection<PickingList> PickingListAssignedToNavigations { get; set; } = new List<PickingList>();
+  
+      public virtual ICollection<PickingList> PickingListPickedByNavigations { get; set; } = new List<PickingList>();
+  
+      public virtual ICollection<PickingList> PickingListVerifiedByNavigations { get; set; } = new List<PickingList>();
+  
+      public virtual ICollection<ProductPricingHistory> ProductPricingHistories { get; set; } = new List<ProductPricingHistory>();
+  
+      public virtual ICollection<PurchaseReturn> PurchaseReturns { get; set; } = new List<PurchaseReturn>();
+  
+      public virtual ICollection<ReceiptVoucher> ReceiptVouchers { get; set; } = new List<ReceiptVoucher>();
+  
+      public virtual ICollection<SalesReturn> SalesReturns { get; set; } = new List<SalesReturn>();
+  
+      public virtual ICollection<StockAdjustment> StockAdjustments { get; set; } = new List<StockAdjustment>();
+  
+      public virtual ICollection<StockTransfer> StockTransferApprovedByNavigations { get; set; } = new List<StockTransfer>();
+  
+      public virtual ICollection<StockTransfer> StockTransferReceivedByNavigations { get; set; } = new List<StockTransfer>();
+  
+      public virtual ICollection<UserSession> UserSessions { get; set; } = new List<UserSession>();
+  
+      public virtual Warehouse? Warehouse { get; set; }
+  
+      public virtual ICollection<WorkflowAssignment> WorkflowAssignments { get; set; } = new List<WorkflowAssignment>();
+  
+      public virtual ICollection<WorkflowDeadline> WorkflowDeadlines { get; set; } = new List<WorkflowDeadline>();
+  
+      public virtual ICollection<WorkflowInstanceLog> WorkflowInstanceLogs { get; set; } = new List<WorkflowInstanceLog>();
+  
+      public virtual ICollection<WorkflowNotification> WorkflowNotifications { get; set; } = new List<WorkflowNotification>();
+  
+      public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
+  }
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\Controllers\Admin\User.cs
+  using ERPWMS.Application.DTOs.Identity;
+  using ERPWMS.Domain.Services;
+  using Microsoft.AspNetCore.Authorization;
+  using Microsoft.AspNetCore.Mvc;
+  using Microsoft.EntityFrameworkCore;
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Security.Claims;
+  using System.Threading.Tasks;
+  
+  namespace ERPWMS.Controllers.Admin
+  {
+      [Authorize]
+      public class UserController : Controller
+      {
+          private readonly IUserService _userService;
+          private readonly IRoleService _roleService;
+  
+          public UserController(IUserService userService, IRoleService roleService)
+          {
+              _userService = userService;
+              _roleService = roleService;
+          }
+  
+          [Authorize(Policy = "SystemAdmin.View")]
+          [HttpGet]
+          public async Task<IActionResult> Index(string? searchTerm = null, bool? isActive = null, int page = 1, int pageSize = 10)
+          {
+              if (page < 1) page = 1;
+              if (pageSize < 1) pageSize = 10;
+              if (pageSize > 100) pageSize = 100;
+  
+              var serviceUsers = await _userService.GetAllUsersAsync(false);
+              var users = serviceUsers?.ToList() ?? new List<ERPWMS.Database.Models.User>();
+  
+              if (!string.IsNullOrWhiteSpace(searchTerm))
+              {
+                  var s = searchTerm.Trim();
+                  users = users.Where(u =>
+                      (!string.IsNullOrWhiteSpace(u.UserName) && u.UserName.Contains(s, StringComparison.OrdinalIgnoreCase)) ||
+                      (!string.IsNullOrWhiteSpace(u.Email) && u.Email.Contains(s, StringComparison.OrdinalIgnoreCase)) ||
+                      (!string.IsNullOrWhiteSpace(u.FirstName) && u.FirstName.Contains(s, StringComparison.OrdinalIgnoreCase)) ||
+                      (!string.IsNullOrWhiteSpace(u.LastName) && u.LastName.Contains(s, StringComparison.OrdinalIgnoreCase))
+                  ).ToList();
+              }
+  
+              if (isActive.HasValue)
+                  users = users.Where(u => u.IsActive == isActive).ToList();
+  
+              var totalRecords = users.Count;
+              var totalPages = totalRecords == 0 ? 0 : (int)Math.Ceiling(totalRecords / (double)pageSize);
+              if (totalPages > 0 && page > totalPages) page = totalPages;
+  
+              var paged = users.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+  
+              var dtos = paged.Select(u => new UserDto
+              {
+                  Id = u.Id, UserName = u.UserName, Email = u.Email,
+                  FirstName = u.FirstName, LastName = u.LastName,
+                  EmployeeCode = u.EmployeeCode, WarehouseId = u.WarehouseId,
+                  IsActive = u.IsActive, LastLoginDate = u.LastLoginDate
+              }).ToList();
+  
+              ViewBag.SearchTerm = searchTerm;
+              ViewBag.Page = page;
+              ViewBag.PageSize = pageSize;
+              ViewBag.TotalRecords = totalRecords;
+              ViewBag.TotalPages = totalPages;
+  
+              return View(dtos);
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpGet]
+          public IActionResult Create() => View();
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> Create(CreateUserRequest request)
+          {
+              if (!ModelState.IsValid) return View(request);
+              await _userService.CreateUserAsync(request.UserName, request.Email, request.Password,
+                  request.FirstName, request.LastName, request.EmployeeCode, request.WarehouseId, request.IsActive);
+              TempData["Success"] = "User created successfully.";
+              return RedirectToAction(nameof(Index));
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpGet]
+          public async Task<IActionResult> Edit(int id)
+          {
+              var user = await _userService.GetUserByIdAsync(id);
+              if (user == null) return NotFound();
+  
+              var model = new UpdateUserRequest
+              {
+                  UserId = user.Id, UserName = user.UserName, Email = user.Email,
+                  FirstName = user.FirstName, LastName = user.LastName,
+                  EmployeeCode = user.EmployeeCode, WarehouseId = user.WarehouseId,
+                  IsActive = user.IsActive
+              };
+              return View(model);
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> Edit(UpdateUserRequest request)
+          {
+              if (!ModelState.IsValid) return View(request);
+  
+              var user = await _userService.GetUserByIdAsync(request.UserId);
+              if (user == null) return NotFound();
+  
+              user.UserName = request.UserName;
+              user.NormalizedUserName = request.UserName?.ToUpperInvariant();
+              user.Email = request.Email;
+              user.NormalizedEmail = request.Email?.ToUpperInvariant();
+              user.FirstName = request.FirstName;
+              user.LastName = request.LastName;
+              user.EmployeeCode = request.EmployeeCode;
+              user.WarehouseId = request.WarehouseId;
+              if (request.IsActive.HasValue) user.IsActive = request.IsActive.Value;
+  
+              await _userService.UpdateUserAsync(user);
+              TempData["Success"] = "User updated successfully.";
+              return RedirectToAction(nameof(Index));
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> Activate(int id)
+          {
+              var r = await _userService.ActivateUserAsync(id);
+              TempData[r ? "Success" : "Error"] = r ? "User activated." : "User not found.";
+              return RedirectToAction(nameof(Index));
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> Deactivate(int id)
+          {
+              // Prevent self-deactivation
+              var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+              if (currentUserId == id.ToString())
+              {
+                  TempData["Error"] = "You cannot deactivate yourself.";
+                  return RedirectToAction(nameof(Index));
+              }
+  
+              var r = await _userService.DeactivateUserAsync(id);
+              TempData[r ? "Success" : "Error"] = r ? "User deactivated." : "User not found.";
+              return RedirectToAction(nameof(Index));
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpGet]
+          public async Task<IActionResult> Roles(int id)
+          {
+              var user = await _userService.GetUserByIdAsync(id);
+              if (user == null) return NotFound();
+  
+              var allRoles = await _roleService.GetAllRolesAsync();
+              var userRoles = await _userService.GetUserRolesAsync(id);
+  
+              ViewBag.UserId = id;
+              ViewBag.UserName = user.UserName;
+              ViewBag.UserRoles = userRoles;
+              return View(allRoles);
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> AssignRole(int userId, int roleId)
+          {
+              var r = await _roleService.AddUserToRoleAsync(userId, roleId);
+              TempData[r ? "Success" : "Error"] = r ? "Role assigned." : "Failed.";
+              return RedirectToAction(nameof(Roles), new { id = userId });
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> RemoveRole(int userId, int roleId)
+          {
+              var r = await _roleService.RemoveUserFromRoleAsync(userId, roleId);
+              TempData[r ? "Success" : "Error"] = r ? "Role removed." : "Failed.";
+              return RedirectToAction(nameof(Roles), new { id = userId });
+          }
+  
+          [Authorize(Policy = "SystemAdmin.View")]
+          [HttpGet]
+          public IActionResult AddPartial() => PartialView("_AddForm");
+  
+          [Authorize(Policy = "SystemAdmin.View")]
+          [HttpGet]
+          public async Task<IActionResult> EditPartial(int id)
+          {
+              var u = await _userService.GetUserByIdAsync(id);
+              if (u == null) return NotFound();
+              return PartialView("_EditForm", u);
+          }
+  
+          [Authorize(Policy = "SystemAdmin.View")]
+          [HttpGet]
+          public async Task<IActionResult> GetStatistics()
+          {
+              var users = await _userService.GetAllUsersAsync(false);
+              var list = users?.ToList() ?? new List<ERPWMS.Database.Models.User>();
+              return Json(new
+              {
+                  total = list.Count,
+                  active = list.Count(u => u.IsActive == true),
+                  inactive = list.Count(u => u.IsActive != true),
+                  addedThisMonth = 0
+              });
+          }
+  
+          [Authorize(Policy = "SystemAdmin.View")]
+          [HttpGet]
+          public async Task<IActionResult> GetAll()
+          {
+              var users = await _userService.GetAllUsersAsync(false);
+              var list = (users ?? Enumerable.Empty<ERPWMS.Database.Models.User>()).Select(u => new
+              {
+                  userId = u.Id,
+                  userName = u.UserName,
+                  fullName = ((u.FirstName ?? "") + " " + (u.LastName ?? "")).Trim(),
+                  email = u.Email,
+                  phoneNumber = u.PhoneNumber ?? "",
+                  roleName = "User",
+                  isActive = u.IsActive == true
+              }).ToList();
+              return Json(list);
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> QuickAdd(string userName, string email, string firstName,
+              string lastName, string employeeCode, string password)
+          {
+              try
+              {
+                  if (string.IsNullOrWhiteSpace(userName)) return Json(new { success = false, message = "Username required" });
+                  if (string.IsNullOrWhiteSpace(email)) return Json(new { success = false, message = "Email required" });
+  
+                  // Password strength validation
+                  if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+                      return Json(new { success = false, message = "Password min 8 chars" });
+                  if (!password.Any(char.IsUpper) || !password.Any(char.IsLower) || !password.Any(char.IsDigit))
+                      return Json(new { success = false, message = "Password must contain upper, lower, and digit" });
+  
+                  await _userService.CreateUserAsync(userName, email, password, firstName, lastName, employeeCode, null, true);
+                  return Json(new { success = true, message = "User created successfully" });
+              }
+              catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> QuickEdit(int userId, string userName, string email,
+              string firstName, string lastName, string employeeCode, bool isActive = true)
+          {
+              try
+              {
+                  var u = await _userService.GetUserByIdAsync(userId);
+                  if (u == null) return Json(new { success = false, message = "Not found" });
+  
+                  u.UserName = userName;
+                  u.NormalizedUserName = userName?.ToUpperInvariant();
+                  u.Email = email;
+                  u.NormalizedEmail = email?.ToUpperInvariant();
+                  u.FirstName = firstName;
+                  u.LastName = lastName;
+                  u.EmployeeCode = employeeCode;
+                  u.IsActive = isActive;
+  
+                  await _userService.UpdateUserAsync(u);
+                  return Json(new { success = true, message = "User updated successfully" });
+              }
+              catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> QuickDelete(int id)
+          {
+              try
+              {
+                  // Prevent self-deactivation
+                  var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                  if (currentUserId == id.ToString())
+                  {
+                      return Json(new { success = false, message = "You cannot deactivate yourself." });
+                  }
+  
+                  var u = await _userService.GetUserByIdAsync(id);
+                  if (u == null) return Json(new { success = false, message = "Not found" });
+                  u.IsActive = false;
+                  await _userService.UpdateUserAsync(u);
+                  return Json(new { success = true, message = "User deactivated" });
+              }
+              catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+          }
+  
+          [Authorize(Policy = "SystemAdmin.Manage")]
+          [HttpPost, ValidateAntiForgeryToken]
+          public async Task<IActionResult> QuickToggle(int id)
+          {
+              try
+              {
+                  var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                  if (currentUserId == id.ToString())
+                      return Json(new { success = false, message = "You cannot toggle your own status." });
+  
+                  var u = await _userService.GetUserByIdAsync(id);
+                  if (u == null) return Json(new { success = false, message = "Not found" });
+                  u.IsActive = !(u.IsActive ?? false);
+                  await _userService.UpdateUserAsync(u);
+                  return Json(new { success = true, message = u.IsActive == true ? "Activated" : "Deactivated" });
+              }
+              catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+          }
+      }
+  }
+  
+
+
+===== [3] Company Model =====
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\Models\Company.cs
+  using System;
+  using System.Collections.Generic;
+  
+  namespace ERPWMS.Database.Models;
+  
+  public partial class Company
+  {
+      public int CompanyId { get; set; }
+  
+      public string CompanyName { get; set; } = null!;
+  
+      public string? RegistrationNo { get; set; }
+  
+      public string? Address { get; set; }
+  
+      public string? Phone { get; set; }
+  
+      public string? Email { get; set; }
+  
+      public string? LogoUrl { get; set; }
+  
+      public bool? IsActive { get; set; }
+  
+      public bool? IsDeleted { get; set; }
+  
+      public string? DeletedBy { get; set; }
+  
+      public DateTime? DeletedDate { get; set; }
+  
+      public string? CreatedBy { get; set; }
+  
+      public DateTime? CreatedDate { get; set; }
+  
+      public string? UpdatedBy { get; set; }
+  
+      public DateTime? UpdatedDate { get; set; }
+  
+      public string? DeletedByName { get; set; }
+  
+      public string? CreatedByName { get; set; }
+  
+      public string? UpdatedByName { get; set; }
+  
+      public virtual ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
+  
+      public virtual ICollection<Branch> Branches { get; set; } = new List<Branch>();
+  
+      public virtual ICollection<ChartOfAccount> ChartOfAccounts { get; set; } = new List<ChartOfAccount>();
+  
+      public virtual ICollection<Department> Departments { get; set; } = new List<Department>();
+  
+      public virtual ICollection<TaxSetting> TaxSettings { get; set; } = new List<TaxSetting>();
+  }
+
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Web\Controllers\Company.cs
+  using System;
+  using System.Linq;
+  using System.Threading.Tasks;
+  using Microsoft.AspNetCore.Mvc;
+  using Microsoft.EntityFrameworkCore;
+  using Microsoft.AspNetCore.Authorization;
+  using ERPWMS.Database.Models;
+  using ERPWMS.Database;
+  
+  namespace ERPWMS.Web.Controllers
+  {
+      [Authorize]
+      public class CompanyController : Controller
+      {
+          private readonly AppDbContext _context;
+          public CompanyController(AppDbContext context) { _context = context; }
+  
+          public IActionResult Index() { return View(); }
+  
+          [HttpGet]
+          public async Task<IActionResult> GetStatistics()
+          {
+              var q = _context.Companies.Where(c => c.IsDeleted != true);
+              var total = await q.CountAsync();
+              var active = await q.CountAsync(c => c.IsActive == true);
+              var inactive = await q.CountAsync(c => c.IsActive != true);
+              var now = DateTime.Now;
+              var month = await q.CountAsync(c => c.CreatedDate.HasValue && c.CreatedDate.Value.Month == now.Month && c.CreatedDate.Value.Year == now.Year);
+              return Json(new { total, active, inactive, addedThisMonth = month });
+          }
+  
+          [HttpGet]
+          public async Task<IActionResult> GetAllCompanies()
+          {
+              var list = await _context.Companies
+                  .Where(c => c.IsDeleted != true)
+                  .OrderBy(c => c.CompanyId)
+                  .Select(c => new {
+                      companyId = c.CompanyId,
+                      companyName = c.CompanyName,
+                      registrationNo = c.RegistrationNo,
+                      email = c.Email,
+                      phone = c.Phone,
+                      isActive = c.IsActive == true,
+                      createdDate = c.CreatedDate,
+                      branchCount = c.Branches.Count()
+                  }).ToListAsync();
+              return Json(list);
+          }
+  
+          [HttpGet]
+          public IActionResult AddCompanyPartial() { return PartialView("_AddCompanyForm"); }
+  
+          [HttpGet]
+          public async Task<IActionResult> EditCompanyPartial(int id)
+          {
+              var c = await _context.Companies.FindAsync(id);
+              if (c == null) return NotFound();
+              return PartialView("_EditCompanyForm", c);
+          }
+  
+          [HttpPost]
+          [ValidateAntiForgeryToken]
+          public async Task<IActionResult> Register(Company model)
+          {
+              if (string.IsNullOrWhiteSpace(model.CompanyName))
+                  return Json(new { success = false, message = "Company name is required" });
+  
+              if (!string.IsNullOrWhiteSpace(model.RegistrationNo))
+              {
+                  var dup = await _context.Companies
+                      .AnyAsync(c => c.IsDeleted != true && c.RegistrationNo == model.RegistrationNo);
+                  if (dup)
+                      return Json(new { success = false, message = "Registration No. \"" + model.RegistrationNo + "\" already exists. Please use a different one." });
+              }
+  
+              var user = User.Identity?.Name ?? "System";
+              int uid = 1;
+              var idClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+              if (idClaim != null && int.TryParse(idClaim, out var pid)) uid = pid;
+  
+              model.CompanyId = 0;
+              model.IsActive = true;
+              model.IsDeleted = false;
+              model.CreatedBy = uid.ToString();
+              model.CreatedByName = user;
+              model.CreatedDate = DateTime.Now;
+  
+              try
+              {
+                  _context.Companies.Add(model);
+                  await _context.SaveChangesAsync();
+                  return Json(new { success = true, message = "Company registered successfully" });
+              }
+              catch (DbUpdateException)
+              {
+                  return Json(new { success = false, message = "Registration No. already exists. Please use a different one." });
+              }
+          }
+  
+          [HttpPost]
+          [ValidateAntiForgeryToken]
+          public async Task<IActionResult> Edit(Company model)
+          {
+              if (string.IsNullOrWhiteSpace(model.CompanyName))
+                  return Json(new { success = false, message = "Company name is required" });
+  
+              var c = await _context.Companies.FindAsync(model.CompanyId);
+              if (c == null) return Json(new { success = false, message = "Company not found" });
+  
+              if (!string.IsNullOrWhiteSpace(model.RegistrationNo))
+              {
+                  var dup = await _context.Companies
+                      .AnyAsync(x => x.IsDeleted != true && x.CompanyId != model.CompanyId && x.RegistrationNo == model.RegistrationNo);
+                  if (dup)
+                      return Json(new { success = false, message = "Registration No. \"" + model.RegistrationNo + "\" already exists." });
+              }
+  
+              c.CompanyName = model.CompanyName;
+              c.RegistrationNo = model.RegistrationNo;
+              c.Address = model.Address;
+              c.Phone = model.Phone;
+              c.Email = model.Email;
+              c.LogoUrl = model.LogoUrl;
+              c.UpdatedDate = DateTime.Now;
+  
+              try
+              {
+                  await _context.SaveChangesAsync();
+                  return Json(new { success = true, message = "Company updated successfully" });
+              }
+              catch (DbUpdateException)
+              {
+                  return Json(new { success = false, message = "Update failed. Duplicate registration number." });
+              }
+          }
+  
+          [HttpPost]
+          [ValidateAntiForgeryToken]
+          public async Task<IActionResult> Delete(int id)
+          {
+              var c = await _context.Companies.FindAsync(id);
+              if (c == null) return Json(new { success = false });
+              c.IsDeleted = true;
+              c.IsActive = false;
+              c.DeletedByName = User.Identity?.Name ?? "System";
+              c.DeletedDate = DateTime.Now;
+              await _context.SaveChangesAsync();
+              return Json(new { success = true, message = "Company deleted" });
+          }
+  
+          [HttpPost]
+          [ValidateAntiForgeryToken]
+          public async Task<IActionResult> ToggleActive(int id)
+          {
+              var c = await _context.Companies.FindAsync(id);
+              if (c == null) return Json(new { success = false });
+              c.IsActive = !(c.IsActive ?? false);
+              c.UpdatedDate = DateTime.Now;
+              await _context.SaveChangesAsync();
+              return Json(new { success = true, message = c.IsActive == true ? "Company activated" : "Company deactivated" });
+          }
+  
+          [HttpGet]
+          public async Task<IActionResult> Profile(int id)
+          {
+              var c = await _context.Companies
+                  .Include(x => x.Branches)
+                  .Include(x => x.Departments)
+                  .FirstOrDefaultAsync(x => x.CompanyId == id);
+              if (c == null) return NotFound();
+              ViewBag.BranchCount = c.Branches.Count();
+              ViewBag.DepartmentCount = c.Departments.Count();
+              return View(c);
+          }
+      }
+  }
+
+
+===== [4] JWT / Claims Generation =====
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\BankAccount\DeleteBankAccountCommand.cs:7  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\BankAccount\RegisterBankAccountCommand.cs:6  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\BankAccount\UpdateBankAccountCommand.cs:7  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\ChartOfAccount\DeleteChartOfAccountCommand.cs:10  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\ChartOfAccount\RegisterChartOfAccountCommand.cs:8  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\ChartOfAccount\UpdateChartOfAccountCommand.cs:10  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\TaxSetting\DeleteTaxSettingCommand.cs:8  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\TaxSetting\RegisterTaxSettingCommand.cs:9  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Commands\Finance\TaxSetting\UpdateTaxSettingCommand.cs:9  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Common\ICurrentUserService.cs:11  int? CompanyId { get; }                          // int? rakha
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Common\ICurrentUserService.cs:25  int GetCompanyId();
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchQueries.cs:19  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchQueries.cs:28  public int? CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchQueries.cs:42  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchQueries.cs:50  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchQueries.cs:65  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchQueries.cs:87  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchStatusCommand.cs:29  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchValidationRequests.cs:11  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchValidationRequests.cs:21  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\BranchValidationRequests.cs:30  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\RegisterBranchRequest.cs:15  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Branch\RegisterBranchRequest.cs:26  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\ChangeCompanyProfileRequest.cs:7  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\ChangeCompanyProfileRequest.cs:18  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyQueries.cs:9  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyQueries.cs:37  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyQueries.cs:60  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyStatusCommands.cs:7  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyStatusCommands.cs:13  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyStatusCommands.cs:20  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyValidationRequests.cs:9  public int? ExcludingCompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\CompanyValidationRequests.cs:16  public int? ExcludingCompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Company\RegisterCompanyRequest.cs:17  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Department\DepartmentQueries.cs:36  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Department\DepartmentQueries.cs:47  public int? CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Department\DepartmentQueries.cs:74  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Department\DepartmentQueries.cs:98  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Department\DepartmentStatusCommands.cs:30  public int CompanyId { get; set; }
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\DTOs\Department\DepartmentValidationRequests.cs:38  public int CompanyId { get; set; }
+
+===== [5] companyId=0 Occurrences =====
+1. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\DispatchService.cs:121
+    var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+2. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\DispatchService.cs:151
+    var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+3. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\DispatchService.cs:162
+    var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+4. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\DispatchService.cs:189
+    var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
+5. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\GRNService.cs:163
+    var grn = await _grnRepository.GetByIdAsync(grnId, 0);
+6. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\InvoiceService.cs:148
+    var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
+7. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\InvoiceService.cs:168
+    var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
+8. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\InvoiceService.cs:214
+    var invoice = await invoiceRepository.GetByIdAsync(invoiceId, 0);
+9. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\PurchaseReturnService.cs:193
+    var purchase = await _purchaseMasterRepository.GetByIdAsync(purchaseId, 0);
+10. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\PurchaseReturnService.cs:214
+    var returnHeader = await _purchaseReturnRepository.GetByIdAsync(returnId, 0);
+11. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\SalesReturnService.cs:210
+    var returnHeader = await _salesReturnRepository.GetByIdAsync(returnId, 0);
+12. C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Infrastructure\Services\SalesService.cs:240
+    var sales = await _salesMasterRepository.GetByIdAsync(salesId, 0);
+TOTAL: 12
+
+===== [6] Repository GetByIdAsync Signatures =====
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IBankAccountRepository.cs:12  Task<BankAccount?> GetByIdAsync(int id, int companyId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IChartOfAccountRepository.cs:13  Task<ChartOfAccount?> GetByIdAsync(int id, int companyId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\ICycleCountDetailRepository.cs:10  Task<CycleCountDetail?> GetByIdAsync(int detailId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\ICycleCountRepository.cs:11  Task<CycleCount?> GetByIdAsync(int cycleCountId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IDispatchDetailRepository.cs:10  Task<DispatchDetail?> GetByIdAsync(int dispatchDetailId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IDispatchMasterRepository.cs:11  Task<DispatchMaster?> GetByIdAsync(int dispatchId, int companyId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IEmployeeBankAccountRepository.cs:14  Task<EmployeeBankAccount?> GetByIdAsync(int id);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IEmployeeRepository.cs:39  Task<Employee?> GetByIdAsync(int id);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IEmployeeSalaryRepository.cs:10  Task<EmployeeSalary?> GetByIdAsync(int id);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IGRNDetailRepository.cs:10  Task<Grndetail?> GetByIdAsync(int grnDetailId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IGRNRepository.cs:11  Task<Grn?> GetByIdAsync(int grnId, int companyId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IHolidayRepository.cs:10  Task<Holiday?> GetByIdAsync(int id);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IInvoiceDetailRepository.cs:11  Task<InvoiceDetail?> GetByIdAsync(int invoiceDetailId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IInvoiceRepository.cs:11  Task<Invoice?> GetByIdAsync(int invoiceId, int companyId);
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Domain\Interfaces\IPayrollSettingRepository.cs:9  Task<PayrollSetting?> GetByIdAsync(int id);
+
+===== [7] Service Constructors (sample from 12 services) =====
+FILE: ERPWMS.Infrastructure\Services\DispatchService.cs
+  using ERPWMS.Domain.Interfaces;
+  using ERPWMS.Domain.Services;
+  using ERPWMS.Database.Models;
+  using System;
+  using System.Collections.Generic;
+  using System.Threading.Tasks;
+  using ERPWMS.Database;
+  
+  namespace ERPWMS.Infrastructure.Services
+  {
+      public class DispatchService : IDispatchService
+      {
+          private readonly IDispatchMasterRepository _dispatchMasterRepository;
+          private readonly IDispatchDetailRepository _dispatchDetailRepository;
+          private readonly ISalesDetailRepository _salesDetailRepository;
+          private readonly IInvoiceRepository _invoiceRepository;
+          private readonly IInvoiceDetailRepository _invoiceDetailRepository;
+          private readonly AppDbContext _context;
+  
+          public DispatchService(
+              IDispatchMasterRepository dispatchMasterRepository,
+              IDispatchDetailRepository dispatchDetailRepository,
+              ISalesDetailRepository salesDetailRepository,
+              IInvoiceRepository invoiceRepository,
+              IInvoiceDetailRepository invoiceDetailRepository,
+              AppDbContext context)
+          {
+              _dispatchMasterRepository = dispatchMasterRepository;
+              _dispatchDetailRepository = dispatchDetailRepository;
+              _salesDetailRepository = salesDetailRepository;
+              _invoiceRepository = invoiceRepository;
+              _invoiceDetailRepository = invoiceDetailRepository;
+              _context = context;
+          }
+  
+          public async Task<IEnumerable<DispatchMaster>> GetAllAsync(int companyId, bool includeDeleted = false)
+              => await _dispatchMasterRepository.GetAllAsync(companyId, includeDeleted);
+  
+          public async Task<DispatchMaster?> GetByIdAsync(int dispatchId, int companyId)
+              => await _dispatchMasterRepository.GetByIdAsync(dispatchId, companyId);
+  
+          public async Task<DispatchMaster?> GetByDispatchNoAsync(string dispatchNo, int companyId)
+              => await _dispatchMasterRepository.GetByDispatchNoAsync(dispatchNo, companyId);
+  
+          public async Task<IEnumerable<DispatchMaster>> GetBySalesIdAsync(int salesId)
+              => await _dispatchMasterRepository.GetBySalesIdAsync(salesId);
+  
+          public async Task<IEnumerable<DispatchMaster>> GetByStatusAsync(string status, int companyId)
+              => await _dispatchMasterRepository.GetByStatusAsync(status, companyId);
+  
+
+FILE: ERPWMS.Infrastructure\Services\GRNService.cs
+  using ERPWMS.Domain.Interfaces;
+  using ERPWMS.Domain.Services;
+  using ERPWMS.Database;
+  using ERPWMS.Database.Models;
+  using Microsoft.EntityFrameworkCore;
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Threading.Tasks;
+  
+  namespace ERPWMS.Infrastructure.Services
+  {
+      public class GrnService : IGrnService
+      {
+          private readonly IGrnRepository _grnRepository;
+          private readonly IGrndetailRepository _grnDetailRepository;
+          private readonly IPurchaseMasterRepository _purchaseMasterRepository;
+          private readonly IPurchaseDetailRepository _purchaseDetailRepository;
+          private readonly AppDbContext _context;
+  
+          public GrnService(
+              IGrnRepository grnRepository,
+              IGrndetailRepository grnDetailRepository,
+              IPurchaseMasterRepository purchaseMasterRepository,
+              IPurchaseDetailRepository purchaseDetailRepository,
+              AppDbContext context)
+          {
+              _grnRepository = grnRepository;
+              _grnDetailRepository = grnDetailRepository;
+              _purchaseMasterRepository = purchaseMasterRepository;
+              _purchaseDetailRepository = purchaseDetailRepository;
+              _context = context;
+          }
+  
+          public async Task<IEnumerable<Grn>> GetAllAsync(int companyId, bool includeDeleted = false)
+              => await _grnRepository.GetAllAsync(companyId, includeDeleted);
+  
+          public async Task<Grn?> GetByIdAsync(int grnId, int companyId)
+              => await _grnRepository.GetByIdAsync(grnId, companyId);
+  
+          public async Task<Grn> CreateGrnAsync(
+              Grn grn,
+              List<Grndetail> details,
+              string createdBy)
+          {
+              if (!await _grnRepository.IsGrnNoUniqueAsync(grn.GrnNo, grn.Warehouse?.Branch?.CompanyId ?? 0, null))
+                  throw new InvalidOperationException("Grn Number already exists.");
+  
+              grn.Status = "Draft";
+              grn.CreatedBy = createdBy;
+
+FILE: ERPWMS.Infrastructure\Services\InvoiceService.cs
+  using ERPWMS.Domain.Interfaces;
+  using ERPWMS.Domain.Services;
+  using ERPWMS.Database.Models;
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Threading.Tasks;
+  
+  namespace ERPWMS.Infrastructure.Services
+  {
+      public class InvoiceService(
+          IInvoiceRepository invoiceRepository,
+          IInvoiceDetailRepository invoiceDetailRepository) : IInvoiceService
+      {
+          // =========================================================
+          // QUERIES
+          // =========================================================
+  
+          public async Task<IEnumerable<Invoice>> GetAllAsync(int companyId, bool includeDeleted = false)
+              => await invoiceRepository.GetAllAsync(companyId, includeDeleted);
+  
+          public async Task<Invoice?> GetByIdAsync(int invoiceId, int companyId)
+              => await invoiceRepository.GetByIdAsync(invoiceId, companyId);
+  
+          public async Task<Invoice?> GetByInvoiceNoAsync(string invoiceNo, int companyId)
+              => await invoiceRepository.GetByInvoiceNoAsync(invoiceNo, companyId);
+  
+          public async Task<IEnumerable<Invoice>> GetBySalesIdAsync(int salesId)
+              => await invoiceRepository.GetBySalesIdAsync(salesId);
+  
+          public async Task<IEnumerable<Invoice>> GetByStatusAsync(string status, int companyId)
+              => await invoiceRepository.GetByStatusAsync(status, companyId);
+  
+          public async Task<IEnumerable<Invoice>> GetByDateRangeAsync(DateTime? fromDate, DateTime? toDate, int companyId)
+              => await invoiceRepository.GetByDateRangeAsync(fromDate, toDate, companyId);
+  
+          // =========================================================
+          // CREATE
+          // =========================================================
+  
+          public async Task<Invoice> CreateInvoiceAsync(
+              Invoice invoice,
+              List<InvoiceDetail> details,
+              string createdBy)
+          {
+              if (invoice is null)
+                  throw new ArgumentNullException(nameof(invoice));
+  
+              if (details is null || !details.Any())
+                  throw new ArgumentException("Invoice must have at least one detail line.", nameof(details));
+
+FILE: ERPWMS.Infrastructure\Services\SalesService.cs
+  using ERPWMS.Domain.Interfaces;
+  using ERPWMS.Domain.Services;
+  using ERPWMS.Database.Models;
+  using System;
+  using System.Collections.Generic;
+  using System.Linq;
+  using System.Threading.Tasks;
+  
+  namespace ERPWMS.Infrastructure.Services
+  {
+      public class SalesService : ISalesService
+      {
+          private readonly ISalesMasterRepository _salesMasterRepository;
+          private readonly ISalesDetailRepository _salesDetailRepository;
+          private readonly IPickingListRepository _pickingListRepository;
+  
+          public SalesService(
+              ISalesMasterRepository salesMasterRepository,
+              ISalesDetailRepository salesDetailRepository,
+              IPickingListRepository pickingListRepository)
+          {
+              _salesMasterRepository = salesMasterRepository;
+              _salesDetailRepository = salesDetailRepository;
+              _pickingListRepository = pickingListRepository;
+          }
+  
+          public async Task<IEnumerable<SalesMaster>> GetAllAsync(int companyId, bool includeDeleted = false)
+              => await _salesMasterRepository.GetAllAsync(companyId, includeDeleted);
+  
+          public async Task<SalesMaster?> GetByIdAsync(int salesId, int companyId)
+              => await _salesMasterRepository.GetByIdAsync(salesId, companyId);
+  
+          public async Task<SalesMaster?> GetByOrderNoAsync(string orderNo, int companyId)
+              => await _salesMasterRepository.GetByOrderNoAsync(orderNo, companyId);
+  
+          public async Task<IEnumerable<SalesMaster>> GetByCustomerIdAsync(int customerId, int companyId)
+              => await _salesMasterRepository.GetByCustomerIdAsync(customerId, companyId);
+  
+          public async Task<IEnumerable<SalesMaster>> GetByDateRangeAsync(DateTime? fromDate, DateTime? toDate, int companyId)
+              => await _salesMasterRepository.GetByDateRangeAsync(fromDate, toDate, companyId);
+  
+          public async Task<IEnumerable<SalesMaster>> GetByStatusAsync(string status, int companyId)
+              => await _salesMasterRepository.GetByStatusAsync(status, companyId);
+  
+          // =========================================================
+          // CREATE
+          // =========================================================
+  
+          public async Task<SalesMaster> CreateSalesOrderAsync(
+              SalesMaster sales,
+
+
+===== [8] AppDbContext Stats =====
+FILE: C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Database\Models\AppDbContext.cs
+LINES: 3251
+--- First 30 lines ---
+  using System;
+  using System.Collections.Generic;
+  using Microsoft.EntityFrameworkCore;
+  
+  namespace ERPWMS.Database.Models;
+  
+  public partial class AppDbContext : DbContext
+  {
+      public AppDbContext()
+      {
+      }
+  
+      public AppDbContext(DbContextOptions<AppDbContext> options)
+          : base(options)
+      {
+      }
+  
+      public virtual DbSet<AccountLedger> AccountLedgers { get; set; }
+  
+      public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
+  
+      public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
+  
+      public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; }
+  
+      public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; }
+  
+      public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
+  
+      public virtual DbSet<AuditLog> AuditLogs { get; set; }
+--- DbSet declarations ---
+  L18: public virtual DbSet<AccountLedger> AccountLedgers { get; set; }
+  L20: public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
+  L22: public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
+  L24: public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; }
+  L26: public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; }
+  L28: public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
+  L30: public virtual DbSet<AuditLog> AuditLogs { get; set; }
+  L32: public virtual DbSet<BankAccount> BankAccounts { get; set; }
+  L34: public virtual DbSet<BankReconciliation> BankReconciliations { get; set; }
+  L36: public virtual DbSet<BankTransaction> BankTransactions { get; set; }
+  L38: public virtual DbSet<BatchTracking> BatchTrackings { get; set; }
+  L40: public virtual DbSet<Bin> Bins { get; set; }
+  L42: public virtual DbSet<Branch> Branches { get; set; }
+  L44: public virtual DbSet<Brand> Brands { get; set; }
+  L46: public virtual DbSet<Category> Categories { get; set; }
+  L48: public virtual DbSet<ChartOfAccount> ChartOfAccounts { get; set; }
+  L50: public virtual DbSet<Company> Companies { get; set; }
+  L52: public virtual DbSet<Customer> Customers { get; set; }
+  L54: public virtual DbSet<CustomerComplaint> CustomerComplaints { get; set; }
+  L56: public virtual DbSet<CustomerContact> CustomerContacts { get; set; }
+  L58: public virtual DbSet<CustomerFeedback> CustomerFeedbacks { get; set; }
+  L60: public virtual DbSet<CustomerInquiry> CustomerInquiries { get; set; }
+  L62: public virtual DbSet<CycleCount> CycleCounts { get; set; }
+  L64: public virtual DbSet<CycleCountDetail> CycleCountDetails { get; set; }
+  L66: public virtual DbSet<DashboardWidget> DashboardWidgets { get; set; }
+  L68: public virtual DbSet<DataBackupLog> DataBackupLogs { get; set; }
+  L70: public virtual DbSet<DeliveryChallan> DeliveryChallans { get; set; }
+  L72: public virtual DbSet<Department> Departments { get; set; }
+  L74: public virtual DbSet<Designation> Designations { get; set; }
+  L76: public virtual DbSet<DispatchDetail> DispatchDetails { get; set; }
+  L78: public virtual DbSet<DispatchMaster> DispatchMasters { get; set; }
+  L80: public virtual DbSet<Employee> Employees { get; set; }
+  L82: public virtual DbSet<EmployeeAttendance> EmployeeAttendances { get; set; }
+  L84: public virtual DbSet<EmployeeBankAccount> EmployeeBankAccounts { get; set; }
+  L86: public virtual DbSet<EmployeeLeaf> EmployeeLeaves1 { get; set; }
+  L88: public virtual DbSet<EmployeeLeave> EmployeeLeaves { get; set; }
+  L90: public virtual DbSet<EmployeePayroll> EmployeePayrolls { get; set; }
+  L92: public virtual DbSet<EmployeePayrollDetail> EmployeePayrollDetails { get; set; }
+  L94: public virtual DbSet<EmployeeSalary> EmployeeSalaries { get; set; }
+  L96: public virtual DbSet<EmployeeSalary1> EmployeeSalaries1 { get; set; }
+  L98: public virtual DbSet<EmployeeStatus> EmployeeStatuses { get; set; }
+  L100: public virtual DbSet<ErrorLog> ErrorLogs { get; set; }
+  L102: public virtual DbSet<Grn> Grns { get; set; }
+  L104: public virtual DbSet<Grndetail> Grndetails { get; set; }
+  L106: public virtual DbSet<InventoryValuation> InventoryValuations { get; set; }
+  L108: public virtual DbSet<Invoice> Invoices { get; set; }
+  L110: public virtual DbSet<InvoiceDetail> InvoiceDetails { get; set; }
+  L112: public virtual DbSet<JournalVoucher> JournalVouchers { get; set; }
+  L114: public virtual DbSet<JournalVoucherDetail> JournalVoucherDetails { get; set; }
+  L116: public virtual DbSet<LoginHistory> LoginHistories { get; set; }
+--- OnModelCreating sections (entity configurations) ---
+  L295: modelBuilder.Entity<AccountLedger>(entity =>
+  L333: modelBuilder.Entity<AspNetRole>(entity =>
+  L348: modelBuilder.Entity<AspNetRoleClaim>(entity =>
+  L360: modelBuilder.Entity<AspNetUserClaim>(entity =>
+  L373: modelBuilder.Entity<AspNetUserLogin>(entity =>
+  L387: modelBuilder.Entity<AspNetUserToken>(entity =>
+  L400: modelBuilder.Entity<AuditLog>(entity =>
+  L428: modelBuilder.Entity<BankAccount>(entity =>
+  L458: modelBuilder.Entity<BankReconciliation>(entity =>
+  L487: modelBuilder.Entity<BankTransaction>(entity =>
+  L514: modelBuilder.Entity<BatchTracking>(entity =>
+  L553: modelBuilder.Entity<Bin>(entity =>
+  L586: modelBuilder.Entity<Branch>(entity =>
+  L627: modelBuilder.Entity<Brand>(entity =>
+  L655: modelBuilder.Entity<Category>(entity =>
+  L681: modelBuilder.Entity<ChartOfAccount>(entity =>
+  L714: modelBuilder.Entity<Company>(entity =>
+  L747: modelBuilder.Entity<Customer>(entity =>
+  L829: modelBuilder.Entity<CustomerComplaint>(entity =>
+  L871: modelBuilder.Entity<CustomerContact>(entity =>
+  L897: modelBuilder.Entity<CustomerFeedback>(entity =>
+  L918: modelBuilder.Entity<CustomerInquiry>(entity =>
+  L957: modelBuilder.Entity<CycleCount>(entity =>
+  L1015: modelBuilder.Entity<CycleCountDetail>(entity =>
+  L1047: modelBuilder.Entity<DashboardWidget>(entity =>
+  L1062: modelBuilder.Entity<DataBackupLog>(entity =>
+  L1081: modelBuilder.Entity<DeliveryChallan>(entity =>
+  L1133: modelBuilder.Entity<Department>(entity =>
+  L1174: modelBuilder.Entity<Designation>(entity =>
+  L1203: modelBuilder.Entity<DispatchDetail>(entity =>
+  L1235: modelBuilder.Entity<DispatchMaster>(entity =>
+  L1294: modelBuilder.Entity<Employee>(entity =>
+  L1367: modelBuilder.Entity<EmployeeAttendance>(entity =>
+  L1393: modelBuilder.Entity<EmployeeBankAccount>(entity =>
+  L1418: modelBuilder.Entity<EmployeeLeaf>(entity =>
+  L1451: modelBuilder.Entity<EmployeeLeave>(entity =>
+  L1495: modelBuilder.Entity<EmployeePayroll>(entity =>
+  L1547: modelBuilder.Entity<EmployeePayrollDetail>(entity =>
+  L1580: modelBuilder.Entity<EmployeeSalary>(entity =>
+  L1609: modelBuilder.Entity<EmployeeSalary1>(entity =>
+  L1664: modelBuilder.Entity<EmployeeStatus>(entity =>
+  L1676: modelBuilder.Entity<ErrorLog>(entity =>
+  L1695: modelBuilder.Entity<Grn>(entity =>
+  L1753: modelBuilder.Entity<Grndetail>(entity =>
+  L1803: modelBuilder.Entity<InventoryValuation>(entity =>
+  L1834: modelBuilder.Entity<Invoice>(entity =>
+  L1891: modelBuilder.Entity<InvoiceDetail>(entity =>
+  L1931: modelBuilder.Entity<JournalVoucher>(entity =>
+  L1973: modelBuilder.Entity<JournalVoucherDetail>(entity =>
+  L1996: modelBuilder.Entity<LoginHistory>(entity =>
+  L2018: modelBuilder.Entity<Module>(entity =>
+  L2036: modelBuilder.Entity<ModulePermission>(entity =>
+  L2063: modelBuilder.Entity<Notification>(entity =>
+  L2091: modelBuilder.Entity<NotificationTemplate>(entity =>
+  L2112: modelBuilder.Entity<PasswordResetToken>(entity =>
+  L2127: modelBuilder.Entity<PaymentVoucher>(entity =>
+  L2184: modelBuilder.Entity<PaymentVoucherDetail>(entity =>
+  L2207: modelBuilder.Entity<PickingDetail>(entity =>
+  L2255: modelBuilder.Entity<PickingList>(entity =>
+  L2323: modelBuilder.Entity<Product>(entity =>
+

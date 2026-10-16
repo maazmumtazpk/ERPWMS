@@ -1,0 +1,40 @@
+﻿
+=== GIT PUSH — 2026-10-16 21:25:25 ===
+
+--- [1] UPDATING .gitignore ---
+[SKIP] .gitignore already has rules
+
+--- [2] GIT STATUS ---
+ M ERPWMS.Application/ERPWMS.Application.csproj
+ M ERPWMS.Database/ERPWMS.Database.csproj
+ M ERPWMS.Domain/ERPWMS.Domain.csproj
+ M ERPWMS.Infrastructure/ERPWMS.Infrastructure.csproj
+ M ERPWMS.Infrastructure/Services/DispatchService.cs
+ M ERPWMS.Infrastructure/Services/GRNService.cs
+ M ERPWMS.Infrastructure/Services/InvoiceService.cs
+ M ERPWMS.Infrastructure/Services/PurchaseReturnService.cs
+ M ERPWMS.Infrastructure/Services/SalesReturnService.cs
+ M ERPWMS.Infrastructure/Services/SalesService.cs
+ M ERPWMS.Infrastructure/Services/SystemSettingService.cs
+ M ERPWMS.Web/ERPWMS.Web.csproj
+ M ERPWMS.Web/Program.cs
+?? backup_20261016_204816/
+?? backup_cid_20261016_211517/
+?? backup_fix2_20261016_205224/
+?? backup_fix4_20261016_205751/
+?? backup_fix_20261016_204312/
+?? backup_fix_20261016_205003/
+?? cid_fix.txt
+?? companyid_audit.txt
+?? fix2_report.txt
+?? fix4_report.txt
+?? fix_report.txt
+?? git_audit.txt
+?? git_push.txt
+?? pkcs_audit.txt
+?? preflight_audit.txt
+?? setup_report.txt
+?? verify.txt
+?? warnings_audit.txt
+
+--- [3] STAGING ---

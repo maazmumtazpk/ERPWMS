@@ -1,0 +1,250 @@
+﻿
+=== GIT AUDIT — 2026-10-16 21:19:49 ===
+
+--- [1] GIT REPO CHECK ---
+  [OK] .git folder exists
+  Remotes:
+    origin	https://github.com/maazmumtazpk/ERPWMS.git (fetch)
+    origin	https://github.com/maazmumtazpk/ERPWMS.git (push)
+  Current branch: main
+
+--- [2] GIT STATUS ---
+ M ERPWMS.Application/ERPWMS.Application.csproj
+ M ERPWMS.Database/ERPWMS.Database.csproj
+ M ERPWMS.Domain/ERPWMS.Domain.csproj
+ M ERPWMS.Infrastructure/ERPWMS.Infrastructure.csproj
+ M ERPWMS.Infrastructure/Services/DispatchService.cs
+ M ERPWMS.Infrastructure/Services/GRNService.cs
+ M ERPWMS.Infrastructure/Services/InvoiceService.cs
+ M ERPWMS.Infrastructure/Services/PurchaseReturnService.cs
+ M ERPWMS.Infrastructure/Services/SalesReturnService.cs
+ M ERPWMS.Infrastructure/Services/SalesService.cs
+ M ERPWMS.Infrastructure/Services/SystemSettingService.cs
+ M ERPWMS.Web/ERPWMS.Web.csproj
+ M ERPWMS.Web/Program.cs
+?? backup_20261016_204816/
+?? backup_cid_20261016_211517/
+?? backup_fix2_20261016_205224/
+?? backup_fix4_20261016_205751/
+?? backup_fix_20261016_204312/
+?? backup_fix_20261016_205003/
+?? cid_fix.txt
+?? companyid_audit.txt
+?? fix2_report.txt
+?? fix4_report.txt
+?? fix_report.txt
+?? git_audit.txt
+?? pkcs_audit.txt
+?? preflight_audit.txt
+?? setup_report.txt
+?? verify.txt
+?? warnings_audit.txt
+
+--- [3] .gitignore ---
+  [OK] .gitignore exists
+    # ============================================================
+    # .NET / Visual Studio
+    # ============================================================
+    [Bb]in/
+    [Oo]bj/
+    [Dd]ebug/
+    [Rr]elease/
+    x64/
+    x86/
+    build/
+    bld/
+    *.user
+    *.suo
+    *.userosscache
+    *.sln.docstates
+    *.userprefs
+    .vs/
+    .vscode/
+    .idea/
+    
+    # ============================================================
+    # NuGet Packages
+    # ============================================================
+    *.nupkg
+    *.snupkg
+    packages/
+    !packages/build/
+    !packages/**/build/
+    !packages/**/buildTransitive/
+    *.nuget.props
+    *.nuget.targets
+    
+    # ============================================================
+    # MSBuild / Build Artifacts
+    # ============================================================
+    *.dll
+    *.pdb
+    *.exe
+    *.cache
+    *.log
+    project.lock.json
+    project.fragment.lock.json
+    artifacts/
+    
+    # ============================================================
+    # Test Results
+    # ============================================================
+    [Tt]est[Rr]esult*/
+    [Bb]uild[Ll]og.*
+    *.trx
+    *.coverage
+    *.coveragexml
+    
+    # ============================================================
+    # Application Specific
+    # ============================================================
+    # Connection strings (agar sensitive ho toh — commented)
+    # appsettings.Production.json
+    # appsettings.Development.json
+    # appsettings.Local.json
+    *.mdf
+    *.ldf
+    *.ndf
+    
+    # ============================================================
+    # Publish / Deployment
+    # ============================================================
+    publish/
+    *.publishproj
+    PublishScripts/
+    
+    # ============================================================
+    # Node (in case frontend)
+    # ============================================================
+    node_modules/
+    npm-debug.log*
+    yarn-debug.log*
+    yarn-error.log*
+    
+    # ============================================================
+    # Backup / Junk Folders (Aapke Project Specific)
+    # ============================================================
+    OfflinePackages/
+    _BACKUP_*/
+    _BROKEN_BACKUP/
+    _DISABLED_FILES/
+    *.bak
+    *.bak_*
+    *.disabled
+    *.old
+    *.tmp
+    
+    # ============================================================
+    # OS Files
+    # ============================================================
+    .DS_Store
+    Thumbs.db
+    Desktop.ini
+    ehthumbs.db
+    
+    # ============================================================
+    # ReSharper / Rider
+    # ============================================================
+    _ReSharper*/
+    *.[Rr]e[Ss]harper
+    *.DotSettings.user
+    
+    # ============================================================
+    # User-Specific
+    # ============================================================
+    *.rsuser
+    *.svclog
+    *.sbr
+    *.svc
+    # Backups (auto-generated)
+    *.backup_*
+    *.backup
+    BuildLog-*.txt
+    FixLog-*.txt
+    PolicyCheck-*.txt
+    GitPush-*.txt
+    PermList.txt
+    
+    backup-*/
+    AdminFix*.txt
+    AdminFiles-*.txt
+    AdminCode-*.txt
+    PermList*.txt
+
+--- [4] BACKUP FOLDERS (should NOT push) ---
+  backup_20261016_204816  (30.2 KB)
+  backup_cid_20261016_211517  (57 KB)
+  backup_fix2_20261016_205224  (17.2 KB)
+  backup_fix4_20261016_205751  (4.5 KB)
+  backup_fix_20261016_204312  (10.4 KB)
+  backup_fix_20261016_205003  (5.9 KB)
+
+--- [5] obj/bin (should be ignored) ---
+  Found: 10+ obj/bin folders
+
+--- [6] Report/Log files in root ---
+
+Name                  KB
+----                  --
+cid_fix.txt          1.4
+companyid_audit.txt 64.3
+fix2_report.txt       38
+fix4_report.txt      1.8
+fix_report.txt       1.1
+git_audit.txt          5
+pkcs_audit.txt      16.7
+preflight_audit.txt 18.3
+setup_report.txt     2.7
+verify.txt          22.8
+warnings_audit.txt   2.5
+
+
+
+
+--- [7] .log files ---
+
+Name                  KB
+----                  --
+build_after.log     29.3
+build_before.log    29.3
+build_cid.log        170
+build_fix.log      191.6
+build_fix2.log     189.2
+build_fix4.log     261.2
+build_warnings.log   5.9
+
+
+
+
+--- [8] FILES CHANGED TODAY ---
+  21:19  .\git_audit.txt
+  21:15  .\cid_fix.txt
+  21:15  .\ERPWMS.Infrastructure\Services\DispatchService.cs
+  21:15  .\ERPWMS.Infrastructure\Services\GRNService.cs
+  21:15  .\ERPWMS.Infrastructure\Services\InvoiceService.cs
+  21:15  .\ERPWMS.Infrastructure\Services\SalesService.cs
+  21:15  .\build_cid.log
+  21:15  .\ERPWMS.Infrastructure\Services\PurchaseReturnService.cs
+  21:15  .\ERPWMS.Infrastructure\Services\SalesReturnService.cs
+  21:10  .\preflight_audit.txt
+  21:05  .\companyid_audit.txt
+  21:01  .\build_warnings.log
+  21:01  .\warnings_audit.txt
+  20:59  .\build_fix4.log
+  20:59  .\fix4_report.txt
+  20:58  .\ERPWMS.Web\ERPWMS.Web.csproj
+  20:58  .\ERPWMS.Application\ERPWMS.Application.csproj
+  20:58  .\ERPWMS.Domain\ERPWMS.Domain.csproj
+  20:58  .\ERPWMS.Database\ERPWMS.Database.csproj
+  20:58  .\ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj
+  20:55  .\pkcs_audit.txt
+  20:53  .\fix2_report.txt
+  20:52  .\build_fix2.log
+  20:52  .\ERPWMS.Web\Program.cs
+  20:50  .\fix_report.txt
+  20:50  .\ERPWMS.Infrastructure\Services\SystemSettingService.cs
+  20:50  .\build_fix.log
+  20:48  .\build_after.log
+  20:48  .\setup_report.txt
+  20:45  .\build_before.log
+

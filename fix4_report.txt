@@ -1,0 +1,50 @@
+﻿
+=== FIX 4: Pkcs -> 10.0.13 ===
+Time: 2026-10-16 20:57:51
+
+--- BACKUP ---
+  [OK] ERPWMS.Database\ERPWMS.Database.csproj
+  [OK] ERPWMS.Domain\ERPWMS.Domain.csproj
+  [OK] ERPWMS.Application\ERPWMS.Application.csproj
+  [OK] ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj
+  [OK] ERPWMS.Web\ERPWMS.Web.csproj
+  Backup: C:\Users\AT\Downloads\ERPWMS_New\backup_fix4_20261016_205751
+
+--- PIN PKCS 10.0.13 ---
+PROJECT: ERPWMS.Database\ERPWMS.Database.csproj
+[OK] Added 10.0.13
+
+PROJECT: ERPWMS.Domain\ERPWMS.Domain.csproj
+[OK] Added 10.0.13
+
+PROJECT: ERPWMS.Application\ERPWMS.Application.csproj
+[OK] Added 10.0.13
+
+PROJECT: ERPWMS.Infrastructure\ERPWMS.Infrastructure.csproj
+[OK] Added 10.0.13
+
+PROJECT: ERPWMS.Web\ERPWMS.Web.csproj
+[OK] Added 10.0.13
+
+--- VERIFY: Pkcs refs in csproj ---
+  ERPWMS.Database.csproj [19]: <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  ERPWMS.Domain.csproj [12]: <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  ERPWMS.Application.csproj [16]: <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  ERPWMS.Infrastructure.csproj [15]: <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  ERPWMS.Web.csproj [18]: <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+
+--- BUILD ---
+Exit Code          : 0
+Errors             : 0
+Warnings (total)   : 518
+Warnings (unique)  : 259
+
+--- Pkcs warning status ---
+  [CLEARED] No Pkcs/NU1902/NU1903 warnings!
+
+--- Installed Pkcs in Web ---
+     > System.Security.Cryptography.Pkcs                      10.0.13     10.0.13
+
+============================================
+ [SUCCESS] BUILD PASSED
+============================================

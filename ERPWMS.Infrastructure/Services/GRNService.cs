@@ -17,19 +17,22 @@ namespace ERPWMS.Infrastructure.Services
         private readonly IPurchaseMasterRepository _purchaseMasterRepository;
         private readonly IPurchaseDetailRepository _purchaseDetailRepository;
         private readonly AppDbContext _context;
+        private readonly ERPWMS.Application.Common.ICurrentUserService _currentUserService;
 
         public GrnService(
             IGrnRepository grnRepository,
             IGrndetailRepository grnDetailRepository,
             IPurchaseMasterRepository purchaseMasterRepository,
             IPurchaseDetailRepository purchaseDetailRepository,
-            AppDbContext context)
+            AppDbContext context,
+            ERPWMS.Application.Common.ICurrentUserService currentUserService)
         {
             _grnRepository = grnRepository;
             _grnDetailRepository = grnDetailRepository;
             _purchaseMasterRepository = purchaseMasterRepository;
             _purchaseDetailRepository = purchaseDetailRepository;
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<Grn>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -160,7 +163,7 @@ namespace ERPWMS.Infrastructure.Services
         // =========================================================
         public async Task UpdateInventoryOnPostAsync(int grnId)
         {
-            var grn = await _grnRepository.GetByIdAsync(grnId, 0);
+            var grn = await _grnRepository.GetByIdAsync(grnId, _currentUserService.GetCompanyId());
             if (grn == null) return;
 
             var details = await _context.Grndetails
@@ -195,3 +198,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

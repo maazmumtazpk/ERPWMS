@@ -22,8 +22,14 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
+// === ERPWMS DataProtection (auto-added) ===
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\Keys\ERPWMS"))
+    .SetApplicationName("ERPWMS");
+// === end ===
 
 // ============================================================
 // 1. DATABASE
@@ -300,3 +306,5 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
+
+
