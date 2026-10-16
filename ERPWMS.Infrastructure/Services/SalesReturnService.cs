@@ -1,6 +1,8 @@
 ﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
+using ERPWMS.Database;
 using ERPWMS.Database.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,15 +15,18 @@ namespace ERPWMS.Infrastructure.Services
         private readonly ISalesReturnRepository _salesReturnRepository;
         private readonly ISalesReturnDetailRepository _salesReturnDetailRepository;
         private readonly ISalesMasterRepository _salesMasterRepository;
+        private readonly AppDbContext _context;
 
         public SalesReturnService(
             ISalesReturnRepository salesReturnRepository,
             ISalesReturnDetailRepository salesReturnDetailRepository,
-            ISalesMasterRepository salesMasterRepository)
+            ISalesMasterRepository salesMasterRepository,
+            AppDbContext context)
         {
             _salesReturnRepository = salesReturnRepository;
             _salesReturnDetailRepository = salesReturnDetailRepository;
             _salesMasterRepository = salesMasterRepository;
+            _context = context;
         }
 
         public async Task<IEnumerable<SalesReturn>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -60,9 +65,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new InvalidOperationException("Sales Return Number already exists.");
 
             foreach (var detail in details)
-            {
                 ValidateSalesReturnDetail(detail);
-            }
 
             salesReturn.Status = "Draft";
             salesReturn.CreatedBy = createdBy;
@@ -109,9 +112,7 @@ namespace ERPWMS.Infrastructure.Services
             var existingDetails = await _salesReturnDetailRepository.GetByReturnIdAsync(salesReturn.ReturnId);
 
             foreach (var existing in existingDetails)
-            {
                 await _salesReturnDetailRepository.DeleteAsync(existing.ReturnDetailId);
-            }
 
             if (details != null)
             {
@@ -189,10 +190,6 @@ namespace ERPWMS.Infrastructure.Services
             if (details is null || !details.Any())
                 throw new ArgumentException("Return must have details.", nameof(details));
 
-            var sales = await _salesMasterRepository.GetByIdAsync(invoiceId, 0);
-            if (sales == null)
-                throw new InvalidOperationException("Sales Order not found.");
-
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
@@ -205,12 +202,51 @@ namespace ERPWMS.Infrastructure.Services
             await Task.CompletedTask;
         }
 
+        // =========================================================
+        // INVENTORY UPDATE ON APPROVE
+        // =========================================================
         public async Task UpdateInventoryOnApproveAsync(int returnId)
         {
-            // TODO: Implement inventory ledger updates
-            // This method should update the stock ledger when a return is approved
-            await Task.CompletedTask;
+            var returnHeader = await _salesReturnRepository.GetByIdAsync(returnId, 0);
+            if (returnHeader == null) return;
+
+            var details = await _context.SalesReturnDetails
+                .Where(d => d.ReturnId == returnId && (d.IsDeleted == null || d.IsDeleted == false))
+                .ToListAsync();
+
+            if (!details.Any()) return;
+
+            // Find warehouse via Sales order
+            int warehouseId = 0;
+            if (returnHeader.SalesId > 0)
+            {
+                var sales = await _context.SalesMasters
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.SalesId == returnHeader.SalesId);
+                if (sales != null) warehouseId = sales.WarehouseId;
+            }
+
+            var now = DateTime.UtcNow;
+
+            foreach (var detail in details)
+            {
+                // Product comes BACK to warehouse
+                _context.StockLedgers.Add(new StockLedger
+                {
+                    ProductId = detail.ProductId,
+                    WarehouseId = warehouseId,
+                    Quantity = detail.Quantity,
+                    TransactionType = "IN",
+                    ReferenceDocType = "SalesReturn",
+                    ReferenceDocNo = returnHeader.ReturnNo ?? returnId.ToString(),
+                    ReferenceId = returnId,
+                    CreatedBy = "System",
+                    CreatedDate = now,
+                    IsDeleted = false
+                });
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }
-

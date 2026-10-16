@@ -1,6 +1,8 @@
 ﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
+using ERPWMS.Database;
 using ERPWMS.Database.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,15 +15,18 @@ namespace ERPWMS.Infrastructure.Services
         private readonly IPurchaseReturnRepository _purchaseReturnRepository;
         private readonly IPurchaseReturnDetailRepository _purchaseReturnDetailRepository;
         private readonly IPurchaseMasterRepository _purchaseMasterRepository;
+        private readonly AppDbContext _context;
 
         public PurchaseReturnService(
             IPurchaseReturnRepository purchaseReturnRepository,
             IPurchaseReturnDetailRepository purchaseReturnDetailRepository,
-            IPurchaseMasterRepository purchaseMasterRepository)
+            IPurchaseMasterRepository purchaseMasterRepository,
+            AppDbContext context)
         {
             _purchaseReturnRepository = purchaseReturnRepository;
             _purchaseReturnDetailRepository = purchaseReturnDetailRepository;
             _purchaseMasterRepository = purchaseMasterRepository;
+            _context = context;
         }
 
         public async Task<IEnumerable<PurchaseReturn>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -45,9 +50,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new InvalidOperationException("Return Number already exists.");
 
             foreach (var detail in details)
-            {
                 ValidatePurchaseReturnDetail(detail);
-            }
 
             purchaseReturn.Status = "Draft";
             purchaseReturn.CreatedBy = createdBy;
@@ -94,9 +97,7 @@ namespace ERPWMS.Infrastructure.Services
             var existingDetails = await _purchaseReturnDetailRepository.GetByReturnIdAsync(purchaseReturn.ReturnId);
 
             foreach (var existing in existingDetails)
-            {
                 await _purchaseReturnDetailRepository.DeleteAsync(existing.ReturnDetailId);
-            }
 
             if (details != null)
             {
@@ -205,12 +206,51 @@ namespace ERPWMS.Infrastructure.Services
             await Task.CompletedTask;
         }
 
+        // =========================================================
+        // INVENTORY UPDATE ON APPROVE
+        // =========================================================
         public async Task UpdateInventoryOnApproveAsync(int returnId)
         {
-            // TODO: Implement inventory ledger updates
-            // This method should update the stock ledger when a return is approved
-            await Task.CompletedTask;
+            var returnHeader = await _purchaseReturnRepository.GetByIdAsync(returnId, 0);
+            if (returnHeader == null) return;
+
+            var details = await _context.PurchaseReturnDetails
+                .Where(d => d.ReturnId == returnId && (d.IsDeleted == null || d.IsDeleted == false))
+                .ToListAsync();
+
+            if (!details.Any()) return;
+
+            // Find warehouse via Purchase order
+            int warehouseId = 0;
+            if (returnHeader.PurchaseId > 0)
+            {
+                var purchase = await _context.PurchaseMasters
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.PurchaseId == returnHeader.PurchaseId);
+                if (purchase != null) warehouseId = purchase.WarehouseId;
+            }
+
+            var now = DateTime.UtcNow;
+
+            foreach (var detail in details)
+            {
+                // Product goes OUT to supplier
+                _context.StockLedgers.Add(new StockLedger
+                {
+                    ProductId = detail.ProductId,
+                    WarehouseId = warehouseId,
+                    Quantity = detail.Quantity,
+                    TransactionType = "OUT",
+                    ReferenceDocType = "PurchaseReturn",
+                    ReferenceDocNo = returnHeader.ReturnNo ?? returnId.ToString(),
+                    ReferenceId = returnId,
+                    CreatedBy = "System",
+                    CreatedDate = now,
+                    IsDeleted = false
+                });
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }
-

@@ -1,6 +1,8 @@
 ﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
+using ERPWMS.Database;
 using ERPWMS.Database.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,17 +16,20 @@ namespace ERPWMS.Infrastructure.Services
         private readonly IGrndetailRepository _grnDetailRepository;
         private readonly IPurchaseMasterRepository _purchaseMasterRepository;
         private readonly IPurchaseDetailRepository _purchaseDetailRepository;
+        private readonly AppDbContext _context;
 
         public GrnService(
             IGrnRepository grnRepository,
             IGrndetailRepository grnDetailRepository,
             IPurchaseMasterRepository purchaseMasterRepository,
-            IPurchaseDetailRepository purchaseDetailRepository)
+            IPurchaseDetailRepository purchaseDetailRepository,
+            AppDbContext context)
         {
             _grnRepository = grnRepository;
             _grnDetailRepository = grnDetailRepository;
             _purchaseMasterRepository = purchaseMasterRepository;
             _purchaseDetailRepository = purchaseDetailRepository;
+            _context = context;
         }
 
         public async Task<IEnumerable<Grn>> GetAllAsync(int companyId, bool includeDeleted = false)
@@ -42,7 +47,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new InvalidOperationException("Grn Number already exists.");
 
             grn.Status = "Draft";
-            grn.CreatedBy = createdBy.ToString();
+            grn.CreatedBy = createdBy;
             grn.CreatedDate = DateTime.UtcNow;
 
             await _grnRepository.AddAsync(grn);
@@ -50,7 +55,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 detail.GrnId = grn.GrnId;
-                detail.CreatedBy = createdBy.ToString();
+                detail.CreatedBy = createdBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await _grnDetailRepository.AddAsync(detail);
             }
@@ -58,13 +63,12 @@ namespace ERPWMS.Infrastructure.Services
             return grn;
         }
 
-        // ? FIXED — MISSING METHOD
         public async Task UpdateGrnAsync(
             Grn grn,
             List<Grndetail> details,
             string updatedBy)
         {
-            grn.UpdatedBy = updatedBy.ToString();
+            grn.UpdatedBy = updatedBy;
             grn.UpdatedDate = DateTime.UtcNow;
 
             await _grnRepository.UpdateAsync(grn);
@@ -72,20 +76,17 @@ namespace ERPWMS.Infrastructure.Services
             var existingDetails = await _grnDetailRepository.GetByGrnIdAsync(grn.GrnId);
 
             foreach (var existing in existingDetails)
-            {
                 await _grnDetailRepository.DeleteAsync(existing.GrndetailId);
-            }
 
             foreach (var detail in details)
             {
                 detail.GrnId = grn.GrnId;
-                detail.CreatedBy = updatedBy.ToString();
+                detail.CreatedBy = updatedBy;
                 detail.CreatedDate = DateTime.UtcNow;
                 await _grnDetailRepository.AddAsync(detail);
             }
         }
 
-        // ? FIXED — MISSING METHOD
         public async Task<bool> DeleteGrnAsync(
             int grnId,
             int companyId,
@@ -151,14 +152,46 @@ namespace ERPWMS.Infrastructure.Services
         public async Task ValidateGrnAgainstPurchaseOrderAsync(int purchaseId, List<Grndetail> details)
         {
             var purchaseDetails = await _purchaseDetailRepository.GetByPurchaseIdAsync(purchaseId);
-            // Validation logic — extend as needed
             await Task.CompletedTask;
         }
 
+        // =========================================================
+        // INVENTORY UPDATE ON POST
+        // =========================================================
         public async Task UpdateInventoryOnPostAsync(int grnId)
         {
-            // Inventory ledger update logic
-            await Task.CompletedTask;
+            var grn = await _grnRepository.GetByIdAsync(grnId, 0);
+            if (grn == null) return;
+
+            var details = await _context.Grndetails
+                .Where(d => d.GrnId == grnId && (d.IsDeleted == null || d.IsDeleted == false))
+                .ToListAsync();
+
+            if (!details.Any()) return;
+
+            var now = DateTime.UtcNow;
+
+            foreach (var detail in details)
+            {
+                if (detail.AcceptedQty <= 0) continue;
+
+                // Product comes IN from supplier
+                _context.StockLedgers.Add(new StockLedger
+                {
+                    ProductId = detail.ProductId,
+                    WarehouseId = grn.WarehouseId,
+                    Quantity = detail.AcceptedQty,
+                    TransactionType = "IN",
+                    ReferenceDocType = "GRN",
+                    ReferenceDocNo = grn.GrnNo ?? grnId.ToString(),
+                    ReferenceId = grnId,
+                    CreatedBy = "System",
+                    CreatedDate = now,
+                    IsDeleted = false
+                });
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }
