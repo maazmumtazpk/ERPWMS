@@ -1,4 +1,4 @@
-@model ERPWMS.Application.DTOs.Inventory.StockAdjustmentDto
+﻿@model ERPWMS.Application.DTOs.Inventory.StockAdjustmentDto
 
 @{
     ViewData["Title"] = "Adjustment Details";
@@ -100,7 +100,7 @@
                             <th class="bg-light">Created Date</th>
                             <td>@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
                         </tr>
-                        @if (Model.ApprovedBy.HasValue)
+                        @if (!string.IsNullOrEmpty(Model.ApprovedBy))
                         {
                             <tr>
                                 <th class="bg-light">Approved By</th>

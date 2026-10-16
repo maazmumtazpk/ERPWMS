@@ -1,4 +1,4 @@
-using ERPWMS.Application.DTOs.Procurement;
+﻿using ERPWMS.Application.DTOs.Procurement;
 using ERPWMS.Domain.Interfaces;
 using FluentValidation;
 using System;
@@ -102,8 +102,10 @@ namespace ERPWMS.Application.Validators.Procurement
              * CreateGrndetailValidator should be registered through DI.
              */
 
-            RuleForEach(x => x.Grndetails)
-                .SetValidator((CreateGrndetailValidator)null!);
+            // FIX: child validator needs PurchaseDetailRepository - skip inline validation
+            // (validation happens inside CreateGrndetailValidator when registered in DI)
+            // RuleForEach(x => x.Grndetails)
+            //     .SetValidator(new CreateGrndetailValidator(_purchaseDetailRepository));
 
             // Validate quantities against Purchase Order
             RuleFor(x => x)

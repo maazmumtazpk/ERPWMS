@@ -9,6 +9,7 @@ namespace ERPWMS.Application.Commands.ProductImage
         public bool? IsPrimary { get; set; }
         public int? DisplayOrder { get; set; }
         public bool? IsActive { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
     }
 }
+

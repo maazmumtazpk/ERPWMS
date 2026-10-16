@@ -1,6 +1,4 @@
 ﻿using MediatR;
-using ERPWMS.Database.Models;
-
 namespace ERPWMS.Application.Commands.Finance.BankAccount
 {
     public class RegisterBankAccountCommand : IRequest<RegisterBankAccountResponse>
@@ -24,3 +22,4 @@ namespace ERPWMS.Application.Commands.Finance.BankAccount
         public string? SuccessMessage { get; set; }
     }
 }
+

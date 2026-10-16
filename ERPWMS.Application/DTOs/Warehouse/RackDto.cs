@@ -26,7 +26,7 @@ namespace ERPWMS.Application.DTOs.Warehouse
         public string CreatedBy { get; set; }
         public string CreatedByName { get; set; } = string.Empty;
         public DateTime? CreatedDate { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
         public string UpdatedByName { get; set; } = string.Empty;
         public DateTime? UpdatedDate { get; set; }
     }

@@ -25,6 +25,7 @@ namespace ERPWMS.Application.Commands.Product
         public bool? IsSerialized { get; set; }
         public bool? IsBatchManaged { get; set; }
         public bool? IsActive { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
     }
 }
+

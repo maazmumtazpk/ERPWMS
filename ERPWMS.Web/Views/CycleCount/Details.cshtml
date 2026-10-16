@@ -1,4 +1,4 @@
-@model ERPWMS.Application.DTOs.Inventory.CycleCountDto
+﻿@model ERPWMS.Application.DTOs.Inventory.CycleCountDto
 
 @{
     ViewData["Title"] = "Cycle Count Details";
@@ -88,7 +88,7 @@
                             <th class="bg-light">Counted Date</th>
                             <td>@Model.CountedDate?.ToString("dd-MMM-yyyy HH:mm")</td>
                         </tr>
-                        @if (Model.VerifiedBy.HasValue)
+                        @if (!string.IsNullOrEmpty(Model.VerifiedBy))
                         {
                             <tr>
                                 <th class="bg-light">Verified By</th>

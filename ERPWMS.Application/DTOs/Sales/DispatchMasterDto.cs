@@ -44,7 +44,7 @@ namespace ERPWMS.Application.DTOs.Sales
 
         public DateTime? CreatedDate { get; set; }
 
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
 
         public DateTime? UpdatedDate { get; set; }
 
@@ -53,4 +53,5 @@ namespace ERPWMS.Application.DTOs.Sales
         public List<DispatchDetailDto> DispatchDetails { get; set; } = new();
     }
 }
+
 

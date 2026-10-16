@@ -1,7 +1,5 @@
 ﻿using MediatR;
 using ERPWMS.Application.DTOs.EmployeeSalary;
-using ERPWMS.Database.Models;
-
 namespace ERPWMS.Application.Commands.EmployeeSalary.ChangeEmployeeSalary
 {
     public class ChangeEmployeeSalaryCommand : IRequest<EmployeeSalaryDto>

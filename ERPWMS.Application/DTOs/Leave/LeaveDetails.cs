@@ -22,7 +22,7 @@ namespace ERPWMS.Application.DTOs.Leave
 
         public string Status { get; set; } = string.Empty;
 
-        public int? ApprovedBy { get; set; }
+        public string? ApprovedBy { get; set; }
 
         public DateTime? ApprovedDate { get; set; }
 
@@ -52,3 +52,4 @@ namespace ERPWMS.Application.DTOs.Leave
         public int RemainingDays { get; set; }
     }
 }
+

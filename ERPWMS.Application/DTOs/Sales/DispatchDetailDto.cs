@@ -23,9 +23,10 @@ namespace ERPWMS.Application.DTOs.Sales
 
         public string? SerialNumbers { get; set; }
 
-        public string?CreatedBy { get; set; }
+        public string? CreatedBy { get; set; }
 
         public DateTime? CreatedDate { get; set; }
     }
 }
+
 

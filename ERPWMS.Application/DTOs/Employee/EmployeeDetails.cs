@@ -115,7 +115,7 @@ namespace ERPWMS.Application.DTOs.Employee
 
         public DateTime? CreatedDate { get; set; }
 
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
 
         public DateTime? UpdatedDate { get; set; }
 

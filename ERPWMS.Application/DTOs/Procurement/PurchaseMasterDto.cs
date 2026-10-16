@@ -25,7 +25,7 @@ namespace ERPWMS.Application.DTOs.Procurement
         public string CreatedBy { get; set; }
         public string? CreatedByName { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
         public DateTime? UpdatedDate { get; set; }
         public bool IsDeleted { get; set; }
         public List<PurchaseDetailDto>? PurchaseDetails { get; set; }

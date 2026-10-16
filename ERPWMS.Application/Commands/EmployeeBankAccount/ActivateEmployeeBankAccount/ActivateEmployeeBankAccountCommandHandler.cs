@@ -1,12 +1,12 @@
-﻿using MediatR;
-using ERPWMS.Database.Models;
-using Microsoft.EntityFrameworkCore;
-using ERPWMS.Domain.Exceptions;
-using ERPWMS.Database;
-using ERPWMS.Domain.Exceptions.HRMaster;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using ERPWMS.Database;
+using ERPWMS.Domain.Exceptions.HRMaster;
+using ERPWMS.Database.Models;
+using ERPWMS.Domain.Exceptions;
 
 namespace ERPWMS.Application.Commands.EmployeeBankAccount.ActivateEmployeeBankAccount
 {
@@ -15,8 +15,7 @@ namespace ERPWMS.Application.Commands.EmployeeBankAccount.ActivateEmployeeBankAc
     {
         private readonly AppDbContext _context;
 
-        public ActivateEmployeeBankAccountCommandHandler(
-            AppDbContext context)
+        public ActivateEmployeeBankAccountCommandHandler(AppDbContext context)
         {
             _context = context;
         }
@@ -25,28 +24,26 @@ namespace ERPWMS.Application.Commands.EmployeeBankAccount.ActivateEmployeeBankAc
             ActivateEmployeeBankAccountCommand request,
             CancellationToken cancellationToken)
         {
-            // =====================================================
-            // FIND BANK ACCOUNT
-            // =====================================================
-
+            // Find bank account
             var account = await _context.EmployeeBankAccounts
                 .FirstOrDefaultAsync(
-                    x =>
-                        x.BankAccountId == request.BankAccountId &&
-                        x.EmployeeId == request.EmployeeId,
+                    x => x.BankAccountId == request.BankAccountId
+                        && x.EmployeeId == request.EmployeeId,
                     cancellationToken);
 
             if (account == null)
             {
-                // ✅ FIX: int → string
                 throw new EmployeeBankAccountNotFoundException(
                     request.BankAccountId.ToString());
             }
 
-            // =====================================================
-            // ACTIVATE ACCOUNT
-            // =====================================================
+            // Already active
+            if (account.IsActive == true)
+            {
+                return true;
+            }
 
+            // Activate
             account.IsActive = true;
             account.UpdatedBy = request.CurrentUserId.ToString();
             account.UpdatedDate = DateTime.UtcNow;

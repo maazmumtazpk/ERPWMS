@@ -17,7 +17,7 @@ namespace ERPWMS.Application.DTOs.Payroll
 
         public string Status { get; set; } = string.Empty;
 
-        public int? ApprovedBy { get; set; }
+        public string? ApprovedBy { get; set; }
         public DateTime? ApprovedDate { get; set; }
         public DateTime? PaymentDate { get; set; }
 
@@ -56,3 +56,4 @@ namespace ERPWMS.Application.DTOs.Payroll
         public string Status { get; set; } = string.Empty;
     }
 }
+

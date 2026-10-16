@@ -2,10 +2,6 @@
 using ERPWMS.Application.Validators.Brand;
 using ERPWMS.Database.Models;
 using FluentValidation;
-using Microsoft.IdentityModel.Tokens;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Net.WebRequestMethods;
-
 namespace ERPWMS.Application.Validators.Brand
 {
     public class RegisterBrandCommandValidator : AbstractValidator<RegisterBrandCommand>
@@ -32,4 +28,5 @@ namespace ERPWMS.Application.Validators.Brand
         }
     }
 }
+
 

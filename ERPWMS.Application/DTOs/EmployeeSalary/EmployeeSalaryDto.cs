@@ -21,11 +21,12 @@ namespace ERPWMS.Application.DTOs.EmployeeSalary
         public bool? IsActive { get; set; }
         public string CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
         public DateTime? UpdatedDate { get; set; }
         public string? EmployeeName { get; set; }
         public string? EmployeeCode { get; set; }
     }
 }
+
 
 

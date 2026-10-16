@@ -1,6 +1,4 @@
 ﻿using MediatR;
-using ERPWMS.Database.Models;
-
 namespace ERPWMS.Application.Commands.EmployeeSalary.ActivateEmployeeSalary
 {
     public class ActivateEmployeeSalaryCommand : IRequest<bool>

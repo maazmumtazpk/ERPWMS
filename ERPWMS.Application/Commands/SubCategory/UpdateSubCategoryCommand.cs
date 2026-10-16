@@ -10,6 +10,7 @@ namespace ERPWMS.Application.Commands.SubCategory
         public string? SubCategoryCode { get; set; }
         public string? Description { get; set; }
         public bool? IsActive { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
     }
 }
+

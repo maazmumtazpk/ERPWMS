@@ -17,7 +17,7 @@ namespace ERPWMS.Application.DTOs.Workflow
         public bool IsActive { get; set; }
         public string CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
         public DateTime? UpdatedDate { get; set; }
     }
 }

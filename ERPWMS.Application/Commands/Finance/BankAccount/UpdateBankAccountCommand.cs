@@ -1,6 +1,4 @@
 ﻿using MediatR;
-using ERPWMS.Database.Models;
-
 namespace ERPWMS.Application.Commands.Finance.BankAccount
 {
     public class UpdateBankAccountCommand : IRequest<UpdateBankAccountResponse>
@@ -25,3 +23,4 @@ namespace ERPWMS.Application.Commands.Finance.BankAccount
         public string? SuccessMessage { get; set; }
     }
 }
+

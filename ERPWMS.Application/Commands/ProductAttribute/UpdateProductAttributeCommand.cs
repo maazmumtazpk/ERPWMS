@@ -8,6 +8,7 @@ namespace ERPWMS.Application.Commands.ProductAttribute
         public string AttributeName { get; set; } = null!;
         public string AttributeValue { get; set; } = null!;
         public bool? IsActive { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
     }
 }
+

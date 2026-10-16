@@ -19,6 +19,7 @@ namespace ERPWMS.Application.DTOs.Sales
 
         public decimal? TaxAmount { get; set; }
 
+        [Required(ErrorMessage = "Due Date is required.")]
         public DateOnly DueDate { get; set; }
 
         public string? Remarks { get; set; }

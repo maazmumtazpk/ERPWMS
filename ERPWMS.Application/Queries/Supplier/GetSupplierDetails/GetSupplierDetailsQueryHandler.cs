@@ -1,4 +1,4 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -48,3 +48,4 @@ namespace ERPWMS.Application.Queries.Supplier.GetSupplierDetails
         }
     }
 }
+

@@ -1,6 +1,4 @@
 ﻿using MediatR;
-using ERPWMS.Database.Models;
-
 namespace ERPWMS.Application.Commands.Finance.BankAccount
 {
     public class DeleteBankAccountCommand : IRequest<DeleteBankAccountResponse>
@@ -17,3 +15,4 @@ namespace ERPWMS.Application.Commands.Finance.BankAccount
         public string? SuccessMessage { get; set; }
     }
 }
+

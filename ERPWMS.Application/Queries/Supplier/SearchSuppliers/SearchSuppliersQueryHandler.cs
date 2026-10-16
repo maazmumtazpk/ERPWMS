@@ -124,3 +124,4 @@ namespace ERPWMS.Application.Queries.Supplier.SearchSuppliers
         }
     }
 }
+

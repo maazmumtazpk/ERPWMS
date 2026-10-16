@@ -1,6 +1,4 @@
 ﻿using MediatR;
-using System.Reflection;
-
 namespace ERPWMS.Application.DTOs.Warehouse
 {
     public class GetWarehousesQuery : IRequest<PagedResult<WarehouseListDto>>
@@ -113,3 +111,4 @@ namespace ERPWMS.Application.DTOs.Warehouse
         public bool HasNext => PageNumber < TotalPages;
     }
 }
+

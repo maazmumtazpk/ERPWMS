@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using System;
 using System.Collections.Generic;
 
@@ -273,7 +273,7 @@ namespace ERPWMS.Application.DTOs.Employee
         public string? Status { get; set; }
 
 
-        public int? ApprovedBy { get; set; }
+        public string? ApprovedBy { get; set; }
 
         public string? ApprovedByName { get; set; }
 

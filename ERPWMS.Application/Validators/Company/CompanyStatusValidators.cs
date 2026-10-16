@@ -1,9 +1,6 @@
 ﻿using ERPWMS.Application.DTOs.Company;
 using FluentValidation;
-using Humanizer;
 using ERPWMS.Database.Models;
-using static System.Net.Mime.MediaTypeNames;
-
 namespace ERPWMS.Application.Validators.Company
 {
 	public class ActivateCompanyValidator : AbstractValidator<ActivateCompanyCommand>
@@ -31,3 +28,4 @@ namespace ERPWMS.Application.Validators.Company
 		}
 	}
 }
+

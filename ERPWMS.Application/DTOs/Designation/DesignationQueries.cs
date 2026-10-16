@@ -49,11 +49,11 @@ namespace ERPWMS.Application.DTOs.Designation
         public bool IsActive { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime CreatedDate { get; set; }
-        public string?CreatedBy { get; set; }
+        public string? CreatedBy { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public String?UpdatedBy{ get; set; }
+        public string? UpdatedBy{ get; set; }
         public DateTime? DeletedDate { get; set; }
-        public string?DeletedBy { get; set; }
+        public string? DeletedBy { get; set; }
       
     }
 
@@ -80,4 +80,5 @@ namespace ERPWMS.Application.DTOs.Designation
         public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
     }
 }
+
 

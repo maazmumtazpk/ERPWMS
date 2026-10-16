@@ -16,10 +16,10 @@ namespace ERPWMS.Application.DTOs.Inventory
         public int SystemQty { get; set; }
         public int ActualQty { get; set; }
         public int Variance { get; set; }
-        public int CountedBy { get; set; }
+        public string CountedBy { get; set; }
         public string? CountedByName { get; set; }
         public DateTime? CountedDate { get; set; }
-        public int? VerifiedBy { get; set; }
+        public string? VerifiedBy { get; set; }
         public string? VerifiedByName { get; set; }
         public DateTime? VerifiedDate { get; set; }
         public string? Status { get; set; }
