@@ -126,3 +126,30 @@ AdminFix*.txt
 AdminFiles-*.txt
 AdminCode-*.txt
 PermList*.txt
+
+# ============================================================
+# Setup Backups & Reports (CORRECTED)
+# ============================================================
+backup_*/
+backup-*/
+*_audit.txt
+*_report.txt
+*_fix.txt
+cleanup.txt
+cid_fix.txt
+companyid_audit.txt
+preflight_audit.txt
+warnings_audit.txt
+pkcs_audit.txt
+verify.txt
+setup_report.txt
+git_audit.txt
+git_push.txt
+build_*.log
+build_after.log
+build_before.log
+build_warnings.log
+build_cid.log
+build_fix.log
+build_fix2.log
+build_fix4.log
