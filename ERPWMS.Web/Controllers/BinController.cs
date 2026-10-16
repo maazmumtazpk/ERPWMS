@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +19,9 @@ namespace ERPWMS.Web.Controllers
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         [HttpGet] public IActionResult Index() => View();
@@ -40,7 +40,7 @@ namespace ERPWMS.Web.Controllers
             });
         }
 
-        // --- GET ALL — with Rack ? Zone ? Warehouse joins ---
+        // --- GET ALL â€” with Rack ? Zone ? Warehouse joins ---
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -70,7 +70,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { error = ex.Message, inner = ex.InnerException?.Message });
+                return Json(new { error = "Operation failed.", inner = ex.InnerException?.Message });
             }
         }
 
@@ -87,7 +87,7 @@ namespace ERPWMS.Web.Controllers
                     .ToListAsync();
                 return Json(list);
             }
-            catch (Exception ex) { return Json(new { error = ex.Message }); }
+            catch (Exception ex) { return Json(new { error = "Operation failed." }); }
         }
 
         // --- PARTIALS ---
@@ -129,7 +129,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -156,12 +156,13 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         // --- DELETE ---
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -177,12 +178,13 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         // --- TOGGLE ---
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -197,8 +199,9 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
     }
 }
+

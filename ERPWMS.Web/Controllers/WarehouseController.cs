@@ -1,4 +1,4 @@
-using ERPWMS.Database;
+﻿using ERPWMS.Database;
 using ERPWMS.Database.Models;
 using ERPWMS.Web.ViewModels.Warehouse;
 using Microsoft.AspNetCore.Authorization;
@@ -21,8 +21,13 @@ namespace ERPWMS.Web.Controllers
             _context = context;
         }
 
-        private int Uid() =>
-            int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         // ============================================================
         // BASIC VIEWS
@@ -205,7 +210,7 @@ namespace ERPWMS.Web.Controllers
                 if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE"))
                     return Json(new { success = false, message = "Warehouse code already exists." });
 
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -237,7 +242,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -245,6 +250,7 @@ namespace ERPWMS.Web.Controllers
         // DELETE
         // ============================================================
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -262,7 +268,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -270,6 +276,7 @@ namespace ERPWMS.Web.Controllers
         // TOGGLE ACTIVE
         // ============================================================
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -286,7 +293,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -391,7 +398,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -414,7 +421,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -436,11 +443,12 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleZoneActive(int id)
         {
             try
@@ -457,7 +465,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -551,7 +559,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -574,7 +582,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -596,11 +604,12 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleRackActive(int id)
         {
             try
@@ -617,7 +626,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -705,7 +714,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -728,7 +737,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -750,11 +759,12 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleBinActive(int id)
         {
             try
@@ -771,7 +781,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
     }

@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,13 @@ namespace ERPWMS.Web.Controllers.Finance
             _context = c;
         }
 
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         [HttpGet]
         public IActionResult Index() => View();
@@ -269,7 +275,7 @@ namespace ERPWMS.Web.Controllers.Finance
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -350,7 +356,7 @@ namespace ERPWMS.Web.Controllers.Finance
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -358,6 +364,7 @@ namespace ERPWMS.Web.Controllers.Finance
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             var r = await _context.ReceiptVouchers
@@ -383,11 +390,16 @@ namespace ERPWMS.Web.Controllers.Finance
         // TOGGLE (PENDING/DRAFT -> RECEIVED)
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             var r = await _context.ReceiptVouchers.FindAsync(id);
             if (r == null)
                 return Json(new { success = false, message = "Not found" });
+
+            var currentUid = Uid().ToString();
+            if (r.CreatedBy == currentUid)
+                return Json(new { success = false, message = "You cannot approve your own voucher." });
 
             if (r.Status == "Pending" || r.Status == "Draft")
             {
@@ -424,7 +436,7 @@ namespace ERPWMS.Web.Controllers.Finance
             var c = await _context.Users.FindAsync(r.CreatedBy);
             ViewBag.CreatedByName = c != null ? c.UserName : "N/A";
 
-            // ✅ ApprovedBy/UpdatedBy string hain
+            // âœ… ApprovedBy/UpdatedBy string hain
             if (!string.IsNullOrWhiteSpace(r.ApprovedBy))
             {
                 var a = await _context.Users.FindAsync(r.ApprovedBy);

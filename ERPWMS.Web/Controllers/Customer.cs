@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +19,9 @@ namespace ERPWMS.Web.Controllers
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         [HttpGet]
@@ -115,7 +115,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -156,11 +156,12 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -176,11 +177,12 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -195,7 +197,7 @@ namespace ERPWMS.Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -208,3 +210,4 @@ namespace ERPWMS.Web.Controllers
         }
     }
 }
+

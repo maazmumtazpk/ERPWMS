@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +19,9 @@ namespace ERPWMS.Controllers.Workflow
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         [HttpGet] public IActionResult Index() => View();
@@ -122,7 +122,7 @@ namespace ERPWMS.Controllers.Workflow
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Transition created!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -141,24 +141,26 @@ namespace ERPWMS.Controllers.Workflow
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Transition updated!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 var t = await _context.WorkflowTransitions.FindAsync(id);
                 if (t == null) return Json(new { success = false, message = "Not found" });
-                _context.WorkflowTransitions.Remove(t);
+                return Json(new { success = false, message = "Cannot delete transitions. Disable it instead." });
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Deleted." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Toggle(int id)
         {
             try
@@ -171,7 +173,7 @@ namespace ERPWMS.Controllers.Workflow
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = t.IsAllowed == true ? "Allowed." : "Disallowed." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // --- Aliases for views ---

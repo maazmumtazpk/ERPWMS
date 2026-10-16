@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 using System.Linq;
 using System.Threading.Tasks;
 using ERPWMS.Database;
@@ -21,9 +22,10 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
 
         private int GetUserId()
         {
-            var cl = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            return 1;
+            var cl = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         // -------------------------------------------------------
@@ -46,7 +48,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                     {
                         productId = p.ProductId,
                         productName = p.ProductName,
-                        sku = p.Sku,            // ✅ FIX: Sku
+                        sku = p.Sku,            // âœ… FIX: Sku
                         barcode = p.Barcode,
                         categoryId = p.CategoryId,
                         isActive = p.IsActive,
@@ -57,7 +59,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new { error = "Operation failed." });
             }
         }
 
@@ -151,7 +153,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
 
                 if (!string.IsNullOrWhiteSpace(sku))
                 {
-                    var dup = await _context.Products.AnyAsync(p => p.Sku == sku && p.IsDeleted != true);   // ✅ FIX
+                    var dup = await _context.Products.AnyAsync(p => p.Sku == sku && p.IsDeleted != true);   // âœ… FIX
                     if (dup)
                         return Json(new { success = false, message = "SKU already exists." });
                 }
@@ -159,7 +161,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                 _context.Products.Add(new Product
                 {
                     ProductName = productName.Trim(),
-                    Sku = sku ?? "",                     // ✅ FIX
+                    Sku = sku ?? "",                     // âœ… FIX
                     Barcode = barcode,
                     Description = description,
                     CategoryId = categoryId,
@@ -185,7 +187,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -221,7 +223,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                     return Json(new { success = false, message = "Not found" });
 
                 p.ProductName = productName.Trim();
-                p.Sku = sku ?? "";                   // ✅ FIX
+                p.Sku = sku ?? "";                   // âœ… FIX
                 p.Barcode = barcode;
                 p.Description = description;
                 p.CategoryId = categoryId;
@@ -245,7 +247,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -253,6 +255,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -269,7 +272,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -277,6 +280,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
         // TOGGLE ACTIVE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -293,8 +297,9 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
     }
 }
+

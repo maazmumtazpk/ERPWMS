@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 using System.Linq;
 using System.Threading.Tasks;
 using ERPWMS.Database;
@@ -17,9 +18,10 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
 
         private int GetUserId()
         {
-            var cl = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            return 1;
+            var cl = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         public IActionResult Index() => View();
@@ -42,7 +44,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                     .ToListAsync();
                 return Ok(list);
             }
-            catch (Exception ex) { return StatusCode(500, new { error = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { error = "Operation failed." }); }
         }
 
         [HttpGet]
@@ -84,7 +86,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Category registered!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -103,10 +105,11 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Category updated!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -119,10 +122,11 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Deleted." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -135,7 +139,8 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = c.IsActive == true ? "Activated" : "Deactivated" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
     }
 }
+

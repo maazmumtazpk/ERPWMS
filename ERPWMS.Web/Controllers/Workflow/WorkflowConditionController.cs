@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +19,9 @@ namespace ERPWMS.Controllers.Workflow
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         [HttpGet] public IActionResult Index() => View();
@@ -114,7 +114,7 @@ namespace ERPWMS.Controllers.Workflow
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Condition created!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -135,21 +135,22 @@ namespace ERPWMS.Controllers.Workflow
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Condition updated!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 var c = await _context.WorkflowConditions.FindAsync(id);
                 if (c == null) return Json(new { success = false, message = "Not found" });
-                _context.WorkflowConditions.Remove(c);
+                return Json(new { success = false, message = "Cannot delete conditions." });
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Deleted." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         // --- Aliases for views ---
@@ -162,3 +163,4 @@ namespace ERPWMS.Controllers.Workflow
         [HttpPost, ValidateAntiForgeryToken] public Task<IActionResult> QuickDelete(int id) => Delete(id);
     }
 }
+

@@ -1,4 +1,4 @@
-using ERPWMS.Application.Common;
+﻿using ERPWMS.Application.Common;
 using ERPWMS.Application.DTOs.Branch;
 using ERPWMS.Infrastructure.Data;
 using ERPWMS.Database.Models;
@@ -79,7 +79,7 @@ namespace ERPWMS.Web.Controllers
                     Address = viewModel.Address,
                     Phone = viewModel.Phone,
                     Email = viewModel.Email,
-                    CompanyId = viewModel.CompanyId ?? 0          // ✅ FIX
+                    CompanyId = viewModel.CompanyId ?? 0          // âœ… FIX
                 };
 
                 var response = await _mediator.Send(request);
@@ -203,7 +203,7 @@ namespace ERPWMS.Web.Controllers
             {
                 var request = new ChangeBranchProfileRequest
                 {
-                    BranchId = viewModel.BranchId ?? 0,          // ✅ FIX
+                    BranchId = viewModel.BranchId ?? 0,          // âœ… FIX
                     BranchName = viewModel.BranchName,
                     BranchCode = viewModel.BranchCode,
                     Address = viewModel.Address,
@@ -327,7 +327,7 @@ namespace ERPWMS.Web.Controllers
 
                 var response = await _mediator.Send(query);
 
-                // ✅ FIX: BranchSummaryResponse → BranchViewModel mapping
+                // âœ… FIX: BranchSummaryResponse â†’ BranchViewModel mapping
                 viewModel.Branches = response.Branches?
                     .Select(b => new BranchViewModel
                     {
@@ -577,7 +577,7 @@ namespace ERPWMS.Web.Controllers
                     Address = viewModel.Address,
                     Phone = viewModel.Phone,
                     Email = viewModel.Email,
-                    CompanyId = viewModel.CompanyId ?? 0          // ✅ FIX
+                    CompanyId = viewModel.CompanyId ?? 0          // âœ… FIX
                 };
 
                 var response = await _mediator.Send(request);
@@ -593,19 +593,19 @@ namespace ERPWMS.Web.Controllers
             {
                 ModelState.AddModelError("BranchName", ex.Message);
                 var html = await RenderPartialViewToString("_AddBranchForm", viewModel);
-                return Json(new { success = false, html = html, message = ex.Message });
+                return Json(new { success = false, html = html, message = "Operation failed." });
             }
             catch (Domain.Exceptions.CompanyNotFoundExceptionForBranch ex)
             {
                 ModelState.AddModelError("CompanyId", ex.Message);
                 var html = await RenderPartialViewToString("_AddBranchForm", viewModel);
-                return Json(new { success = false, html = html, message = ex.Message });
+                return Json(new { success = false, html = html, message = "Operation failed." });
             }
             catch (Domain.Exceptions.CompanyInactiveException ex)
             {
                 ModelState.AddModelError("CompanyId", ex.Message);
                 var html = await RenderPartialViewToString("_AddBranchForm", viewModel);
-                return Json(new { success = false, html = html, message = ex.Message });
+                return Json(new { success = false, html = html, message = "Operation failed." });
             }
             catch (Exception ex)
             {
@@ -666,7 +666,7 @@ namespace ERPWMS.Web.Controllers
             {
                 var request = new ChangeBranchProfileRequest
                 {
-                    BranchId = viewModel.BranchId ?? 0,          // ✅ FIX
+                    BranchId = viewModel.BranchId ?? 0,          // âœ… FIX
                     BranchName = viewModel.BranchName,
                     BranchCode = viewModel.BranchCode,
                     Address = viewModel.Address,
@@ -691,7 +691,7 @@ namespace ERPWMS.Web.Controllers
             {
                 ModelState.AddModelError("BranchName", ex.Message);
                 var html = await RenderPartialViewToString("_EditBranchForm", viewModel);
-                return Json(new { success = false, html = html, message = ex.Message });
+                return Json(new { success = false, html = html, message = "Operation failed." });
             }
             catch (Exception ex)
             {
@@ -792,6 +792,7 @@ namespace ERPWMS.Web.Controllers
         // TOGGLE STATUS
         // ============================================================
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleBranchStatus(int id)
         {
             try

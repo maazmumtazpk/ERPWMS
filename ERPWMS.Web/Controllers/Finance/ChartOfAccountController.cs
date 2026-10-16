@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,13 @@ namespace ERPWMS.Web.Controllers.Finance
             _context = c;
         }
 
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         // -------------------------------------------------------
         // INDEX
@@ -117,7 +123,7 @@ namespace ERPWMS.Web.Controllers.Finance
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -144,7 +150,7 @@ namespace ERPWMS.Web.Controllers.Finance
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -152,6 +158,7 @@ namespace ERPWMS.Web.Controllers.Finance
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -169,7 +176,7 @@ namespace ERPWMS.Web.Controllers.Finance
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -177,6 +184,7 @@ namespace ERPWMS.Web.Controllers.Finance
         // TOGGLE ACTIVE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -193,7 +201,7 @@ namespace ERPWMS.Web.Controllers.Finance
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -217,7 +225,7 @@ namespace ERPWMS.Web.Controllers.Finance
 
                 ViewBag.LedgerEntries = entries;
 
-                // Totals calculate karo — Debit/Credit decimal? hain
+                // Totals calculate karo â€” Debit/Credit decimal? hain
                 decimal totalDebit = entries
                     .Where(e => e.Debit.HasValue)
                     .Sum(e => e.Debit!.Value);

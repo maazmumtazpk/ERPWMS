@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +24,9 @@ namespace ERPWMS.Web.Controllers.Workflow
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         // ============================================================
@@ -83,7 +83,7 @@ namespace ERPWMS.Web.Controllers.Workflow
                     stageOrder = s.StageOrder,
                     isStart = s.IsStart ?? false,
                     isEnd = s.IsEnd ?? false,
-                    slaHours = s.SladeadlineHours,          // ✅ FIX: SladeadlineHours
+                    slaHours = s.SladeadlineHours,          // âœ… FIX: SladeadlineHours
                     isActive = s.IsActive ?? false,
                     createdDate = s.CreatedDate
                 })
@@ -146,7 +146,7 @@ namespace ERPWMS.Web.Controllers.Workflow
                     StageOrder = stageOrder,
                     IsStart = isStart,
                     IsEnd = isEnd,
-                    SladeadlineHours = slaDeadlineHours > 0 ? slaDeadlineHours : (int?)null,  // ✅ FIX
+                    SladeadlineHours = slaDeadlineHours > 0 ? slaDeadlineHours : (int?)null,  // âœ… FIX
                     IsActive = true,
                     IsDeleted = false,
                     CreatedBy = Uid().ToString(),
@@ -157,7 +157,7 @@ namespace ERPWMS.Web.Controllers.Workflow
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -186,7 +186,7 @@ namespace ERPWMS.Web.Controllers.Workflow
                 s.StageOrder = stageOrder;
                 s.IsStart = isStart;
                 s.IsEnd = isEnd;
-                s.SladeadlineHours = slaDeadlineHours > 0 ? slaDeadlineHours : (int?)null;  // ✅ FIX
+                s.SladeadlineHours = slaDeadlineHours > 0 ? slaDeadlineHours : (int?)null;  // âœ… FIX
                 s.IsActive = isActive;
                 s.UpdatedBy = Uid().ToString();
                 s.UpdatedDate = DateTime.Now;
@@ -195,7 +195,7 @@ namespace ERPWMS.Web.Controllers.Workflow
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -203,6 +203,7 @@ namespace ERPWMS.Web.Controllers.Workflow
         // DELETE
         // ============================================================
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -220,7 +221,7 @@ namespace ERPWMS.Web.Controllers.Workflow
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -228,6 +229,7 @@ namespace ERPWMS.Web.Controllers.Workflow
         // TOGGLE
         // ============================================================
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Toggle(int id)
         {
             try
@@ -244,7 +246,7 @@ namespace ERPWMS.Web.Controllers.Workflow
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 

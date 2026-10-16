@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Security.Claims;
 using System.Linq;
 using System.Threading.Tasks;
 using ERPWMS.Database;
@@ -21,9 +22,10 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
 
         private int GetUserId()
         {
-            var cl = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            return 1;
+            var cl = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         // -------------------------------------------------------
@@ -47,7 +49,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                         brandId = b.BrandId,
                         brandName = b.BrandName,
                         brandCode = b.BrandCode,
-                        logoUrl = b.LogoUrl,        // ✅ FIX: LogoUrl (chhota rl)
+                        logoUrl = b.LogoUrl,        // âœ… FIX: LogoUrl (chhota rl)
                         isActive = b.IsActive,
                         createdDate = b.CreatedDate
                     })
@@ -56,7 +58,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new { error = "Operation failed." });
             }
         }
 
@@ -101,7 +103,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
                 {
                     BrandName = brandName.Trim(),
                     BrandCode = string.IsNullOrWhiteSpace(brandCode) ? null : brandCode.Trim(),
-                    LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim(),   // ✅ FIX
+                    LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim(),   // âœ… FIX
                     IsActive = true,
                     IsDeleted = false,
                     CreatedBy = GetUserId().ToString(),
@@ -112,7 +114,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -130,7 +132,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
 
                 b.BrandName = brandName.Trim();
                 b.BrandCode = string.IsNullOrWhiteSpace(brandCode) ? null : brandCode.Trim();
-                b.LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim();   // ✅ FIX
+                b.LogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? null : logoUrl.Trim();   // âœ… FIX
                 b.IsActive = isActive;
                 b.UpdatedBy = GetUserId().ToString();
                 b.UpdatedDate = DateTime.Now;
@@ -139,7 +141,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -147,6 +149,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -163,7 +166,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -171,6 +174,7 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
         // TOGGLE ACTIVE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -187,8 +191,9 @@ namespace ERPWMS.Web.Controllers.ProductCatalog
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
     }
 }
+
