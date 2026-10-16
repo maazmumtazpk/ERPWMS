@@ -62,7 +62,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Sales order must have a valid company.");
 
             if (!await _salesMasterRepository.IsOrderNoUniqueAsync(sales.SalesOrderNo, companyId, null))
-                throw new Exception("Sales Order Number already exists.");
+                throw new InvalidOperationException("Sales Order Number already exists.");
 
             foreach (var detail in details)
             {
@@ -150,7 +150,7 @@ namespace ERPWMS.Infrastructure.Services
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(salesId, companyId))
-                throw new Exception("Cannot delete Sales Order as it may have been used.");
+                throw new InvalidOperationException("Cannot delete Sales Order as it may have been used.");
 
             await _salesMasterRepository.SoftDeleteAsync(salesId, companyId, deletedBy);
             return true;
@@ -239,10 +239,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var sales = await _salesMasterRepository.GetByIdAsync(salesId, 0);
             if (sales == null)
-                throw new Exception("Sales Order not found.");
+                throw new InvalidOperationException("Sales Order not found.");
 
             if (sales.Status != "Approved")
-                throw new Exception("Only Approved Sales Orders can be picked.");
+                throw new InvalidOperationException("Only Approved Sales Orders can be picked.");
 
             // Use GUID to avoid collision
             var pickingNo = $"PICK-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
@@ -262,3 +262,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

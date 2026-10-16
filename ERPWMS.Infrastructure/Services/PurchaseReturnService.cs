@@ -42,7 +42,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Purchase return must have at least one detail line.", nameof(details));
 
             if (!await _purchaseReturnRepository.IsReturnNoUniqueAsync(purchaseReturn.ReturnNo, 0, null))
-                throw new Exception("Return Number already exists.");
+                throw new InvalidOperationException("Return Number already exists.");
 
             foreach (var detail in details)
             {
@@ -116,7 +116,7 @@ namespace ERPWMS.Infrastructure.Services
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(returnId, companyId))
-                throw new Exception("Cannot delete Purchase Return as it may be in use.");
+                throw new InvalidOperationException("Cannot delete Purchase Return as it may be in use.");
 
             await _purchaseReturnRepository.SoftDeleteAsync(returnId, companyId, deletedBy);
             return true;
@@ -191,15 +191,15 @@ namespace ERPWMS.Infrastructure.Services
 
             var purchase = await _purchaseMasterRepository.GetByIdAsync(purchaseId, 0);
             if (purchase == null)
-                throw new Exception("Purchase Order not found.");
+                throw new InvalidOperationException("Purchase Order not found.");
 
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
-                    throw new Exception($"Invalid return quantity for item {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid return quantity for item {detail.ProductId}.");
 
                 if (detail.UnitPrice < 0)
-                    throw new Exception($"Invalid return price for item {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid return price for item {detail.ProductId}.");
             }
 
             await Task.CompletedTask;
@@ -213,3 +213,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

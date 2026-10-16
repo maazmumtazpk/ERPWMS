@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
@@ -14,7 +14,7 @@ namespace ERPWMS.Infrastructure.Services
         ICycleCountDetailRepository cycleCountDetailRepository,
         IInventoryAdjustmentService adjustmentService) : IInventoryCycleCountService
     {
-        // ⚠️ ledgerRepository aur context remove kiye (use nahi ho rahe the)
+        // âš ï¸ ledgerRepository aur context remove kiye (use nahi ho rahe the)
 
         public async Task<CycleCount> CreateCycleCountAsync(
             CycleCount cycleCount,
@@ -54,7 +54,7 @@ namespace ERPWMS.Infrastructure.Services
             string updatedBy)
         {
             if (cycleCount.Status != "Draft")
-                throw new Exception("Only Draft cycle counts can be updated.");
+                throw new InvalidOperationException("Only Draft cycle counts can be updated.");
 
             foreach (var detail in details)
             {
@@ -102,10 +102,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var cycleCount = await cycleCountRepository.GetByIdAsync(cycleCountId);
             if (cycleCount is null)
-                throw new Exception("Cycle count not found.");
+                throw new InvalidOperationException("Cycle count not found.");
 
             if (cycleCount.Status != "Draft")
-                throw new Exception("Only Draft cycle counts can be submitted.");
+                throw new InvalidOperationException("Only Draft cycle counts can be submitted.");
 
             await cycleCountRepository.UpdateStatusAsync(cycleCountId, "Submitted");
             return true;
@@ -114,9 +114,9 @@ namespace ERPWMS.Infrastructure.Services
         public async Task<bool> VerifyCycleCountAsync(int cycleCountId, int userId)
         {
             if (!await CanBeVerifiedAsync(cycleCountId))
-                throw new Exception("Cycle count cannot be verified.");
+                throw new InvalidOperationException("Cycle count cannot be verified.");
 
-            // ✅ FIX: userId.ToString() — VerifyAsync string leta hai
+            // âœ… FIX: userId.ToString() â€” VerifyAsync string leta hai
             await cycleCountRepository.VerifyAsync(cycleCountId, userId.ToString(), DateTime.UtcNow);
             return true;
         }
@@ -125,12 +125,12 @@ namespace ERPWMS.Infrastructure.Services
         {
             var cycleCount = await cycleCountRepository.GetByIdAsync(cycleCountId);
             if (cycleCount is null)
-                throw new Exception("Cycle count not found.");
+                throw new InvalidOperationException("Cycle count not found.");
 
             if (cycleCount.Status != "Submitted")
-                throw new Exception("Only Submitted cycle counts can be rejected.");
+                throw new InvalidOperationException("Only Submitted cycle counts can be rejected.");
 
-            // ✅ FIX: userId.ToString() — RejectAsync string leta hai
+            // âœ… FIX: userId.ToString() â€” RejectAsync string leta hai
             await cycleCountRepository.RejectAsync(cycleCountId, userId.ToString());
             return true;
         }
@@ -138,18 +138,18 @@ namespace ERPWMS.Infrastructure.Services
         public async Task<bool> PostCycleCountAsync(int cycleCountId, int userId)
         {
             if (!await CanBePostedAsync(cycleCountId))
-                throw new Exception("Cycle count cannot be posted.");
+                throw new InvalidOperationException("Cycle count cannot be posted.");
 
             var cycleCount = await cycleCountRepository.GetByIdAsync(cycleCountId);
             if (cycleCount is null)
-                throw new Exception("Cycle count not found.");
+                throw new InvalidOperationException("Cycle count not found.");
 
             if (cycleCount.Variance != 0)
             {
                 await CreateAdjustmentFromVarianceAsync(cycleCount, userId);
             }
 
-            // ✅ FIX: userId.ToString() — PostAsync string leta hai
+            // âœ… FIX: userId.ToString() â€” PostAsync string leta hai
             await cycleCountRepository.PostAsync(cycleCountId, userId.ToString());
             return true;
         }
@@ -158,10 +158,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var cycleCount = await cycleCountRepository.GetByIdAsync(cycleCountId);
             if (cycleCount is null)
-                throw new Exception("Cycle count not found.");
+                throw new InvalidOperationException("Cycle count not found.");
 
             if (cycleCount.Status != "Draft")
-                throw new Exception("Only Draft cycle counts can be deleted.");
+                throw new InvalidOperationException("Only Draft cycle counts can be deleted.");
 
             await cycleCountRepository.UpdateStatusAsync(cycleCountId, "Deleted");
             return true;
@@ -187,7 +187,7 @@ namespace ERPWMS.Infrastructure.Services
             return await cycleCountDetailRepository.GetTotalVarianceAsync(cycleCountId);
         }
 
-        // ✅ FIX: Return type Task<StockAdjustment> (null! use kiya jab null return karna ho)
+        // âœ… FIX: Return type Task<StockAdjustment> (null! use kiya jab null return karna ho)
         public async Task<StockAdjustment> CreateAdjustmentFromVarianceAsync(
             CycleCount cycleCount, int userId)
         {
@@ -213,7 +213,7 @@ namespace ERPWMS.Infrastructure.Services
             }
 
             if (adjustmentDetails.Count == 0)
-                return null!;   // ✅ Interface ke saath match
+                return null!;   // âœ… Interface ke saath match
 
             var adjustment = new StockAdjustment
             {
@@ -224,11 +224,11 @@ namespace ERPWMS.Infrastructure.Services
                 Quantity = adjustmentDetails.Sum(d => d.Quantity),
                 Reason = $"Cycle Count Adjustment - Count #{cycleCount.CycleCountId}",
                 Status = "Approved",
-                ApprovedBy = userId.ToString(),   // ✅ FIX: int -> string
+                ApprovedBy = userId.ToString(),   // âœ… FIX: int -> string
                 ApprovedDate = DateTime.UtcNow
             };
 
-            // ✅ FIX: userId int pass kiya (string nahi)
+            // âœ… FIX: userId int pass kiya (string nahi)
             await adjustmentService.CreateAdjustmentAsync(
                 adjustment, adjustmentDetails, userId.ToString());
 

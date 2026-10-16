@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ERPWMS.Domain.Interfaces;
@@ -44,8 +44,8 @@ namespace ERPWMS.Domain.Services
                 Email = email,
                 IsActive = true,
                 IsDeleted = false,
-                CreatedBy = createdBy.ToString(),
-                CreatedDate = DateTime.Now
+                CreatedBy = createdBy,
+                CreatedDate = DateTime.UtcNow
             };
 
             await _repository.AddWarehouseAsync(warehouse, cancellationToken);
@@ -75,8 +75,8 @@ namespace ERPWMS.Domain.Services
             warehouse.Address = address;
             warehouse.Phone = phone;
             warehouse.Email = email;
-            warehouse.UpdatedBy = updatedBy.ToString();
-            warehouse.UpdatedDate = DateTime.Now;
+            warehouse.UpdatedBy = updatedBy;
+            warehouse.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateWarehouseAsync(warehouse, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -92,8 +92,8 @@ namespace ERPWMS.Domain.Services
 
             warehouse.IsActive = true;
             warehouse.IsDeleted = false;
-            warehouse.UpdatedBy = updatedBy.ToString();
-            warehouse.UpdatedDate = DateTime.Now;
+            warehouse.UpdatedBy = updatedBy;
+            warehouse.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateWarehouseAsync(warehouse, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -108,8 +108,8 @@ namespace ERPWMS.Domain.Services
             ArgumentNullException.ThrowIfNull(warehouse);
 
             warehouse.IsActive = false;
-            warehouse.UpdatedBy = updatedBy.ToString();
-            warehouse.UpdatedDate = DateTime.Now;
+            warehouse.UpdatedBy = updatedBy;
+            warehouse.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateWarehouseAsync(warehouse, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -126,7 +126,7 @@ namespace ERPWMS.Domain.Services
             warehouse.IsDeleted = true;
             warehouse.IsActive = false;
             warehouse.DeletedBy = deletedBy;
-            warehouse.DeletedDate = DateTime.Now;
+            warehouse.DeletedDate = DateTime.UtcNow;
 
             await _repository.UpdateWarehouseAsync(warehouse, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -154,8 +154,8 @@ namespace ERPWMS.Domain.Services
                 ZoneCode = zoneCode,
                 IsActive = true,
                 IsDeleted = false,
-                CreatedBy = createdBy.ToString(),
-                CreatedDate = DateTime.Now
+                CreatedBy = createdBy,
+                CreatedDate = DateTime.UtcNow
             };
 
             await _repository.AddZoneAsync(zone, cancellationToken);
@@ -179,8 +179,8 @@ namespace ERPWMS.Domain.Services
             zone.WarehouseId = warehouseId;
             zone.ZoneName = zoneName;
             zone.ZoneCode = zoneCode;
-            zone.UpdatedBy = updatedBy.ToString();
-            zone.UpdatedDate = DateTime.Now;
+            zone.UpdatedBy = updatedBy;
+            zone.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateZoneAsync(zone, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -196,8 +196,8 @@ namespace ERPWMS.Domain.Services
 
             zone.IsActive = true;
             zone.IsDeleted = false;
-            zone.UpdatedBy = updatedBy.ToString();
-            zone.UpdatedDate = DateTime.Now;
+            zone.UpdatedBy = updatedBy;
+            zone.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateZoneAsync(zone, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -212,8 +212,8 @@ namespace ERPWMS.Domain.Services
             ArgumentNullException.ThrowIfNull(zone);
 
             zone.IsActive = false;
-            zone.UpdatedBy = updatedBy.ToString();
-            zone.UpdatedDate = DateTime.Now;
+            zone.UpdatedBy = updatedBy;
+            zone.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateZoneAsync(zone, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -230,7 +230,7 @@ namespace ERPWMS.Domain.Services
             zone.IsDeleted = true;
             zone.IsActive = false;
             zone.DeletedBy = deletedBy;
-            zone.DeletedDate = DateTime.Now;
+            zone.DeletedDate = DateTime.UtcNow;
 
             await _repository.UpdateZoneAsync(zone, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -258,8 +258,8 @@ namespace ERPWMS.Domain.Services
                 RackCode = rackCode,
                 IsActive = true,
                 IsDeleted = false,
-                CreatedBy = createdBy.ToString(),
-                CreatedDate = DateTime.Now
+                CreatedBy = createdBy,
+                CreatedDate = DateTime.UtcNow
             };
 
             await _repository.AddRackAsync(rack, cancellationToken);
@@ -283,8 +283,8 @@ namespace ERPWMS.Domain.Services
             rack.ZoneId = zoneId;
             rack.RackName = rackName;
             rack.RackCode = rackCode;
-            rack.UpdatedBy = updatedBy.ToString();
-            rack.UpdatedDate = DateTime.Now;
+            rack.UpdatedBy = updatedBy;
+            rack.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateRackAsync(rack, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -300,8 +300,8 @@ namespace ERPWMS.Domain.Services
 
             rack.IsActive = true;
             rack.IsDeleted = false;
-            rack.UpdatedBy = updatedBy.ToString();
-            rack.UpdatedDate = DateTime.Now;
+            rack.UpdatedBy = updatedBy;
+            rack.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateRackAsync(rack, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -316,8 +316,8 @@ namespace ERPWMS.Domain.Services
             ArgumentNullException.ThrowIfNull(rack);
 
             rack.IsActive = false;
-            rack.UpdatedBy = updatedBy.ToString();
-            rack.UpdatedDate = DateTime.Now;
+            rack.UpdatedBy = updatedBy;
+            rack.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateRackAsync(rack, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -334,7 +334,7 @@ namespace ERPWMS.Domain.Services
             rack.IsDeleted = true;
             rack.IsActive = false;
             rack.DeletedBy = deletedBy;
-            rack.DeletedDate = DateTime.Now;
+            rack.DeletedDate = DateTime.UtcNow;
 
             await _repository.UpdateRackAsync(rack, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -364,8 +364,8 @@ namespace ERPWMS.Domain.Services
                 IsOccupied = isOccupied ?? false,
                 IsActive = true,
                 IsDeleted = false,
-                CreatedBy = createdBy.ToString(),
-                CreatedDate = DateTime.Now
+                CreatedBy = createdBy,
+                CreatedDate = DateTime.UtcNow
             };
 
             await _repository.AddBinAsync(bin, cancellationToken);
@@ -391,8 +391,8 @@ namespace ERPWMS.Domain.Services
             bin.BinName = binName;
             bin.BinCode = binCode;
             bin.IsOccupied = isOccupied ?? bin.IsOccupied;
-            bin.UpdatedBy = updatedBy.ToString();
-            bin.UpdatedDate = DateTime.Now;
+            bin.UpdatedBy = updatedBy;
+            bin.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateBinAsync(bin, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -408,8 +408,8 @@ namespace ERPWMS.Domain.Services
 
             bin.IsActive = true;
             bin.IsDeleted = false;
-            bin.UpdatedBy = updatedBy.ToString();
-            bin.UpdatedDate = DateTime.Now;
+            bin.UpdatedBy = updatedBy;
+            bin.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateBinAsync(bin, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -424,8 +424,8 @@ namespace ERPWMS.Domain.Services
             ArgumentNullException.ThrowIfNull(bin);
 
             bin.IsActive = false;
-            bin.UpdatedBy = updatedBy.ToString();
-            bin.UpdatedDate = DateTime.Now;
+            bin.UpdatedBy = updatedBy;
+            bin.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateBinAsync(bin, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -442,7 +442,7 @@ namespace ERPWMS.Domain.Services
             bin.IsDeleted = true;
             bin.IsActive = false;
             bin.DeletedBy = deletedBy;
-            bin.DeletedDate = DateTime.Now;
+            bin.DeletedDate = DateTime.UtcNow;
 
             await _repository.UpdateBinAsync(bin, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -457,8 +457,8 @@ namespace ERPWMS.Domain.Services
             ArgumentNullException.ThrowIfNull(bin);
 
             bin.IsOccupied = true;
-            bin.UpdatedBy = updatedBy.ToString();
-            bin.UpdatedDate = DateTime.Now;
+            bin.UpdatedBy = updatedBy;
+            bin.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateBinAsync(bin, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);
@@ -473,8 +473,8 @@ namespace ERPWMS.Domain.Services
             ArgumentNullException.ThrowIfNull(bin);
 
             bin.IsOccupied = false;
-            bin.UpdatedBy = updatedBy.ToString();
-            bin.UpdatedDate = DateTime.Now;
+            bin.UpdatedBy = updatedBy;
+            bin.UpdatedDate = DateTime.UtcNow;
 
             await _repository.UpdateBinAsync(bin, cancellationToken);
             await _repository.SaveChangesAsync(cancellationToken);

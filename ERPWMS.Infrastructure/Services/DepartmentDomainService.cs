@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ERPWMS.Database.Models;
@@ -40,7 +40,7 @@ namespace ERPWMS.Infrastructure.Services
                 IsActive = true,
                 IsDeleted = false,
                 CreatedDate = _dateTimeProvider.Now,
-                CreatedBy = createdBy.ToString()
+                CreatedBy = createdBy
             };
 
             await _repository.AddDepartmentAsync(department, cancellationToken);
@@ -57,7 +57,7 @@ namespace ERPWMS.Infrastructure.Services
             department.DepartmentName = departmentName;
             department.DepartmentCode = departmentCode;
             department.UpdatedDate = _dateTimeProvider.Now;
-            department.UpdatedBy = updatedBy.ToString();
+            department.UpdatedBy = updatedBy;
 
             _repository.UpdateDepartment(department);
             await _repository.SaveChangesAsync(cancellationToken);

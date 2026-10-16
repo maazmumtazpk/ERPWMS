@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ERPWMS.Database.Models;
@@ -44,7 +44,7 @@ namespace ERPWMS.Infrastructure.Services
                 IsActive = true,
                 IsDeleted = false,
                 CreatedDate = _dateTimeProvider.Now,
-                CreatedBy = createdBy.ToString()
+                CreatedBy = createdBy
             };
 
             await _repository.AddBranchAsync(branch, cancellationToken);
@@ -64,7 +64,7 @@ namespace ERPWMS.Infrastructure.Services
             branch.Address = address;
             branch.Phone = phone;
             branch.Email = email;
-            branch.UpdatedBy = updatedBy.ToString();
+            branch.UpdatedBy = updatedBy;
             branch.UpdatedDate = _dateTimeProvider.Now;
 
             _repository.UpdateBranch(branch);

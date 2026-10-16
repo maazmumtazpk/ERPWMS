@@ -1,6 +1,6 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
-using ERPWMS.Domain.Services.DTOs;   // ✅ Domain DTOs
+using ERPWMS.Domain.Services.DTOs;   // âœ… Domain DTOs
 using ERPWMS.Domain.Rules;
 using ERPWMS.Database.Models;
 using System;
@@ -44,13 +44,13 @@ namespace ERPWMS.Infrastructure.Services
             var leave = new EmployeeLeave
             {
                 EmployeeId = request.EmployeeId,
-                LeaveType = request.LeaveTypeId.ToString(),   // ✅ int -> string
+                LeaveType = request.LeaveTypeId.ToString(),   // âœ… int -> string
                 FromDate = request.StartDate,
                 ToDate = request.EndDate,
                 TotalDays = totalDays,
                 Reason = request.Reason?.Trim() ?? string.Empty,
                 Status = "Submitted",
-                CreatedBy = userId.ToString(),                // ✅ int -> string
+                CreatedBy = userId.ToString(),                // âœ… int -> string
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -76,9 +76,9 @@ namespace ERPWMS.Infrastructure.Services
                 throw new InvalidOperationException("Only submitted or pending leave can be approved.");
 
             leave.Status = "Approved";
-            leave.ApprovedBy = approvedByUserId.ToString();   // ✅ int -> string
+            leave.ApprovedBy = approvedByUserId.ToString();   // âœ… int -> string
             leave.ApprovedDate = DateTime.UtcNow;
-            leave.UpdatedBy = approvedByUserId.ToString();   // ✅ int -> string
+            leave.UpdatedBy = approvedByUserId.ToString();   // âœ… int -> string
             leave.UpdatedDate = DateTime.UtcNow;
 
             await employeeRepository.UpdateLeaveAsync(leave);
@@ -106,7 +106,7 @@ namespace ERPWMS.Infrastructure.Services
 
             leave.Status = "Rejected";
             leave.RejectionReason = rejectionReason.Trim();
-            leave.UpdatedBy = rejectedByUserId.ToString();  // ✅ int -> string
+            leave.UpdatedBy = rejectedByUserId.ToString();  // âœ… int -> string
             leave.UpdatedDate = DateTime.UtcNow;
 
             await employeeRepository.UpdateLeaveAsync(leave);
@@ -129,7 +129,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new InvalidOperationException("This leave cannot be cancelled.");
 
             leave.Status = "Cancelled";
-            leave.UpdatedBy = userId.ToString();   // ✅ int -> string
+            leave.UpdatedBy = userId.ToString();   // âœ… int -> string
             leave.UpdatedDate = DateTime.UtcNow;
 
             await employeeRepository.UpdateLeaveAsync(leave);
@@ -149,7 +149,7 @@ namespace ERPWMS.Infrastructure.Services
 
             var leaves = await employeeRepository.GetLeavesByEmployeeAsync(request.EmployeeId);
 
-            // ✅ DateTime? -> DateOnly?
+            // âœ… DateTime? -> DateOnly?
             var fromDate = request.FromDate.HasValue
                 ? DateOnly.FromDateTime(request.FromDate.Value)
                 : (DateOnly?)null;
@@ -204,7 +204,7 @@ namespace ERPWMS.Infrastructure.Services
                 .Where(x => x.Status == "Submitted" || x.Status == "Pending")
                 .Sum(x => x.TotalDays);
 
-            // ✅ FIX: string pass kiya
+            // âœ… FIX: string pass kiya
             var allowedDays = LeaveRules.GetDefaultAllowedDays(leaveTypeStr);
 
             return new LeaveBalanceDetails
@@ -225,10 +225,10 @@ namespace ERPWMS.Infrastructure.Services
         // =========================================================
         private static LeaveDetails MapToDetails(EmployeeLeave leave, Employee employee)
         {
-            // ✅ string -> int? (safe conversion)
+            // âœ… string -> int? (safe conversion)
             int? approvedByInt = int.TryParse(leave.ApprovedBy, out var ab) ? ab : (int?)null;
 
-            // ✅ string -> int (safe conversion)
+            // âœ… string -> int (safe conversion)
             int leaveTypeIdInt = int.TryParse(leave.LeaveType, out var lt) ? lt : 0;
 
             return new LeaveDetails
@@ -250,3 +250,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

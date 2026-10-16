@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
@@ -89,7 +89,7 @@ namespace ERPWMS.Infrastructure.Services
                     picking.Warehouse.Branch.CompanyId,
                     null))
             {
-                throw new Exception("Picking Number already exists.");
+                throw new InvalidOperationException("Picking Number already exists.");
             }
 
             picking.Status = "Draft";
@@ -149,7 +149,7 @@ namespace ERPWMS.Infrastructure.Services
         {
             if (!await CanBeDeletedAsync(pickingId, companyId))
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "Cannot delete Picking List as it may have been used.");
             }
 
@@ -201,7 +201,7 @@ namespace ERPWMS.Infrastructure.Services
             if (picking.Status != "Draft" &&
                 picking.Status != "Assigned")
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "Picking list cannot be confirmed.");
             }
 
@@ -251,7 +251,7 @@ namespace ERPWMS.Infrastructure.Services
 
             if (picking.Status != "Picked")
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "Only picked lists can be verified.");
             }
 
@@ -312,11 +312,11 @@ namespace ERPWMS.Infrastructure.Services
                     0);
 
             if (picking == null)
-                throw new Exception("Picking list not found.");
+                throw new InvalidOperationException("Picking list not found.");
 
             if (picking.Status != "Verified")
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "Only verified picking lists can be dispatched.");
             }
 

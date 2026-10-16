@@ -57,7 +57,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Sales return must have at least one detail line.", nameof(details));
 
             if (!await _salesReturnRepository.IsReturnNoUniqueAsync(salesReturn.ReturnNo, 0, null))
-                throw new Exception("Sales Return Number already exists.");
+                throw new InvalidOperationException("Sales Return Number already exists.");
 
             foreach (var detail in details)
             {
@@ -131,7 +131,7 @@ namespace ERPWMS.Infrastructure.Services
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(returnId, companyId))
-                throw new Exception("Cannot delete Sales Return as it may be in use.");
+                throw new InvalidOperationException("Cannot delete Sales Return as it may be in use.");
 
             await _salesReturnRepository.SoftDeleteAsync(returnId, companyId, deletedBy);
             return true;
@@ -191,15 +191,15 @@ namespace ERPWMS.Infrastructure.Services
 
             var sales = await _salesMasterRepository.GetByIdAsync(invoiceId, 0);
             if (sales == null)
-                throw new Exception("Sales Order not found.");
+                throw new InvalidOperationException("Sales Order not found.");
 
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
-                    throw new Exception($"Invalid return quantity for item {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid return quantity for item {detail.ProductId}.");
 
                 if (detail.UnitPrice < 0)
-                    throw new Exception($"Invalid return price for item {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid return price for item {detail.ProductId}.");
             }
 
             await Task.CompletedTask;
@@ -213,3 +213,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

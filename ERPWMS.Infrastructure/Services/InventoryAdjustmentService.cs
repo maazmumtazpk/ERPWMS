@@ -28,7 +28,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Adjustment must have at least one detail.", nameof(details));
 
             if (adjustment.Quantity <= 0)
-                throw new Exception("Quantity must be greater than zero.");
+                throw new InvalidOperationException("Quantity must be greater than zero.");
 
             if (adjustment.AdjustmentType == "Decrease")
             {
@@ -57,7 +57,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
-                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid quantity for product {detail.ProductId}.");
 
                 detail.AdjustmentId = adjustment.AdjustmentId;
                 detail.PreviousQty = (int)currentBalance;
@@ -81,10 +81,10 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentNullException(nameof(adjustment));
 
             if (adjustment.Status != "Draft")
-                throw new Exception("Only Draft adjustments can be updated.");
+                throw new InvalidOperationException("Only Draft adjustments can be updated.");
 
             if (adjustment.Quantity <= 0)
-                throw new Exception("Quantity must be greater than zero.");
+                throw new InvalidOperationException("Quantity must be greater than zero.");
 
             // FIXED: Validate stock on update too
             if (adjustment.AdjustmentType == "Decrease")
@@ -120,7 +120,7 @@ namespace ERPWMS.Infrastructure.Services
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
-                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid quantity for product {detail.ProductId}.");
 
                 detail.AdjustmentId = adjustment.AdjustmentId;
                 detail.PreviousQty = (int)currentBalance;
@@ -150,10 +150,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var adjustment = await adjustmentRepository.GetByIdAsync(adjustmentId);
             if (adjustment is null)
-                throw new Exception("Adjustment not found.");
+                throw new InvalidOperationException("Adjustment not found.");
 
             if (adjustment.Status != "Draft")
-                throw new Exception("Only Draft adjustments can be submitted.");
+                throw new InvalidOperationException("Only Draft adjustments can be submitted.");
 
             await adjustmentRepository.UpdateStatusAsync(adjustmentId, "Submitted");
             return true;
@@ -162,7 +162,7 @@ namespace ERPWMS.Infrastructure.Services
         public async Task<bool> ApproveAdjustmentAsync(int adjustmentId, int userId)
         {
             if (!await CanBeApprovedAsync(adjustmentId))
-                throw new Exception("Adjustment cannot be approved.");
+                throw new InvalidOperationException("Adjustment cannot be approved.");
 
             await adjustmentRepository.ApproveAsync(
                 adjustmentId, userId.ToString(), DateTime.UtcNow);
@@ -173,10 +173,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var adjustment = await adjustmentRepository.GetByIdAsync(adjustmentId);
             if (adjustment is null)
-                throw new Exception("Adjustment not found.");
+                throw new InvalidOperationException("Adjustment not found.");
 
             if (adjustment.Status != "Submitted")
-                throw new Exception("Only Submitted adjustments can be rejected.");
+                throw new InvalidOperationException("Only Submitted adjustments can be rejected.");
 
             await adjustmentRepository.RejectAsync(adjustmentId, userId.ToString());
             return true;
@@ -185,11 +185,11 @@ namespace ERPWMS.Infrastructure.Services
         public async Task<bool> PostAdjustmentAsync(int adjustmentId, int userId)
         {
             if (!await CanBePostedAsync(adjustmentId))
-                throw new Exception("Adjustment cannot be posted.");
+                throw new InvalidOperationException("Adjustment cannot be posted.");
 
             var adjustment = await adjustmentRepository.GetByIdAsync(adjustmentId);
             if (adjustment is null)
-                throw new Exception("Adjustment not found.");
+                throw new InvalidOperationException("Adjustment not found.");
 
             await adjustmentRepository.PostAsync(adjustmentId, userId.ToString());
             await CreateLedgerEntryForAdjustmentAsync(adjustment, userId);
@@ -201,10 +201,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var adjustment = await adjustmentRepository.GetByIdAsync(adjustmentId);
             if (adjustment is null)
-                throw new Exception("Adjustment not found.");
+                throw new InvalidOperationException("Adjustment not found.");
 
             if (adjustment.Status != "Draft")
-                throw new Exception("Only Draft adjustments can be deleted.");
+                throw new InvalidOperationException("Only Draft adjustments can be deleted.");
 
             await adjustmentRepository.UpdateStatusAsync(adjustmentId, "Deleted");
             return true;
@@ -235,7 +235,7 @@ namespace ERPWMS.Infrastructure.Services
                     productId, warehouseId, binId);
 
                 if (currentBalance < quantity)
-                    throw new Exception(
+                    throw new InvalidOperationException(
                         $"Insufficient stock. Available: {currentBalance}, Requested: {quantity}");
             }
         }
@@ -263,3 +263,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

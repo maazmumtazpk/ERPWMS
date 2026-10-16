@@ -50,7 +50,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Invoice must have at least one detail line.", nameof(details));
 
             if (!await invoiceRepository.IsInvoiceNoUniqueAsync(invoice.InvoiceNo, 0, null))
-                throw new Exception("Invoice Number already exists.");
+                throw new InvalidOperationException("Invoice Number already exists.");
 
             // Validate details
             foreach (var detail in details)
@@ -133,7 +133,7 @@ namespace ERPWMS.Infrastructure.Services
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(invoiceId, companyId))
-                throw new Exception("Cannot delete Invoice as it may have associated returns.");
+                throw new InvalidOperationException("Cannot delete Invoice as it may have associated returns.");
 
             await invoiceRepository.SoftDeleteAsync(invoiceId, companyId, deletedBy);
             return true;
@@ -221,9 +221,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var invoice = await invoiceRepository.GetByIdAsync(invoiceId, companyId);
             if (invoice is null)
-                throw new Exception("Invoice not found.");
+                throw new InvalidOperationException("Invoice not found.");
 
             return invoice;
         }
     }
 }
+

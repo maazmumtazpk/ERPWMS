@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+﻿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Rules;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
@@ -43,7 +43,7 @@ namespace ERPWMS.Infrastructure.Services
                 IsActive = true,
                 IsDeleted = false,
                 CreatedDate = _dateTimeProvider.Now,
-                CreatedBy = createdBy.ToString()
+                CreatedBy = createdBy
             };
 
             await _repository.AddCompanyAsync(company, cancellationToken);
@@ -65,7 +65,7 @@ namespace ERPWMS.Infrastructure.Services
             company.Email = email;
             company.LogoUrl = LogoUrl;
             company.UpdatedDate = _dateTimeProvider.Now;
-            company.UpdatedBy = updatedBy.ToString();
+            company.UpdatedBy = updatedBy;
 
             _repository.UpdateCompany(company);
             await _repository.SaveChangesAsync(cancellationToken);

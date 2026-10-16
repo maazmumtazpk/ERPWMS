@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
@@ -39,7 +39,7 @@ namespace ERPWMS.Infrastructure.Services
             string createdBy)
         {
             if (!await _grnRepository.IsGrnNoUniqueAsync(grn.GrnNo, grn.Warehouse?.Branch?.CompanyId ?? 0, null))
-                throw new Exception("Grn Number already exists.");
+                throw new InvalidOperationException("Grn Number already exists.");
 
             grn.Status = "Draft";
             grn.CreatedBy = createdBy.ToString();
@@ -58,7 +58,7 @@ namespace ERPWMS.Infrastructure.Services
             return grn;
         }
 
-        // ? FIXED — MISSING METHOD
+        // ? FIXED â€” MISSING METHOD
         public async Task UpdateGrnAsync(
             Grn grn,
             List<Grndetail> details,
@@ -85,14 +85,14 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // ? FIXED — MISSING METHOD
+        // ? FIXED â€” MISSING METHOD
         public async Task<bool> DeleteGrnAsync(
             int grnId,
             int companyId,
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(grnId, companyId))
-                throw new Exception("Cannot delete Grn as it may have associated returns.");
+                throw new InvalidOperationException("Cannot delete Grn as it may have associated returns.");
 
             await _grnRepository.SoftDeleteAsync(grnId, companyId, deletedBy);
             return true;
@@ -151,7 +151,7 @@ namespace ERPWMS.Infrastructure.Services
         public async Task ValidateGrnAgainstPurchaseOrderAsync(int purchaseId, List<Grndetail> details)
         {
             var purchaseDetails = await _purchaseDetailRepository.GetByPurchaseIdAsync(purchaseId);
-            // Validation logic — extend as needed
+            // Validation logic â€” extend as needed
             await Task.CompletedTask;
         }
 

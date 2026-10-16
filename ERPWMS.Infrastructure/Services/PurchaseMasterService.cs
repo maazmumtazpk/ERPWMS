@@ -39,7 +39,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Purchase order must have at least one detail line.", nameof(details));
 
             if (!await _purchaseMasterRepository.IsPurchaseOrderNoUniqueAsync(purchase.PurchaseOrderNo, 0, null))
-                throw new Exception("Purchase Order Number already exists.");
+                throw new InvalidOperationException("Purchase Order Number already exists.");
 
             foreach (var detail in details)
             {
@@ -113,7 +113,7 @@ namespace ERPWMS.Infrastructure.Services
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(purchaseId, companyId))
-                throw new Exception("Cannot delete Purchase Order as it may have associated Grn or Returns.");
+                throw new InvalidOperationException("Cannot delete Purchase Order as it may have associated Grn or Returns.");
 
             await _purchaseMasterRepository.SoftDeleteAsync(purchaseId, companyId, deletedBy);
             return true;
@@ -195,3 +195,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

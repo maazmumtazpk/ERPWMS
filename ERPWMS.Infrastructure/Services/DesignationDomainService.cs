@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using ERPWMS.Database.Models;
@@ -39,7 +39,7 @@ namespace ERPWMS.Infrastructure.Services
                 IsActive = true,
                 IsDeleted = false,
                 CreatedDate = _dateTimeProvider.Now,
-                CreatedBy = createdBy.ToString()
+                CreatedBy = createdBy
             };
 
             await _repository.AddDesignationAsync(designation, cancellationToken);
@@ -56,7 +56,7 @@ namespace ERPWMS.Infrastructure.Services
             designation.DesignationName = designationName;
             designation.RankLevel = rankLevel;
             designation.UpdatedDate = _dateTimeProvider.Now;
-            designation.UpdatedBy = updatedBy.ToString();
+            designation.UpdatedBy = updatedBy;
 
             _repository.UpdateDesignation(designation);
             await _repository.SaveChangesAsync(cancellationToken);

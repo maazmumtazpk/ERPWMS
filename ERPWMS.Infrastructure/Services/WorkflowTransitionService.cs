@@ -45,14 +45,14 @@ namespace ERPWMS.Infrastructure.Services
 
             if (sourceStage == null || destinationStage == null)
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "Invalid source or destination stage.");
             }
 
             if (sourceStage.WorkflowDefId != transition.WorkflowDefId ||
                 destinationStage.WorkflowDefId != transition.WorkflowDefId)
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "Source and destination stages must belong to the same workflow definition.");
             }
 
@@ -63,7 +63,7 @@ namespace ERPWMS.Infrastructure.Services
 
             if (!isUnique)
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "A transition with the same source stage and action already exists.");
             }
 
@@ -83,7 +83,7 @@ namespace ERPWMS.Infrastructure.Services
 
             if (!isUnique)
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     "A transition with the same source stage and action already exists.");
             }
 
@@ -109,3 +109,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+

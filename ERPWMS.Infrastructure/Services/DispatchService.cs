@@ -1,4 +1,4 @@
-using ERPWMS.Domain.Interfaces;
+ï»¿using ERPWMS.Domain.Interfaces;
 using ERPWMS.Domain.Services;
 using ERPWMS.Database.Models;
 using System;
@@ -57,7 +57,7 @@ namespace ERPWMS.Infrastructure.Services
             string createdBy)
         {
             if (!await _dispatchMasterRepository.IsDispatchNoUniqueAsync(dispatch.DispatchNo, dispatch.Warehouse?.Branch?.CompanyId ?? 0, null))
-                throw new Exception("Dispatch Number already exists.");
+                throw new InvalidOperationException("Dispatch Number already exists.");
 
             dispatch.Status = "Draft";
             dispatch.CreatedBy = createdBy.ToString();
@@ -76,7 +76,7 @@ namespace ERPWMS.Infrastructure.Services
             return dispatch;
         }
 
-        // ? FIXED — MISSING METHOD
+        // ? FIXED â€” MISSING METHOD
         public async Task UpdateDispatchAsync(
             DispatchMaster dispatch,
             List<DispatchDetail> details,
@@ -103,14 +103,14 @@ namespace ERPWMS.Infrastructure.Services
             }
         }
 
-        // ? FIXED — MISSING METHOD
+        // ? FIXED â€” MISSING METHOD
         public async Task<bool> DeleteDispatchAsync(
             int dispatchId,
             int companyId,
             string deletedBy)
         {
             if (!await CanBeDeletedAsync(dispatchId, companyId))
-                throw new Exception("Cannot delete Dispatch as it may have associated Invoice.");
+                throw new InvalidOperationException("Cannot delete Dispatch as it may have associated Invoice.");
 
             await _dispatchMasterRepository.SoftDeleteAsync(dispatchId, companyId, deletedBy);
             return true;
@@ -122,7 +122,7 @@ namespace ERPWMS.Infrastructure.Services
             if (dispatch == null) return false;
 
             if (dispatch.Status != "Draft")
-                throw new Exception("Only Draft dispatches can be dispatched.");
+                throw new InvalidOperationException("Only Draft dispatches can be dispatched.");
 
             dispatch.Status = "Dispatched";
             dispatch.DispatchedBy = dispatchedBy;
@@ -163,7 +163,7 @@ namespace ERPWMS.Infrastructure.Services
             if (dispatch == null) return false;
 
             if (dispatch.Status != "Dispatched")
-                throw new Exception("Only Dispatched orders can be confirmed delivered.");
+                throw new InvalidOperationException("Only Dispatched orders can be confirmed delivered.");
 
             dispatch.Status = "Delivered";
             dispatch.DeliveryDate = deliveryDate;
@@ -188,10 +188,10 @@ namespace ERPWMS.Infrastructure.Services
         {
             var dispatch = await _dispatchMasterRepository.GetByIdAsync(dispatchId, 0);
             if (dispatch == null)
-                throw new Exception("Dispatch not found.");
+                throw new InvalidOperationException("Dispatch not found.");
 
             if (dispatch.Status != "Dispatched")
-                throw new Exception("Only dispatched orders can be invoiced.");
+                throw new InvalidOperationException("Only dispatched orders can be invoiced.");
 
             var invoiceNo = $"INV-{DateTime.Now:yyyyMMdd}-{new Random().Next(1000, 9999)}";
 

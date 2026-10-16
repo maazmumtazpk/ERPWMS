@@ -36,22 +36,22 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentException("Transfer must have at least one detail.", nameof(details));
 
             if (transfer.FromWarehouseId == transfer.ToWarehouseId)
-                throw new Exception("Source and destination warehouse cannot be the same.");
+                throw new InvalidOperationException("Source and destination warehouse cannot be the same.");
 
             if (!await _stockTransferRepository.IsTransferNoUniqueAsync(transfer.TransferNo, null))
-                throw new Exception("Transfer Number already exists.");
+                throw new InvalidOperationException("Transfer Number already exists.");
 
             // Validate stock for each detail
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
-                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid quantity for product {detail.ProductId}.");
 
                 var currentBalance = await _stockLedgerRepository.GetCurrentBalanceAsync(
                     detail.ProductId, transfer.FromWarehouseId, detail.FromBinId);
 
                 if (currentBalance < detail.Quantity)
-                    throw new Exception(
+                    throw new InvalidOperationException(
                         $"Insufficient stock for product {detail.ProductId}. " +
                         $"Available: {currentBalance}, Requested: {detail.Quantity}");
             }
@@ -82,7 +82,7 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentNullException(nameof(transfer));
 
             if (transfer.Status != "Draft")
-                throw new Exception("Only Draft transfers can be updated.");
+                throw new InvalidOperationException("Only Draft transfers can be updated.");
 
             transfer.UpdatedBy = updatedBy;
             transfer.UpdatedDate = DateTime.UtcNow;
@@ -104,7 +104,7 @@ namespace ERPWMS.Infrastructure.Services
                 foreach (var detail in details)
                 {
                     if (detail.Quantity <= 0)
-                        throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+                        throw new InvalidOperationException($"Invalid quantity for product {detail.ProductId}.");
 
                     detail.TransferId = transfer.TransferId;
                     detail.CreatedBy = updatedBy;
@@ -122,7 +122,7 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer == null) return false;
 
             if (transfer.Status != "Draft" && transfer.Status != "Rejected")
-                throw new Exception("Only Draft or Rejected transfers can be deleted.");
+                throw new InvalidOperationException("Only Draft or Rejected transfers can be deleted.");
 
             transfer.IsDeleted = true;
             transfer.DeletedBy = deletedBy;
@@ -144,7 +144,7 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer == null) return false;
 
             if (transfer.Status != "Draft")
-                throw new Exception("Only Draft transfers can be submitted.");
+                throw new InvalidOperationException("Only Draft transfers can be submitted.");
 
             transfer.Status = "Submitted";
             transfer.UpdatedBy = userId.ToString();
@@ -160,7 +160,7 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer == null) return false;
 
             if (transfer.Status != "Submitted")
-                throw new Exception("Only Submitted transfers can be approved.");
+                throw new InvalidOperationException("Only Submitted transfers can be approved.");
 
             transfer.Status = "Approved";
             transfer.ApprovedBy = userId.ToString();
@@ -178,7 +178,7 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer == null) return false;
 
             if (transfer.Status != "Submitted")
-                throw new Exception("Only Submitted transfers can be rejected.");
+                throw new InvalidOperationException("Only Submitted transfers can be rejected.");
 
             transfer.Status = "Rejected";
             transfer.UpdatedBy = userId.ToString();
@@ -194,7 +194,7 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer == null) return false;
 
             if (transfer.Status != "Approved")
-                throw new Exception("Only Approved transfers can be dispatched.");
+                throw new InvalidOperationException("Only Approved transfers can be dispatched.");
 
             transfer.Status = "InTransit";
             transfer.UpdatedBy = userId.ToString();
@@ -210,7 +210,7 @@ namespace ERPWMS.Infrastructure.Services
             if (transfer == null) return false;
 
             if (transfer.Status != "InTransit")
-                throw new Exception("Only InTransit transfers can be received.");
+                throw new InvalidOperationException("Only InTransit transfers can be received.");
 
             transfer.Status = "Completed";
             transfer.ReceivedBy = userId.ToString();
@@ -242,15 +242,15 @@ namespace ERPWMS.Infrastructure.Services
                 throw new ArgumentNullException(nameof(transfer));
 
             if (transfer.FromWarehouseId == transfer.ToWarehouseId)
-                throw new Exception("Source and destination warehouse cannot be the same.");
+                throw new InvalidOperationException("Source and destination warehouse cannot be the same.");
 
             if (details == null || !details.Any())
-                throw new Exception("Transfer must have at least one detail.");
+                throw new InvalidOperationException("Transfer must have at least one detail.");
 
             foreach (var detail in details)
             {
                 if (detail.Quantity <= 0)
-                    throw new Exception($"Invalid quantity for product {detail.ProductId}.");
+                    throw new InvalidOperationException($"Invalid quantity for product {detail.ProductId}.");
             }
 
             await Task.CompletedTask;
@@ -295,3 +295,4 @@ namespace ERPWMS.Infrastructure.Services
         }
     }
 }
+
