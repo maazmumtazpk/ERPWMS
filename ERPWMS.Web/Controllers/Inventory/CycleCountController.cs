@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,13 @@ namespace ERPWMS.Web.Controllers.Inventory
             _context = c;
         }
 
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         // -------------------------------------------------------
         // INDEX
@@ -158,7 +164,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { warehouseId = 0, warehouseName = "", bins = new List<Dictionary<string, object>>(), error = ex.Message });
+                return Json(new { warehouseId = 0, warehouseName = "", bins = new List<Dictionary<string, object>>(), error = "Operation failed." });
             }
         }
 
@@ -201,13 +207,13 @@ namespace ERPWMS.Web.Controllers.Inventory
                     SystemQty = systemQty,
                     ActualQty = actualQty,
                     Variance = actualQty - systemQty,
-                    CountedBy = Uid().ToString(),     // ✅ FIX: int → string
+                    CountedBy = Uid().ToString(),     // âœ… FIX: int â†’ string
                     CountedDate = DateTime.Now,
                     Status = "Pending",
                     Remarks = remarks ?? "",
                     IsActive = true,
                     IsDeleted = false,
-                    CreatedBy = Uid().ToString(),     // ✅ string
+                    CreatedBy = Uid().ToString(),     // âœ… string
                     CreatedDate = DateTime.Now
                 });
                 await _context.SaveChangesAsync();
@@ -215,7 +221,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -246,7 +252,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -254,6 +260,7 @@ namespace ERPWMS.Web.Controllers.Inventory
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -271,7 +278,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -279,6 +286,7 @@ namespace ERPWMS.Web.Controllers.Inventory
         // TOGGLE STATUS (Pending <-> Verified)
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -287,6 +295,9 @@ namespace ERPWMS.Web.Controllers.Inventory
                 if (c == null)
                     return Json(new { success = false, message = "Not found" });
 
+                var currentUid = Uid().ToString();
+                if (c.CreatedBy == currentUid)
+                    return Json(new { success = false, message = "You cannot approve your own entry." });
                 c.Status = c.Status == "Pending" ? "Verified" : "Pending";
                 c.UpdatedBy = Uid().ToString();
                 c.UpdatedDate = DateTime.Now;
@@ -295,7 +306,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -315,3 +326,4 @@ namespace ERPWMS.Web.Controllers.Inventory
         }
     }
 }
+

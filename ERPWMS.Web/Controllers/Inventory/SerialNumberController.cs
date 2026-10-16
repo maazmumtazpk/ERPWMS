@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,13 @@ namespace ERPWMS.Web.Controllers.Inventory
             _context = c;
         }
 
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         // -------------------------------------------------------
         // INDEX
@@ -113,6 +119,9 @@ namespace ERPWMS.Web.Controllers.Inventory
                     return Json(new { success = false, message = "Serial No required." });
                 if (productId <= 0)
                     return Json(new { success = false, message = "Please select product." });
+                if (await _context.SerialNumbers.AnyAsync(x => x.SerialNo == serialNo.Trim()))
+                    return Json(new { success = false, message = "Serial number already exists." });
+
 
                 _context.SerialNumbers.Add(new SerialNumber
                 {
@@ -128,7 +137,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -156,7 +165,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -164,6 +173,7 @@ namespace ERPWMS.Web.Controllers.Inventory
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -174,14 +184,15 @@ namespace ERPWMS.Web.Controllers.Inventory
 
                 s.DeletedBy = Uid().ToString();
                 s.DeletedDate = DateTime.Now;
-                _context.SerialNumbers.Remove(s);
+                s.Status = "Deleted";
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Deleted." });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
     }
 }
+

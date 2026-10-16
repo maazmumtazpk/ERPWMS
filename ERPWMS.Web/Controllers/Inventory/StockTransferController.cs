@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +19,9 @@ namespace ERPWMS.Controllers.Inventory
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         private async Task<string> GenerateTransferNo()
@@ -133,7 +133,7 @@ namespace ERPWMS.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { warehouseId = 0, warehouseName = "", balance = 0, error = ex.Message });
+                return Json(new { warehouseId = 0, warehouseName = "", balance = 0, error = "Operation failed." });
             }
         }
 
@@ -161,6 +161,16 @@ namespace ERPWMS.Controllers.Inventory
                 if (productId <= 0) return Json(new { success = false, message = "Product select karein." });
                 if (quantity <= 0) return Json(new { success = false, message = "Quantity 0 se zyada honi chahiye." });
                 if (fromWarehouseId == toWarehouseId) return Json(new { success = false, message = "From aur To warehouse same nahi ho sakte." });
+                // Available stock check
+                var currentStock = await _context.StockLedgers
+                    .Where(s => s.ProductId == productId && s.WarehouseId == fromWarehouseId && (s.IsDeleted == null || s.IsDeleted == false))
+                    .GroupBy(s => s.ProductId)
+                    .Select(g => g.Sum(x => x.TransactionType == "IN" ? x.Quantity : -x.Quantity))
+                    .FirstOrDefaultAsync();
+
+                if (currentStock < quantity)
+                    return Json(new { success = false, message = $"Insufficient stock. Available: {currentStock}, Requested: {quantity}." });
+
 
                 var transferNo = await GenerateTransferNo();
 
@@ -181,7 +191,7 @@ namespace ERPWMS.Controllers.Inventory
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Stock Transfer created: " + transferNo });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -198,10 +208,11 @@ namespace ERPWMS.Controllers.Inventory
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Updated!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             var t = await _context.StockTransfers.FindAsync(id);
@@ -215,11 +226,15 @@ namespace ERPWMS.Controllers.Inventory
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Toggle(int id)
         {
             var t = await _context.StockTransfers.FindAsync(id);
             if (t == null) return Json(new { success = false });
-            t.Status = t.Status == "Pending" ? "Completed" : "Pending";
+            var currentUid = Uid().ToString();
+                if (t.CreatedBy == currentUid)
+                    return Json(new { success = false, message = "You cannot approve your own entry." });
+                t.Status = t.Status == "Pending" ? "Completed" : "Pending";
             t.UpdatedBy = Uid().ToString();
             t.UpdatedDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -239,3 +254,5 @@ namespace ERPWMS.Controllers.Inventory
         }
     }
 }
+
+

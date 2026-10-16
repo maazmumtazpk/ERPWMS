@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +20,9 @@ namespace ERPWMS.Controllers.Inventory
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         [HttpGet] public IActionResult Index() => View();
@@ -132,7 +132,7 @@ namespace ERPWMS.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { warehouseId = 0, warehouseName = "", bins = new List<Dictionary<string, object>>(), error = ex.Message });
+                return Json(new { warehouseId = 0, warehouseName = "", bins = new List<Dictionary<string, object>>(), error = "Operation failed." });
             }
         }
 
@@ -185,7 +185,7 @@ namespace ERPWMS.Controllers.Inventory
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Stock Adjustment created! New Qty: " + newQty });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -204,10 +204,11 @@ namespace ERPWMS.Controllers.Inventory
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Updated!" });
             }
-            catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             var a = await _context.StockAdjustments.FindAsync(id);
@@ -221,11 +222,15 @@ namespace ERPWMS.Controllers.Inventory
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Toggle(int id)
         {
             var a = await _context.StockAdjustments.FindAsync(id);
             if (a == null) return Json(new { success = false });
-            a.Status = a.Status == "Pending" ? "Approved" : a.Status == "Approved" ? "Completed" : "Pending";
+            var currentUid = Uid().ToString();
+                if (a.CreatedBy == currentUid)
+                    return Json(new { success = false, message = "You cannot approve your own entry." });
+                a.Status = a.Status == "Pending" ? "Approved" : a.Status == "Approved" ? "Completed" : "Pending";
             a.UpdatedBy = Uid().ToString();
             a.UpdatedDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -244,3 +249,4 @@ namespace ERPWMS.Controllers.Inventory
         }
     }
 }
+

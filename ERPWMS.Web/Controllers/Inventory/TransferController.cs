@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,13 @@ namespace ERPWMS.Web.Controllers.Inventory
             _context = c;
         }
 
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         // -------------------------------------------------------
         // INDEX
@@ -155,7 +161,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -191,7 +197,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -199,6 +205,7 @@ namespace ERPWMS.Web.Controllers.Inventory
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -216,7 +223,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -224,6 +231,7 @@ namespace ERPWMS.Web.Controllers.Inventory
         // TOGGLE STATUS (Pending <-> Approved)
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -232,6 +240,9 @@ namespace ERPWMS.Web.Controllers.Inventory
                 if (t == null)
                     return Json(new { success = false, message = "Not found" });
 
+                var currentUid = Uid().ToString();
+                if (t.CreatedBy == currentUid)
+                    return Json(new { success = false, message = "You cannot approve your own entry." });
                 t.Status = t.Status == "Pending" ? "Approved" : "Pending";
                 t.UpdatedBy = Uid().ToString();
                 t.UpdatedDate = DateTime.Now;
@@ -240,7 +251,7 @@ namespace ERPWMS.Web.Controllers.Inventory
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -260,3 +271,4 @@ namespace ERPWMS.Web.Controllers.Inventory
         }
     }
 }
+
