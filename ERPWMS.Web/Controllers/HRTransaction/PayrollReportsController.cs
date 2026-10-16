@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ERPWMS.Web.Controllers.HRTransaction
 {
-    [Authorize]
+    [Authorize(Policy = "Payroll.Approve")]
     public class PayrollReportsController : Controller
     {
         private readonly AppDbContext _context;
@@ -163,4 +163,5 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         }
     }
 }
+
 

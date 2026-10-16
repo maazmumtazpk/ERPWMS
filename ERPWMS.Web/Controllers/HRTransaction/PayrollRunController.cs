@@ -26,9 +26,9 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         public IActionResult Index() => View();
@@ -179,10 +179,21 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Approve")]
         public async Task<IActionResult> Approve(int id)
         {
             var r = await _context.PayrollRuns.FindAsync(id);
             if (r == null) return Json(new { success = false, message = "Not found" });
+
+            if (r.Status == "Approved" || r.Status == "Locked" || r.Status == "Paid")
+                return Json(new { success = false, message = "Payroll already approved." });
+            if (r.Status != "Draft" && r.Status != "Submitted")
+                return Json(new { success = false, message = "Only Draft/Submitted can be approved." });
+            if (r.CreatedBy == Uid().ToString())
+                return Json(new { success = false, message = "You cannot approve your own payroll run." });
+
+            using var tx = await _context.Database.BeginTransactionAsync();
+            try {
             
             // ===== UPDATE LOAN RECOVERIES =====
             var registers = await _context.PayrollRegisters
@@ -238,7 +249,13 @@ namespace ERPWMS.Web.Controllers.HRTransaction
                 ActionBy = Uid().ToString(), ActionDate = DateTime.Now
             });
             await _context.SaveChangesAsync();
+            await tx.CommitAsync();
             return Json(new { success = true, message = "Payroll approved! Loan recoveries applied." });
+            } catch (Exception ex) {
+                await tx.RollbackAsync();
+                System.Diagnostics.Debug.WriteLine(ex);
+                return Json(new { success = false, message = "Approval failed. Please try again." });
+            }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -259,14 +276,22 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
             var r = await _context.PayrollRuns.FindAsync(id);
             if (r == null) return Json(new { success = false, message = "Not found" });
+
+            if (r.Status == "Approved" || r.Status == "Locked" || r.Status == "Paid")
+                return Json(new { success = false, message = "Approved/Locked payrolls cannot be deleted." });
+
             r.IsDeleted = true; r.IsActive = false;
+            r.UpdatedBy = Uid().ToString();
+            r.UpdatedDate = DateTime.Now;
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Deleted." });
         }
     }
 }
+
 

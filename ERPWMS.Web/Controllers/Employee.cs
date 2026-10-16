@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +16,13 @@ namespace ERPWMS.Web.Controllers
     {
         private readonly AppDbContext _context;
         public EmployeeController(AppDbContext c) { _context = c; }
-        private int Uid() => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 1;
+        private int Uid()
+        {
+            var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Index(string search, int? dept, int? desig)
@@ -74,6 +80,7 @@ namespace ERPWMS.Web.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "EmployeeCreate")]
         public async Task<IActionResult> RegisterEmployee(Employee model)
         {
             try
@@ -103,7 +110,7 @@ namespace ERPWMS.Web.Controllers
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Employee registered: " + model.EmployeeCode });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpGet]
@@ -121,6 +128,7 @@ namespace ERPWMS.Web.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "EmployeeUpdate")]
         public async Task<IActionResult> UpdateEmployee(Employee model)
         {
             try
@@ -148,7 +156,7 @@ namespace ERPWMS.Web.Controllers
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = "Employee updated." });
             }
-            catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpGet]
@@ -210,6 +218,7 @@ namespace ERPWMS.Web.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "EmployeeDelete")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             var emp = await _context.Employees.FindAsync(id);
@@ -280,4 +289,7 @@ namespace ERPWMS.Web.Controllers
         }
     }
 }
+
+
+
 

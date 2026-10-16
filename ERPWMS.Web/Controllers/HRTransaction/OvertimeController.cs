@@ -22,18 +22,20 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
+
+        private const decimal MaxOTPerDay = 12m;
+        private const decimal MaxOTPerMonth = 100m;
 
         public IActionResult Index() => View();
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var l = await _context.Overtimes
-                .Include(o => o.Employee)
+            var l = await _context.Overtimes.Include(o => o.Employee)
                 .Where(o => o.IsDeleted != true)
                 .OrderByDescending(o => o.OvertimeDate)
                 .Select(o => new {
@@ -53,55 +55,110 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetEmployees()
-        {
-            var l = await _context.Employees.Where(e => e.IsDeleted != true && e.IsActive == true)
-                .Select(e => new { employeeId = e.EmployeeId, employeeCode = e.EmployeeCode, fullName = e.FirstName + " " + e.LastName })
-                .OrderBy(e => e.fullName).ToListAsync();
-            return Json(l);
-        }
+        public async Task<IActionResult> GetEmployees() =>
+            Json(await _context.Employees.Where(e => e.IsDeleted != true && e.IsActive == true)
+                .Select(e => new {
+                    employeeId = e.EmployeeId,
+                    employeeCode = e.EmployeeCode,
+                    fullName = e.FirstName + " " + e.LastName
+                }).OrderBy(e => e.fullName).ToListAsync());
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Record(int employeeId, string overtimeDate, decimal otHours, bool isHolidayWork, bool isWeeklyOffWork, string? remarks)
+        [Authorize(Policy = "Payroll.Edit")]
+        public async Task<IActionResult> Record(int employeeId, string overtimeDate, decimal otHours,
+            bool isHolidayWork, bool isWeeklyOffWork, string? remarks)
         {
             try
             {
                 if (employeeId <= 0) return Json(new { success = false, message = "Employee required." });
                 if (!DateOnly.TryParse(overtimeDate, out var date)) return Json(new { success = false, message = "Invalid date." });
-                if (otHours <= 0) return Json(new { success = false, message = "OT hours must be > 0." });
+
+                if (date > DateOnly.FromDateTime(DateTime.Today))
+                    return Json(new { success = false, message = "Future date not allowed." });
+
+                if (otHours <= 0 || otHours > MaxOTPerDay)
+                    return Json(new { success = false, message = $"OT hours must be 0-{MaxOTPerDay}." });
+
+                var dup = await _context.Overtimes.AnyAsync(o => o.EmployeeId == employeeId
+                    && o.OvertimeDate == date && o.Status != "Rejected" && o.IsDeleted != true);
+                if (dup)
+                    return Json(new { success = false, message = "OT already recorded for this date." });
+
+                var monthStart = new DateOnly(date.Year, date.Month, 1);
+                var monthEnd = new DateOnly(date.Year, date.Month, DateTime.DaysInMonth(date.Year, date.Month));
+
+                decimal monthTotal = await _context.Overtimes
+                    .Where(o => o.EmployeeId == employeeId
+                        && o.OvertimeDate >= monthStart && o.OvertimeDate <= monthEnd
+                        && o.Status != "Rejected" && o.IsDeleted != true)
+                    .SumAsync(o => (decimal?)o.OTHours) ?? 0;
+
+                if (monthTotal + otHours > MaxOTPerMonth)
+                    return Json(new { success = false, message = $"Monthly OT limit exceeded. Used: {monthTotal}h." });
 
                 var calc = await _calc.CalculateAsync(employeeId, otHours, isHolidayWork, isWeeklyOffWork);
 
-                var entity = new Overtime {
-                    EmployeeId = employeeId, OvertimeDate = date,
-                    OTHours = otHours, OTRate = calc.OTRate, OTMultiplier = calc.OTMultiplier, OTAmount = calc.OTAmount,
-                    IsHolidayWork = isHolidayWork, IsWeeklyOffWork = isWeeklyOffWork,
-                    Status = "Pending", Remarks = remarks, IsActive = true, IsDeleted = false,
-                    CreatedBy = Uid().ToString(), CreatedDate = DateTime.Now
-                };
-                _context.Overtimes.Add(entity);
+                _context.Overtimes.Add(new Overtime
+                {
+                    EmployeeId = employeeId,
+                    OvertimeDate = date,
+                    OTHours = otHours,
+                    OTRate = calc.OTRate,
+                    OTMultiplier = calc.OTMultiplier,
+                    OTAmount = calc.OTAmount,
+                    IsHolidayWork = isHolidayWork,
+                    IsWeeklyOffWork = isWeeklyOffWork,
+                    Status = "Pending",
+                    Remarks = remarks,
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = Uid().ToString(),
+                    CreatedDate = DateTime.Now
+                });
                 await _context.SaveChangesAsync();
-
                 return Json(new { success = true, message = $"OT recorded! Amount: {calc.OTAmount:N2}" });
-            } catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                return Json(new { success = false, message = "Operation failed." });
+            }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id) 
+        [Authorize(Policy = "Payroll.Approve")]
+        public async Task<IActionResult> Approve(int id)
         {
             var o = await _context.Overtimes.FindAsync(id);
             if (o == null) return Json(new { success = false, message = "Not found" });
-            o.Status = "Approved"; o.ApprovedBy = Uid().ToString(); o.ApprovedDate = DateTime.Now;
+            if (o.Status != "Pending") return Json(new { success = false, message = "Only pending can be approved." });
+
+            var currentUid = Uid().ToString();
+            if (o.CreatedBy == currentUid)
+                return Json(new { success = false, message = "You cannot approve your own OT entry." });
+
+            o.Status = "Approved";
+            o.ApprovedBy = currentUid;
+            o.ApprovedDate = DateTime.Now;
+            o.UpdatedBy = currentUid;
+            o.UpdatedDate = DateTime.Now;
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Approved!" });
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Approve")]
         public async Task<IActionResult> Reject(int id)
         {
             var o = await _context.Overtimes.FindAsync(id);
             if (o == null) return Json(new { success = false, message = "Not found" });
-            o.Status = "Rejected"; o.ApprovedBy = Uid().ToString(); o.ApprovedDate = DateTime.Now;
+            if (o.Status != "Pending") return Json(new { success = false, message = "Only pending can be rejected." });
+
+            o.Status = "Rejected";
+            o.ApprovedBy = Uid().ToString();
+            o.ApprovedDate = DateTime.Now;
+            o.UpdatedBy = Uid().ToString();
+            o.UpdatedDate = DateTime.Now;
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Rejected!" });
         }

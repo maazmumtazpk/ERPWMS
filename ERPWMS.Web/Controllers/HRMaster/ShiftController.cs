@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,9 +23,9 @@ namespace ERPWMS.Web.Controllers.HRMaster
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         // -------------------------------------------------------
@@ -68,7 +68,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
                     shiftName = s.ShiftName,
                     startTime = s.StartTime.ToString("HH:mm"),
                     endTime = s.EndTime.ToString("HH:mm"),
-                    gracePeriodMinutes = s.GracePeriodMinutes,   // ✅ int? as-is
+                    gracePeriodMinutes = s.GracePeriodMinutes,   // âœ… int? as-is
                     isActive = s.IsActive == true
                 })
                 .ToListAsync();
@@ -93,6 +93,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
         // REGISTER
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Register(
             string shiftName,
             string startTime,
@@ -121,7 +122,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
                     ShiftName = shiftName.Trim(),
                     StartTime = st,
                     EndTime = et,
-                    GracePeriodMinutes = gracePeriodMinutes,   // ✅ int?
+                    GracePeriodMinutes = gracePeriodMinutes,   // âœ… int?
                     IsActive = isActive,
                     IsDeleted = false,
                     CreatedBy = Uid().ToString(),
@@ -132,7 +133,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -140,6 +141,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
         // EDIT
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Edit(
             int shiftId,
             string shiftName,
@@ -172,7 +174,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
                 s.ShiftName = shiftName.Trim();
                 s.StartTime = st;
                 s.EndTime = et;
-                s.GracePeriodMinutes = gracePeriodMinutes;   // ✅ int?
+                s.GracePeriodMinutes = gracePeriodMinutes;   // âœ… int?
                 s.IsActive = isActive;
                 s.UpdatedBy = Uid().ToString();
                 s.UpdatedDate = DateTime.Now;
@@ -181,7 +183,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -189,6 +191,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
         // DELETE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -210,7 +213,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
@@ -218,6 +221,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
         // TOGGLE ACTIVE
         // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -234,8 +238,10 @@ namespace ERPWMS.Web.Controllers.HRMaster
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
     }
 }
+
+

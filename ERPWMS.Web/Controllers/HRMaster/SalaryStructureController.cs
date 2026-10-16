@@ -22,9 +22,9 @@ namespace ERPWMS.Web.Controllers.HRMaster
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         public IActionResult Index() => View();
@@ -66,6 +66,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Save(int structureId, string structureCode, string structureName,
             string grade, string? description, decimal? minSalary, decimal? maxSalary, bool isActive)
         {
@@ -103,10 +104,11 @@ namespace ERPWMS.Web.Controllers.HRMaster
                 }
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = structureId > 0 ? "Updated!" : "Created!" });
-            } catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            } catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             var e = await _context.SalaryStructures.FindAsync(id);
@@ -118,3 +120,6 @@ namespace ERPWMS.Web.Controllers.HRMaster
         }
     }
 }
+
+
+

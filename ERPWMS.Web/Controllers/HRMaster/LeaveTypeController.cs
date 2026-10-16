@@ -19,9 +19,9 @@ namespace ERPWMS.Web.Controllers.HRMaster
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
         public IActionResult Index() => View();
@@ -71,6 +71,7 @@ namespace ERPWMS.Web.Controllers.HRMaster
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Save(int leaveTypeId, string leaveCode, string leaveName, string category,
             int annualEntitlement, bool isPaid, bool allowCarryForward, int maxCarryForwardDays,
             int maxConsecutiveDays, bool approvalRequired, bool documentRequired, int noticeDays,
@@ -113,10 +114,11 @@ namespace ERPWMS.Web.Controllers.HRMaster
                 }
                 await _context.SaveChangesAsync();
                 return Json(new { success = true, message = leaveTypeId > 0 ? "Updated!" : "Created!" });
-            } catch (Exception ex) { return Json(new { success = false, message = (ex.InnerException ?? ex).Message }); }
+            } catch (Exception ex) { return Json(new { success = false, message = "Operation failed." }); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "SystemAdmin.Manage")]
         public async Task<IActionResult> Delete(int id)
         {
             var x = await _context.LeaveTypes.FindAsync(id);
@@ -128,3 +130,6 @@ namespace ERPWMS.Web.Controllers.HRMaster
         }
     }
 }
+
+
+

@@ -1,13 +1,12 @@
+﻿using ERPWMS.Database;
 using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ERPWMS.Database;
 
 namespace ERPWMS.Web.Controllers.HRTransaction
 {
@@ -15,57 +14,46 @@ namespace ERPWMS.Web.Controllers.HRTransaction
     public class AttendanceController : Controller
     {
         private readonly AppDbContext _context;
-
-        public AttendanceController(AppDbContext c)
-        {
-            _context = c;
-        }
+        public AttendanceController(AppDbContext c) { _context = c; }
 
         private int Uid()
         {
             var cl = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (int.TryParse(cl, out var i) && i > 0) return i;
-            var u = _context.Users.FirstOrDefault();
-            return u != null ? u.Id : 1;
+            if (!int.TryParse(cl, out var i) || i <= 0)
+                throw new UnauthorizedAccessException("User identity missing.");
+            return i;
         }
 
-        // -------------------------------------------------------
-        // INDEX
-        // -------------------------------------------------------
-        [HttpGet]
+        private const int MaxDaysBack = 30;
+        private const decimal MaxOTHours = 16m;
+        private const decimal StandardHours = 8m;
+
         public IActionResult Index() => View();
 
-        // -------------------------------------------------------
-        // STATISTICS
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetStatistics()
         {
             var l = await _context.EmployeeAttendances.Where(a => a.IsDeleted != true).ToListAsync();
+            var now = DateTime.Now;
             return Json(new
             {
                 total = l.Count,
                 active = l.Count(a => a.Status == "Present"),
                 inactive = l.Count(a => a.Status == "Absent" || a.Status == "Leave"),
-                addedThisMonth = l.Count(a =>
-                    a.CreatedDate.HasValue &&
-                    a.CreatedDate.Value.Month == DateTime.Now.Month &&
-                    a.CreatedDate.Value.Year == DateTime.Now.Year)
+                addedThisMonth = l.Count(a => a.CreatedDate.HasValue &&
+                    a.CreatedDate.Value.Month == now.Month &&
+                    a.CreatedDate.Value.Year == now.Year)
             });
         }
 
-        // -------------------------------------------------------
-        // GET ALL
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var l = await _context.EmployeeAttendances
                 .Include(a => a.Employee)
                 .Where(a => a.IsDeleted != true)
-                .OrderBy(a => a.AttendanceId)
-                .Select(a => new
-                {
+                .OrderByDescending(a => a.AttendanceDate)
+                .Select(a => new {
                     attendanceId = a.AttendanceId,
                     employeeName = a.Employee != null
                         ? a.Employee.FirstName + " " + (a.Employee.LastName ?? "")
@@ -74,52 +62,34 @@ namespace ERPWMS.Web.Controllers.HRTransaction
                     checkInTime = a.CheckInTime,
                     checkOutTime = a.CheckOutTime,
                     status = a.Status ?? "Present",
-                    overtimeHours = a.OvertimeHours    // ✅ decimal? as-is
+                    overtimeHours = a.OvertimeHours
                 })
                 .ToListAsync();
             return Json(l);
         }
 
-        // -------------------------------------------------------
-        // GET EMPLOYEES
-        // -------------------------------------------------------
         [HttpGet]
-        public async Task<IActionResult> GetEmployees()
-        {
-            var l = await _context.Employees
+        public async Task<IActionResult> GetEmployees() =>
+            Json(await _context.Employees
                 .Where(e => e.IsActive == true && e.IsDeleted != true)
-                .Select(e => new
-                {
+                .Select(e => new {
                     employeeId = e.EmployeeId,
                     employeeName = e.FirstName + " " + (e.LastName ?? "")
-                })
-                .ToListAsync();
-            return Json(l);
-        }
+                }).ToListAsync());
 
-        // -------------------------------------------------------
-        // GET SHIFTS
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> GetShifts()
         {
             try
             {
-                var l = await _context.Shifts
+                return Json(await _context.Shifts
                     .Where(s => s.IsDeleted != true)
                     .Select(s => new { shiftId = s.ShiftId, shiftName = s.ShiftName })
-                    .ToListAsync();
-                return Json(l);
+                    .ToListAsync());
             }
-            catch
-            {
-                return Json(new List<object>());
-            }
+            catch { return Json(new System.Collections.Generic.List<object>()); }
         }
 
-        // -------------------------------------------------------
-        // ADD / EDIT PARTIALS
-        // -------------------------------------------------------
         [HttpGet]
         public IActionResult AddAttendancePartial() => PartialView("_AddAttendanceForm");
 
@@ -128,44 +98,60 @@ namespace ERPWMS.Web.Controllers.HRTransaction
         {
             try
             {
-                var a = await _context.EmployeeAttendances
-                    .Include(x => x.Employee)
+                var a = await _context.EmployeeAttendances.Include(x => x.Employee)
                     .FirstOrDefaultAsync(x => x.AttendanceId == id);
                 if (a == null) return NotFound();
                 return PartialView("_EditAttendanceForm", a);
             }
-            catch
-            {
-                return NotFound();
-            }
+            catch { return NotFound(); }
         }
 
-        // -------------------------------------------------------
-        // REGISTER
-        // -------------------------------------------------------
+        // Helper: calculate OT from check-in/check-out
+        private static decimal CalculateOT(TimeOnly? ci, TimeOnly? co, string status)
+        {
+            if (status != "Present" || !ci.HasValue || !co.HasValue) return 0;
+            var duration = co.Value.ToTimeSpan() - ci.Value.ToTimeSpan();
+            var hours = duration.TotalHours;
+            if (hours < 0) hours += 24;
+            if (hours <= (double)StandardHours) return 0;
+            var ot = Math.Round((decimal)(hours - (double)StandardHours), 2);
+            if (ot > MaxOTHours) ot = MaxOTHours;
+            if (ot < 0) ot = 0;
+            return ot;
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Edit")]
         public async Task<IActionResult> Register(
-            int employeeId,
-            DateOnly attendanceDate,
-            string status,
-            string? checkInTime,
-            string? checkOutTime,
-            decimal? overtimeHours,
-            int? shiftId)
+            int employeeId, DateOnly attendanceDate, string status,
+            string? checkInTime, string? checkOutTime, int? shiftId)
         {
             try
             {
                 if (employeeId <= 0)
                     return Json(new { success = false, message = "Please select employee." });
 
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                if (attendanceDate > today)
+                    return Json(new { success = false, message = "Future date not allowed." });
+                if (attendanceDate < today.AddDays(-MaxDaysBack))
+                    return Json(new { success = false, message = $"Cannot mark attendance older than {MaxDaysBack} days." });
+
+                var allowedStatuses = new[] { "Present", "Absent", "Leave", "HalfDay", "Holiday" };
+                if (string.IsNullOrWhiteSpace(status) || !allowedStatuses.Contains(status))
+                    return Json(new { success = false, message = "Invalid status." });
+
                 var existing = await _context.EmployeeAttendances
-                    .FirstOrDefaultAsync(x => x.EmployeeId == employeeId && x.AttendanceDate == attendanceDate && x.IsDeleted != true);
+                    .FirstOrDefaultAsync(x => x.EmployeeId == employeeId
+                        && x.AttendanceDate == attendanceDate && x.IsDeleted != true);
                 if (existing != null)
-                    return Json(new { success = false, message = "Attendance already marked for this employee on this date." });
+                    return Json(new { success = false, message = "Attendance already marked." });
 
                 TimeOnly? ci = null, co = null;
                 if (!string.IsNullOrEmpty(checkInTime) && TimeOnly.TryParse(checkInTime, out var t1)) ci = t1;
                 if (!string.IsNullOrEmpty(checkOutTime) && TimeOnly.TryParse(checkOutTime, out var t2)) co = t2;
+
+                decimal serverOT = CalculateOT(ci, co, status);
 
                 _context.EmployeeAttendances.Add(new EmployeeAttendance
                 {
@@ -173,39 +159,38 @@ namespace ERPWMS.Web.Controllers.HRTransaction
                     AttendanceDate = attendanceDate,
                     CheckInTime = ci,
                     CheckOutTime = co,
-                    Status = status ?? "Present",
-                    OvertimeHours = overtimeHours ?? 0,     // ✅ decimal?
+                    Status = status,
+                    OvertimeHours = serverOT,
                     ShiftId = shiftId,
                     IsDeleted = false,
                     CreatedBy = Uid().ToString(),
                     CreatedDate = DateTime.Now
                 });
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Attendance marked!" });
+                return Json(new { success = true, message = $"Attendance marked! OT: {serverOT}h" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                System.Diagnostics.Debug.WriteLine(ex);
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
-        // -------------------------------------------------------
-        // EDIT
-        // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Edit")]
         public async Task<IActionResult> Edit(
-            int attendanceId,
-            string? status,
-            string? checkInTime,
-            string? checkOutTime,
-            decimal? overtimeHours,
-            int? shiftId)
+            int attendanceId, string? status,
+            string? checkInTime, string? checkOutTime, int? shiftId)
         {
             try
             {
                 var a = await _context.EmployeeAttendances.FindAsync(attendanceId);
                 if (a == null)
                     return Json(new { success = false, message = "Not found" });
+
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                if (a.AttendanceDate < today.AddDays(-MaxDaysBack))
+                    return Json(new { success = false, message = "Attendance locked (older than 30 days)." });
 
                 TimeOnly? ci = null, co = null;
                 if (!string.IsNullOrEmpty(checkInTime) && TimeOnly.TryParse(checkInTime, out var t1)) ci = t1;
@@ -214,8 +199,8 @@ namespace ERPWMS.Web.Controllers.HRTransaction
                 a.Status = status ?? "Present";
                 a.CheckInTime = ci;
                 a.CheckOutTime = co;
-                a.OvertimeHours = overtimeHours ?? 0;   // ✅ decimal?
                 a.ShiftId = shiftId;
+                a.OvertimeHours = CalculateOT(ci, co, a.Status);
                 a.UpdatedBy = Uid().ToString();
                 a.UpdatedDate = DateTime.Now;
                 await _context.SaveChangesAsync();
@@ -223,14 +208,13 @@ namespace ERPWMS.Web.Controllers.HRTransaction
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = (ex.InnerException ?? ex).Message });
+                System.Diagnostics.Debug.WriteLine(ex);
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
-        // -------------------------------------------------------
-        // DELETE
-        // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Delete")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -247,14 +231,13 @@ namespace ERPWMS.Web.Controllers.HRTransaction
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                System.Diagnostics.Debug.WriteLine(ex);
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
-        // -------------------------------------------------------
-        // TOGGLE (Present <-> Absent)
-        // -------------------------------------------------------
         [HttpPost, ValidateAntiForgeryToken]
+        [Authorize(Policy = "Payroll.Approve")]
         public async Task<IActionResult> ToggleActive(int id)
         {
             try
@@ -263,7 +246,12 @@ namespace ERPWMS.Web.Controllers.HRTransaction
                 if (a == null)
                     return Json(new { success = false, message = "Not found" });
 
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                if (a.AttendanceDate < today.AddDays(-MaxDaysBack))
+                    return Json(new { success = false, message = "Attendance locked." });
+
                 a.Status = a.Status == "Present" ? "Absent" : "Present";
+                a.OvertimeHours = CalculateOT(a.CheckInTime, a.CheckOutTime, a.Status);
                 a.UpdatedBy = Uid().ToString();
                 a.UpdatedDate = DateTime.Now;
                 await _context.SaveChangesAsync();
@@ -271,46 +259,33 @@ namespace ERPWMS.Web.Controllers.HRTransaction
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                System.Diagnostics.Debug.WriteLine(ex);
+                return Json(new { success = false, message = "Operation failed." });
             }
         }
 
-        // -------------------------------------------------------
-        // PROFILE
-        // -------------------------------------------------------
         [HttpGet]
         public async Task<IActionResult> Profile(int id)
         {
-            try
+            var a = await _context.EmployeeAttendances.Include(x => x.Employee)
+                .FirstOrDefaultAsync(x => x.AttendanceId == id);
+            if (a == null) return NotFound();
+
+            if (int.TryParse(a.CreatedBy, out int cid))
             {
-                var a = await _context.EmployeeAttendances
-                    .Include(x => x.Employee)
-                    .FirstOrDefaultAsync(x => x.AttendanceId == id);
-
-                if (a == null) return NotFound();
-
-                // ✅ CreatedBy string hai
-                var creator = await _context.Users.FirstOrDefaultAsync(u => u.UserName == a.CreatedBy);
-                ViewBag.CreatedByName = creator != null ? creator.UserName : "N/A";
-
-                // ✅ UpdatedBy string hai
-                if (!string.IsNullOrWhiteSpace(a.UpdatedBy))
-                {
-                    var upd = await _context.Users.FirstOrDefaultAsync(u => u.UserName == a.UpdatedBy);
-                    ViewBag.UpdatedByName = upd != null ? upd.UserName : "N/A";
-                }
-                else
-                {
-                    ViewBag.UpdatedByName = "-";
-                }
-
-                return View("Profile", a);
+                var c = await _context.Users.FindAsync(cid);
+                ViewBag.CreatedByName = c?.UserName ?? "-";
             }
-            catch (Exception ex)
+            else ViewBag.CreatedByName = "-";
+
+            if (int.TryParse(a.UpdatedBy, out int uid))
             {
-                TempData["Error"] = ex.Message?.ToString();
-                return RedirectToAction("Index");
+                var u = await _context.Users.FindAsync(uid);
+                ViewBag.UpdatedByName = u?.UserName ?? "-";
             }
+            else ViewBag.UpdatedByName = "-";
+
+            return View("Profile", a);
         }
     }
 }
