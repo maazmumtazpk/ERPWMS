@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System;
 using System.Collections.Generic;
 
@@ -30,11 +30,8 @@ public partial class Rack
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual ICollection<Bin> Bins { get; set; } = new List<Bin>();
 
@@ -46,3 +43,4 @@ public partial class Rack
     [NotMapped]
     public virtual User? UpdatedByNavigation { get; set; }
 }
+

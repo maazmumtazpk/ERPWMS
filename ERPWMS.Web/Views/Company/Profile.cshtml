@@ -1,4 +1,4 @@
-@model ERPWMS.Database.Models.Company
+﻿@model ERPWMS.Database.Models.Company
 @{
     ViewData["Title"] = "Company - " + Model.CompanyName;
     Layout = "_Layout";
@@ -75,7 +75,7 @@
 <tr><td>Email</td><td>@(string.IsNullOrEmpty(Model.Email) ? "-" : Model.Email)</td></tr>
 <tr><td>Phone</td><td>@(string.IsNullOrEmpty(Model.Phone) ? "-" : Model.Phone)</td></tr>
 <tr><td>Address</td><td>@(string.IsNullOrEmpty(Model.Address) ? "-" : Model.Address)</td></tr>
-<tr><td>Created By</td><td>@(Model.CreatedByName ?? "-")</td></tr>
+<tr><td>Created By</td><td>@(Model.CreatedBy ?? "-")</td></tr>
 <tr><td>Created Date</td><td>@(Model.CreatedDate?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</td></tr>
 </table>
 </div>
@@ -88,3 +88,4 @@ function tk(){var e=document.querySelector('input[name="__RequestVerificationTok
 function toggleStatus(id){var fd=new FormData();fd.append('__RequestVerificationToken',tk());fetch('/Company/ToggleActive/'+id,{method:'POST',body:fd}).then(function(){location.reload();});}
 </script>
 }
+

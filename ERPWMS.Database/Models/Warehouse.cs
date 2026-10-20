@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System;
 using System.Collections.Generic;
 
@@ -36,11 +36,8 @@ public partial class Warehouse
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual Branch Branch { get; set; } = null!;
 
@@ -81,3 +78,4 @@ public partial class Warehouse
     [NotMapped]
     public virtual User? DeletedByNavigation { get; set; }
 }
+

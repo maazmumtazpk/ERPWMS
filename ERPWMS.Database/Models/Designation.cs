@@ -29,13 +29,11 @@ public partial class Designation
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual Department Department { get; set; } = null!;
 
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 }
+

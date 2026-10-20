@@ -393,19 +393,20 @@ namespace ERPWMS.Web.Controllers.Finance
             }
 
             var c = await _context.Users.FindAsync(j.CreatedBy);
-            ViewBag.CreatedByName = c != null ? c.UserName : "N/A";
+
 
             if (!string.IsNullOrWhiteSpace(j.UpdatedBy))
             {
                 var u = await _context.Users.FindAsync(j.UpdatedBy);
-                ViewBag.UpdatedByName = u != null ? u.UserName : "N/A";
+
             }
             else
             {
-                ViewBag.UpdatedByName = "-";
+
             }
 
             return View("Profile", j);
         }
     }
 }
+

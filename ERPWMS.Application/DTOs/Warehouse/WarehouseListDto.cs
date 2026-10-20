@@ -58,7 +58,6 @@ namespace ERPWMS.Application.DTOs.Warehouse
 
         public string CreatedBy { get; set; }
 
-        public string CreatedByName { get; set; } = string.Empty;
 
         public DateTime? UpdatedDate { get; set; }
     }

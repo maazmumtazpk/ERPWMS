@@ -36,13 +36,7 @@ namespace ERPWMS.Application.Mappings
                         src.Zones
                             .SelectMany(z => z.Racks)
                             .SelectMany(r => r.Bins)
-                            .Count()))
-                .ForMember(
-                    dest => dest.CreatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.CreatedByNavigation != null
-                            ? src.CreatedByNavigation.UserName
-                            : null));
+                            .Count()));
 
             // =========================================================
             // Warehouse Details Mapping
@@ -54,24 +48,6 @@ namespace ERPWMS.Application.Mappings
                     opt => opt.MapFrom(src =>
                         src.Branch != null
                             ? src.Branch.BranchName
-                            : null))
-                .ForMember(
-                    dest => dest.CreatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.CreatedByNavigation != null
-                            ? src.CreatedByNavigation.UserName
-                            : null))
-                .ForMember(
-                    dest => dest.UpdatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.UpdatedByNavigation != null
-                            ? src.UpdatedByNavigation.UserName
-                            : null))
-                .ForMember(
-                    dest => dest.DeletedByName,
-                    opt => opt.MapFrom(src =>
-                        src.DeletedByNavigation != null
-                            ? src.DeletedByNavigation.UserName
                             : null))
                 .ForMember(
                     dest => dest.ZoneCount,
@@ -162,19 +138,7 @@ namespace ERPWMS.Application.Mappings
                             .SelectMany(r => r.Bins)
                             .Count(b =>
                                 b.IsOccupied == false ||
-                                b.IsOccupied == null)))
-                .ForMember(
-                    dest => dest.CreatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.CreatedByNavigation != null
-                            ? src.CreatedByNavigation.UserName
-                            : null))
-                .ForMember(
-                    dest => dest.UpdatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.UpdatedByNavigation != null
-                            ? src.UpdatedByNavigation.UserName
-                            : null));
+                                b.IsOccupied == null)));
 
             // =========================================================
             // Rack Mapping
@@ -207,19 +171,7 @@ namespace ERPWMS.Application.Mappings
                     opt => opt.MapFrom(src =>
                         src.Bins.Count(b =>
                             b.IsOccupied == false ||
-                            b.IsOccupied == null)))
-                .ForMember(
-                    dest => dest.CreatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.CreatedByNavigation != null
-                            ? src.CreatedByNavigation.UserName
-                            : null))
-                .ForMember(
-                    dest => dest.UpdatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.UpdatedByNavigation != null
-                            ? src.UpdatedByNavigation.UserName
-                            : null));
+                            b.IsOccupied == null)));
 
             // =========================================================
             // Bin Mapping
@@ -246,18 +198,6 @@ namespace ERPWMS.Application.Mappings
                         src.Rack.Zone != null &&
                         src.Rack.Zone.Warehouse != null
                             ? src.Rack.Zone.Warehouse.WarehouseName
-                            : null))
-                .ForMember(
-                    dest => dest.CreatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.CreatedByNavigation != null
-                            ? src.CreatedByNavigation.UserName
-                            : null))
-                .ForMember(
-                    dest => dest.UpdatedByName,
-                    opt => opt.MapFrom(src =>
-                        src.UpdatedByNavigation != null
-                            ? src.UpdatedByNavigation.UserName
                             : null));
 
             // =========================================================

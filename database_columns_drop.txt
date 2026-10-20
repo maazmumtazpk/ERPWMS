@@ -1,0 +1,67 @@
+﻿
+==============================================================
+ DROPPING ...ByName COLUMNS FROM DATABASE
+==============================================================
+
+  [DROPPED] Categories -> CreatedByName
+  [DROPPED] Categories -> UpdatedByName
+  [DROPPED] Categories -> DeletedByName
+  [DROPPED] Shifts -> CreatedByName
+  [DROPPED] Shifts -> UpdatedByName
+  [DROPPED] Shifts -> DeletedByName
+  [DROPPED] SubCategories -> CreatedByName
+  [DROPPED] SubCategories -> UpdatedByName
+  [DROPPED] SubCategories -> DeletedByName
+  [DROPPED] Brands -> CreatedByName
+  [DROPPED] Brands -> UpdatedByName
+  [DROPPED] Brands -> DeletedByName
+  [DROPPED] Units -> CreatedByName
+  [DROPPED] Units -> UpdatedByName
+  [DROPPED] Units -> DeletedByName
+  [DROPPED] Companies -> CreatedByName
+  [DROPPED] Companies -> UpdatedByName
+  [DROPPED] Companies -> DeletedByName
+  [DROPPED] Products -> CreatedByName
+  [DROPPED] Products -> UpdatedByName
+  [DROPPED] Products -> DeletedByName
+  [DROPPED] Branches -> CreatedByName
+  [DROPPED] Branches -> UpdatedByName
+  [DROPPED] Branches -> DeletedByName
+  [DROPPED] Departments -> CreatedByName
+  [DROPPED] Departments -> UpdatedByName
+  [DROPPED] Departments -> DeletedByName
+  [DROPPED] Designations -> CreatedByName
+  [DROPPED] Designations -> UpdatedByName
+  [DROPPED] Designations -> DeletedByName
+  [DROPPED] Warehouses -> CreatedByName
+  [DROPPED] Warehouses -> UpdatedByName
+  [DROPPED] Warehouses -> DeletedByName
+  [DROPPED] Users -> CreatedByName
+  [DROPPED] Users -> UpdatedByName
+  [DROPPED] Users -> DeletedByName
+  [DROPPED] Suppliers -> CreatedByName
+  [DROPPED] Suppliers -> UpdatedByName
+  [DROPPED] Suppliers -> DeletedByName
+  [DROPPED] Zones -> CreatedByName
+  [DROPPED] Zones -> UpdatedByName
+  [DROPPED] Zones -> DeletedByName
+  [DROPPED] Racks -> CreatedByName
+  [DROPPED] Racks -> UpdatedByName
+  [DROPPED] Racks -> DeletedByName
+  [DROPPED] Customers -> CreatedByName
+  [DROPPED] Customers -> UpdatedByName
+  [DROPPED] Customers -> DeletedByName
+  [DROPPED] Bins -> CreatedByName
+  [DROPPED] Bins -> UpdatedByName
+  [DROPPED] Bins -> DeletedByName
+  [DROPPED] Employees -> CreatedByName
+  [DROPPED] Employees -> UpdatedByName
+  [DROPPED] Employees -> DeletedByName
+
+==============================================================
+ SUMMARY
+==============================================================
+ Tables Affected: 18
+ Columns Dropped: 54
+
+ 🎉 MUBARAK HO! Database ab 100% Clean hai.

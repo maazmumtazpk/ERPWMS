@@ -199,17 +199,17 @@ namespace ERPWMS.Web.Controllers.Finance
 
             // Creator Name
             var creator = await _context.Users.FindAsync(b.CreatedBy);
-            ViewBag.CreatedByName = creator != null ? creator.UserName : "N/A";
+
 
             // âœ… UpdatedBy string hai, direct use karo
             if (!string.IsNullOrWhiteSpace(b.UpdatedBy))
             {
                 var upd = await _context.Users.FindAsync(b.UpdatedBy);
-                ViewBag.UpdatedByName = upd != null ? upd.UserName : "N/A";
+
             }
             else
             {
-                ViewBag.UpdatedByName = "-";
+
             }
 
             // Transaction History
@@ -240,3 +240,4 @@ namespace ERPWMS.Web.Controllers.Finance
         }
     }
 }
+

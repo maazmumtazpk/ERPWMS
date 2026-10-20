@@ -1,4 +1,4 @@
-@model ERPWMS.Database.Models.EmployeeAttendance
+﻿@model ERPWMS.Database.Models.EmployeeAttendance
 @{
     ViewData["Title"] = "Attendance Details";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -47,10 +47,11 @@
     <div class="card shadow-sm"><div class="card-body">
         <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-people" style="color:#F5A623;"></i> Audit Information</h6>
         <div class="row" style="font-size:12px;">
-            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedByName ?? "N/A")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedBy ?? "N/A")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Created Date:</span> <strong>@(Model.CreatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
-            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedByName ?? "-")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedBy ?? "-")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated Date:</span> <strong>@(Model.UpdatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
         </div>
     </div></div>
 </div>
+

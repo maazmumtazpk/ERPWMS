@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -83,7 +83,7 @@ namespace ERPWMS.Web.Controllers
             model.IsActive = true;
             model.IsDeleted = false;
             model.CreatedBy = uid.ToString();
-            model.CreatedByName = user;
+
             model.CreatedDate = DateTime.Now;
 
             try
@@ -143,7 +143,7 @@ namespace ERPWMS.Web.Controllers
             if (c == null) return Json(new { success = false });
             c.IsDeleted = true;
             c.IsActive = false;
-            c.DeletedByName = User.Identity?.Name ?? "System";
+
             c.DeletedDate = DateTime.Now;
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Company deleted" });
@@ -175,3 +175,4 @@ namespace ERPWMS.Web.Controllers
         }
     }
 }
+

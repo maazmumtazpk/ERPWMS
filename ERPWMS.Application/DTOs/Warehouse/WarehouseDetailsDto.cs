@@ -18,13 +18,13 @@ namespace ERPWMS.Application.DTOs.Warehouse
 
         // Audit Information
         public string CreatedBy { get; set; }
-        public string CreatedByName { get; set; } = string.Empty;
+
         public DateTime? CreatedDate { get; set; }
         public string? UpdatedBy{ get; set; }
-        public string UpdatedByName { get; set; } = string.Empty;
+
         public DateTime? UpdatedDate { get; set; }
         public string? DeletedBy { get; set; }
-        public string DeletedByName { get; set; } = string.Empty;
+
         public DateTime? DeletedDate { get; set; }
 
         // Statistics
@@ -52,4 +52,5 @@ public class ZoneSummaryDto
         public int BinCount { get; set; }
         public int OccupiedBinCount { get; set; }
     }
+
 

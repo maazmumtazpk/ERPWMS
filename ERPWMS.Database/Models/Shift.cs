@@ -38,13 +38,11 @@ public partial class Shift
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual ICollection<EmployeeAttendance> EmployeeAttendances { get; set; } = new List<EmployeeAttendance>();
 
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 }
+

@@ -1,4 +1,4 @@
-@model ERPWMS.Database.Models.JournalVoucher
+﻿@model ERPWMS.Database.Models.JournalVoucher
 @{
     ViewData["Title"] = "Journal Voucher Details";
     Layout = "_Layout";
@@ -102,11 +102,11 @@
     <div class="card shadow-sm mb-3" style="border:1px solid #edf0f4;"><div class="card-body">
         <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-people" style="color:#F5A623;"></i> Audit Information</h6>
         <div class="row" style="font-size:12px;">
-            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedByName ?? "N/A")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedBy ?? "N/A")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Created Date:</span> <strong>@(Model.CreatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Approved By:</span> <strong>@(ViewBag.ApprovedByName ?? "-")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Approved Date:</span> <strong>@(Model.ApprovedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
-            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedByName ?? "-")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedBy ?? "-")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated Date:</span> <strong>@(Model.UpdatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
         </div>
     </div></div>
@@ -133,4 +133,5 @@ function openEdit(id){var el=document.getElementById("editModal");var b=document
 function deleteVoucher(id,name){document.getElementById('deleteId').value=id;document.getElementById('deleteName').textContent=name;new bootstrap.Modal(document.getElementById('deleteModal')).show();}
 function toggleActive(id){var e=document.querySelector("input[name=__RequestVerificationToken]");var fd=new FormData();fd.append("__RequestVerificationToken",e?e.value:"");fetch("/JournalVoucher/ToggleActive/"+id,{method:"POST",body:fd}).then(r=>r.json()).then(res=>{if(res.success){location.reload();}});}
 </script>
+
 

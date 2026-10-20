@@ -57,11 +57,8 @@ public partial class User
 
     public int? CompanyId { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
 
@@ -135,3 +132,4 @@ public partial class User
 
     public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
 }
+

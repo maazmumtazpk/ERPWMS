@@ -255,9 +255,9 @@ namespace ERPWMS.Web.Controllers.HRTransaction
             if (int.TryParse(p.CreatedBy, out int cid))
             {
                 var creator = await _context.Users.FindAsync(cid);
-                ViewBag.CreatedByName = creator?.UserName ?? "N/A";
+
             }
-            else ViewBag.CreatedByName = "N/A";
+
 
             if (int.TryParse(p.ApprovedBy, out int aid))
             {
@@ -269,12 +269,13 @@ namespace ERPWMS.Web.Controllers.HRTransaction
             if (int.TryParse(p.UpdatedBy, out int uid))
             {
                 var upd = await _context.Users.FindAsync(uid);
-                ViewBag.UpdatedByName = upd?.UserName ?? "N/A";
+
             }
-            else ViewBag.UpdatedByName = "-";
+
 
             return View("Profile", p);
         }
     }
 }
+
 

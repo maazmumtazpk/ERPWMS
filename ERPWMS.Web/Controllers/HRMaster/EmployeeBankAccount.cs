@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -273,17 +273,17 @@ namespace ERPWMS.Web.Controllers.HRMaster
                 if (b == null) return NotFound();
 
                 var creator = await _context.Users.FindAsync(b.CreatedBy);
-                ViewBag.CreatedByName = creator != null ? creator.UserName : "N/A";
 
-                // ✅ UpdatedBy string hai, direct use karo
+
+                // âœ… UpdatedBy string hai, direct use karo
                 if (!string.IsNullOrWhiteSpace(b.UpdatedBy))
                 {
                     var upd = await _context.Users.FindAsync(b.UpdatedBy);
-                    ViewBag.UpdatedByName = upd != null ? upd.UserName : "N/A";
+
                 }
                 else
                 {
-                    ViewBag.UpdatedByName = "-";
+
                 }
 
                 return View("Profile", b);

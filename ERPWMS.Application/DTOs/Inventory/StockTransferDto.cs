@@ -27,9 +27,10 @@ namespace ERPWMS.Application.DTOs.Inventory
         public string? ReceivedByName { get; set; }
         public DateTime? ReceivedDate { get; set; }
         public string CreatedBy { get; set; }
-        public string? CreatedByName { get; set; }
+
         public DateTime? CreatedDate { get; set; }
         public bool IsDeleted { get; set; }
         public List<StockTransferDetailDto>? TransferDetails { get; set; }
     }
 }
+

@@ -1,4 +1,4 @@
-@model ERPWMS.Application.DTOs.Product.ProductDetailDto
+﻿@model ERPWMS.Application.DTOs.Product.ProductDetailDto
 
 @{
     ViewData["Title"] = "Product Details";
@@ -560,7 +560,7 @@
                                     </small>
 
                                     <p>
-                                        @(Model.CreatedByName ?? Model.CreatedBy.ToString())
+                                        @(Model.CreatedBy ?? Model.CreatedBy.ToString())
                                     </p>
 
                                 </div>
@@ -584,7 +584,7 @@
                                     </small>
 
                                     <p>
-                                        @(Model.UpdatedByName ?? "N/A")
+                                        @(Model.UpdatedBy ?? "N/A")
                                     </p>
 
                                 </div>
@@ -653,3 +653,4 @@
     }
 
 </style>
+

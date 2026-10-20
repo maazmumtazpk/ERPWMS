@@ -29,13 +29,11 @@ public partial class Category
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 
     public virtual ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
 }
+

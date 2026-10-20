@@ -1,4 +1,4 @@
-using ERPWMS.Database.Models;
+﻿using ERPWMS.Database.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -142,12 +142,12 @@ namespace ERPWMS.Web.Controllers.HRMaster
                     UtilityAllowance = utilityAllowance,
                     MedicalAllowance = medicalAllowance,
                     OtherAllowances = otherAllowances,
-                    TotalAllowances = ta,          // ✅ decimal? (string nahi)
+                    TotalAllowances = ta,          // âœ… decimal? (string nahi)
                     IncomeTax = incomeTax,
                     ProfessionalTax = professionalTax,
                     OtherDeductions = otherDeductions,
-                    TotalDeductions = td,          // ✅ decimal?
-                    NetSalary = net,               // ✅ decimal?
+                    TotalDeductions = td,          // âœ… decimal?
+                    NetSalary = net,               // âœ… decimal?
                     IsActive = true,
                     CreatedBy = Uid().ToString(),
                     CreatedDate = DateTime.Now
@@ -192,12 +192,12 @@ namespace ERPWMS.Web.Controllers.HRMaster
                 decimal ta = (houseRent ?? 0) + (utilityAllowance ?? 0) + (medicalAllowance ?? 0) + (otherAllowances ?? 0);
                 decimal td = (incomeTax ?? 0) + (professionalTax ?? 0) + (otherDeductions ?? 0);
 
-                s.TotalAllowances = ta;            // ✅ decimal?
+                s.TotalAllowances = ta;            // âœ… decimal?
                 s.IncomeTax = incomeTax;
                 s.ProfessionalTax = professionalTax;
                 s.OtherDeductions = otherDeductions;
-                s.TotalDeductions = td;            // ✅ decimal?
-                s.NetSalary = basicSalary + ta - td; // ✅ decimal?
+                s.TotalDeductions = td;            // âœ… decimal?
+                s.NetSalary = basicSalary + ta - td; // âœ… decimal?
 
                 s.IsActive = isActive;
                 s.UpdatedBy = Uid().ToString();
@@ -274,17 +274,17 @@ namespace ERPWMS.Web.Controllers.HRMaster
                 if (s == null) return NotFound();
 
                 var creator = await _context.Users.FindAsync(s.CreatedBy);
-                ViewBag.CreatedByName = creator != null ? creator.UserName : "N/A";
 
-                // ✅ UpdatedBy string hai
+
+                // âœ… UpdatedBy string hai
                 if (!string.IsNullOrWhiteSpace(s.UpdatedBy))
                 {
                     var upd = await _context.Users.FindAsync(s.UpdatedBy);
-                    ViewBag.UpdatedByName = upd != null ? upd.UserName : "N/A";
+
                 }
                 else
                 {
-                    ViewBag.UpdatedByName = "-";
+
                 }
 
                 return View("Profile", s);

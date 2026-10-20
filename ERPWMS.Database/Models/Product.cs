@@ -59,11 +59,8 @@ public partial class Product
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual ICollection<BatchTracking> BatchTrackings { get; set; } = new List<BatchTracking>();
 
@@ -115,4 +112,5 @@ public partial class Product
 
     public virtual Unit Unit { get; set; } = null!;
 }
+
 

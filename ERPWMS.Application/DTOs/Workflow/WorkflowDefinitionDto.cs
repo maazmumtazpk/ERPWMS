@@ -16,7 +16,8 @@ namespace ERPWMS.Application.DTOs.Workflow
         public DateTime CreatedDate { get; set; }
         public string? UpdatedBy{ get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public string? CreatedByName { get; set; }
+
         public int StageCount { get; set; }
     }
 }
+

@@ -31,11 +31,8 @@ public partial class Department
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual Branch Branch { get; set; } = null!;
 
@@ -45,3 +42,4 @@ public partial class Department
 
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 }
+

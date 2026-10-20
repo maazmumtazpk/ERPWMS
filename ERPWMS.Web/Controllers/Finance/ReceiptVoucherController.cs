@@ -434,7 +434,7 @@ namespace ERPWMS.Web.Controllers.Finance
             if (r == null) return NotFound();
 
             var c = await _context.Users.FindAsync(r.CreatedBy);
-            ViewBag.CreatedByName = c != null ? c.UserName : "N/A";
+
 
             // âœ… ApprovedBy/UpdatedBy string hain
             if (!string.IsNullOrWhiteSpace(r.ApprovedBy))
@@ -450,14 +450,15 @@ namespace ERPWMS.Web.Controllers.Finance
             if (!string.IsNullOrWhiteSpace(r.UpdatedBy))
             {
                 var u = await _context.Users.FindAsync(r.UpdatedBy);
-                ViewBag.UpdatedByName = u != null ? u.UserName : "N/A";
+
             }
             else
             {
-                ViewBag.UpdatedByName = "-";
+
             }
 
             return View("Profile", r);
         }
     }
 }
+

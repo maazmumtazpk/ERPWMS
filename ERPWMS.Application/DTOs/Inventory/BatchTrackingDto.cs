@@ -15,7 +15,7 @@ namespace ERPWMS.Application.DTOs.Inventory
         public int RemainingQty { get; set; }
         public bool? IsActive { get; set; }
         public string CreatedBy { get; set; }
-        public string? CreatedByName { get; set; }
+
         public DateTime? CreatedDate { get; set; }
         public bool IsExpired => ExpiryDate < DateOnly.FromDateTime(DateTime.UtcNow);
         public bool IsNearExpiry => ExpiryDate > DateOnly.FromDateTime(DateTime.UtcNow) &&

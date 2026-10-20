@@ -244,7 +244,7 @@ namespace ERPWMS.Web.Controllers.Sales
                 ApprovedByName = r.ApprovedByNavigation != null ? r.ApprovedByNavigation.UserName : null,
                 ApprovedDate = r.ApprovedDate,
                 CreatedBy = r.CreatedBy,
-                CreatedByName = r.CreatedByNavigation != null ? r.CreatedByNavigation.UserName : "User #" + r.CreatedBy,
+
                 CreatedDate = r.CreatedDate,
                 SalesReturnDetails = details.Select(d => new SalesReturnDetailDto
                 {
@@ -411,7 +411,7 @@ namespace ERPWMS.Web.Controllers.Sales
                         returnReason = r.ReturnReason,
                         totalAmount = r.TotalAmount,
                         status = r.Status ?? "Draft",
-                        createdByName = r.CreatedByNavigation != null ? r.CreatedByNavigation.UserName : "",
+
                         createdDate = r.CreatedDate
                     }).ToListAsync();
                 return Ok(list);
@@ -452,7 +452,7 @@ namespace ERPWMS.Web.Controllers.Sales
                 ApprovedByName = r.ApprovedByNavigation != null ? r.ApprovedByNavigation.UserName : "",
                 ApprovedDate = r.ApprovedDate,
                 CreatedBy = r.CreatedBy,
-                CreatedByName = r.CreatedByNavigation != null ? r.CreatedByNavigation.UserName : "",
+
                 CreatedDate = r.CreatedDate,
                 IsDeleted = r.IsDeleted ?? false,
                 SalesReturnDetails = details.Select(d => new SalesReturnDetailDto
@@ -527,3 +527,4 @@ namespace ERPWMS.Web.Controllers.Sales
         }
     }
 }
+

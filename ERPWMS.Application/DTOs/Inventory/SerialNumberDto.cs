@@ -16,7 +16,7 @@ namespace ERPWMS.Application.DTOs.Inventory
         public string? CustomerName { get; set; }
         public DateTime? OutDate { get; set; }
         public string CreatedBy { get; set; }
-        public string? CreatedByName { get; set; }
+
         public DateTime? CreatedDate { get; set; }
         public string StatusDisplay => Status switch
         {

@@ -1,4 +1,4 @@
-@model ERPWMS.Application.DTOs.Inventory.StockTransferDto
+﻿@model ERPWMS.Application.DTOs.Inventory.StockTransferDto
 
 @{
     ViewData["Title"] = "Transfer Details";
@@ -99,7 +99,7 @@
                         </tr>
                         <tr>
                             <th class="bg-light">Created By</th>
-                            <td>@Model.CreatedByName</td>
+                            <td>@Model.CreatedBy</td>
                         </tr>
                         <tr>
                             <th class="bg-light">Created Date</th>
@@ -147,7 +147,7 @@
                                     <strong>Created</strong>
                                     <span class="text-muted">@Model.CreatedDate?.ToString("dd-MMM-yyyy HH:mm")</span>
                                     <br />
-                                    <small class="text-muted">by @Model.CreatedByName</small>
+                                    <small class="text-muted">by @Model.CreatedBy</small>
                                 </li>
                                 @if (!string.IsNullOrEmpty(Model.ApprovedByName))
                                 {

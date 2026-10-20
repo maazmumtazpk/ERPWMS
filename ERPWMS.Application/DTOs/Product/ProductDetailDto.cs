@@ -40,14 +40,15 @@ namespace ERPWMS.Application.DTOs.Product
         public string? DeletedBy { get; set; }
         public DateTime? DeletedDate { get; set; }
         public string CreatedBy { get; set; }
-        public string CreatedByName { get; set; } = null!;
+
         public DateTime? CreatedDate { get; set; }
         public string? UpdatedBy{ get; set; }
-        public string UpdatedByName { get; set; } = null!;
+
         public DateTime? UpdatedDate { get; set; }
         public List<ProductAttributeDto> Attributes { get; set; } = new List<ProductAttributeDto>();
         public List<ProductImageDto> Images { get; set; } = new List<ProductImageDto>();
         public string? PrimaryImageUrl { get; set; }
     }
 }
+
 

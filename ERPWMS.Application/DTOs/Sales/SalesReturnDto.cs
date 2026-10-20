@@ -29,7 +29,7 @@ namespace ERPWMS.Application.DTOs.Sales
         public string? CurrentStageName { get; set; }
 
         public string? CreatedBy { get; set; }
-        public string? CreatedByName { get; set; }
+
         public DateTime? CreatedDate { get; set; }
 
         public bool IsDeleted { get; set; }

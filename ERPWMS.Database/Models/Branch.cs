@@ -35,11 +35,8 @@ public partial class Branch
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual Company Company { get; set; } = null!;
 
@@ -49,3 +46,4 @@ public partial class Branch
 
     public virtual ICollection<Warehouse> Warehouses { get; set; } = new List<Warehouse>();
 }
+

@@ -105,7 +105,6 @@ namespace ERPWMS.Web.Controllers.Sales
                 VerifiedByName = p.VerifiedBy ?? string.Empty,
 
                 CreatedBy = p.CreatedBy,
-                CreatedByName = p.CreatedBy,
 
                 CreatedDate = p.CreatedDate,
                 IsDeleted = p.IsDeleted ?? false
@@ -538,7 +537,6 @@ namespace ERPWMS.Web.Controllers.Sales
                 VerifiedByName = picking.VerifiedBy ?? string.Empty,
 
                 CreatedBy = picking.CreatedBy,
-                CreatedByName = picking.CreatedBy,
 
                 CreatedDate = picking.CreatedDate,
 
@@ -708,3 +706,4 @@ namespace ERPWMS.Web.Controllers.Sales
         }
     }
 }
+

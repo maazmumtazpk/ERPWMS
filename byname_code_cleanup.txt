@@ -1,0 +1,83 @@
+﻿
+=== BYNAME CODE CLEANUP ===
+
+  [FIXED] ...\ERPWMS.Application\DTOs\Inventory\BatchTrackingDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Inventory\CycleCountDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Inventory\SerialNumberDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Inventory\StockAdjustmentDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Inventory\StockLedgerDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Inventory\StockTransferDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Procurement\GRNDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Procurement\PurchaseMasterDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Procurement\PurchaseReturnDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Product\ProductDetailDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Sales\DispatchMasterDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Sales\InvoiceDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Sales\PickingListDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Sales\SalesMasterDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Sales\SalesReturnDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Warehouse\BinDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Warehouse\RackDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Warehouse\WarehouseDetailsDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Warehouse\WarehouseListDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Warehouse\ZoneDto.cs
+  [FIXED] ...\ERPWMS.Application\DTOs\Workflow\WorkflowDefinitionDto.cs
+  [FIXED] ...\ERPWMS.Application\Mappings\WarehouseMappingProfile.cs
+  [FIXED] ...\ERPWMS.Database\Models\AppDbContext.cs
+  [FIXED] ...\ERPWMS.Database\Models\Bin.cs
+  [FIXED] ...\ERPWMS.Database\Models\Branch.cs
+  [FIXED] ...\ERPWMS.Database\Models\Brand.cs
+  [FIXED] ...\ERPWMS.Database\Models\Category.cs
+  [FIXED] ...\ERPWMS.Database\Models\Company.cs
+  [FIXED] ...\ERPWMS.Database\Models\Customer.cs
+  [FIXED] ...\ERPWMS.Database\Models\Department.cs
+  [FIXED] ...\ERPWMS.Database\Models\Designation.cs
+  [FIXED] ...\ERPWMS.Database\Models\Employee.cs
+  [FIXED] ...\ERPWMS.Database\Models\Product.cs
+  [FIXED] ...\ERPWMS.Database\Models\Rack.cs
+  [FIXED] ...\ERPWMS.Database\Models\Shift.cs
+  [FIXED] ...\ERPWMS.Database\Models\SubCategory.cs
+  [FIXED] ...\ERPWMS.Database\Models\Supplier.cs
+  [FIXED] ...\ERPWMS.Database\Models\Unit.cs
+  [FIXED] ...\ERPWMS.Database\Models\User.cs
+  [FIXED] ...\ERPWMS.Database\Models\Warehouse.cs
+  [FIXED] ...\ERPWMS.Database\Models\Zone.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\Finance\BankAccountController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\Finance\JournalVoucherController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\Finance\PaymentVoucherController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\Finance\ReceiptVoucherController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\HRMaster\EmployeeBankAccount.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\HRMaster\EmployeeSalary.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\HRTransaction\AttendanceController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\HRTransaction\LeaveController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\HRTransaction\PayrollController.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\Branch.cs
+  [FIXED] ...\ERPWMS.Web\Controllers\Company.cs
+  [FIXED] ...\ERPWMS.Web\Views\Adjustment\Details.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Attendance\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\BankAccount\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\BatchTracking\Details.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Company\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\CycleCount\Details.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\EmployeeBankAccount\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\EmployeeSalary\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\JournalVoucher\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Leave\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\PaymentVoucher\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Picking\Details.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Picking\Index.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Product\Detail.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\ReceiptVoucher\Profile.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\SerialNumber\Details.cshtml
+  [FIXED] ...\ERPWMS.Web\Views\Transfer\Details.cshtml
+
+Total Files Fixed: 69
+
+--- BUILD CHECK ---
+Errors: 20
+ ⚠ Kuch errors hain. Check report.
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Mappings\WarehouseMappingProfile.cs(42,32): error CS1061: 'WarehouseListDto' does not contain a definition for 'MapFrom' and no accessible extension method 'MapFrom' accepting a first argument of type 'WarehouseListDto' could be found (are you missing a using directive or an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Mappings\WarehouseMappingProfile.cs(60,32): error CS1061: 'WarehouseDetailsDto' does not contain a definition for 'MapFrom' and no accessible extension method 'MapFrom' accepting a first argument of type 'WarehouseDetailsDto' could be found (are you missing a using directive or an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Mappings\WarehouseMappingProfile.cs(66,32): error CS1061: 'WarehouseDetailsDto' does not contain a definition for 'MapFrom' and no accessible extension method 'MapFrom' accepting a first argument of type 'WarehouseDetailsDto' could be found (are you missing a using directive or an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Mappings\WarehouseMappingProfile.cs(72,32): error CS1061: 'WarehouseDetailsDto' does not contain a definition for 'MapFrom' and no accessible extension method 'MapFrom' accepting a first argument of type 'WarehouseDetailsDto' could be found (are you missing a using directive or an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]
+  C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\Mappings\WarehouseMappingProfile.cs(168,32): error CS1061: 'ZoneDto' does not contain a definition for 'MapFrom' and no accessible extension method 'MapFrom' accepting a first argument of type 'ZoneDto' could be found (are you missing a using directive or an assembly reference?) [C:\Users\AT\Downloads\ERPWMS_New\ERPWMS.Application\ERPWMS.Application.csproj]

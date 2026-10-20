@@ -22,10 +22,11 @@ namespace ERPWMS.Application.DTOs.Warehouse
 
         // Audit
         public string CreatedBy { get; set; }
-        public string CreatedByName { get; set; } = string.Empty;
+
         public DateTime? CreatedDate { get; set; }
         public string? UpdatedBy{ get; set; }
-        public string UpdatedByName { get; set; } = string.Empty;
+
         public DateTime? UpdatedDate { get; set; }
     }
 }
+

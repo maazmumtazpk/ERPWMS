@@ -22,7 +22,7 @@ namespace ERPWMS.Application.DTOs.Sales
         public int? CurrentStageId { get; set; }
         public string? CurrentStageName { get; set; }
         public string CreatedBy { get; set; }
-        public string? CreatedByName { get; set; }
+
         public DateTime? CreatedDate { get; set; }
         public bool IsDeleted { get; set; }
         public List<InvoiceDetailDto>? InvoiceDetails { get; set; }

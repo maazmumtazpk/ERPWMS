@@ -23,21 +23,14 @@ namespace ERPWMS.Web.Controllers
     /// Controller for branch management operations
     /// </summary>
     [Authorize]
-    public class BranchController : Controller
+    public class BranchController(
+        IMediator mediator,
+        ILoggingService logger,
+        AppDbContext context) : Controller
     {
-        private readonly IMediator _mediator;
-        private readonly ILoggingService _logger;
-        private readonly AppDbContext _context;
-
-        public BranchController(
-            IMediator mediator,
-            ILoggingService logger,
-            AppDbContext context)
-        {
-            _mediator = mediator;
-            _logger = logger;
-            _context = context;
-        }
+        private readonly IMediator _mediator = mediator;
+        private readonly ILoggingService _logger = logger;
+        private readonly AppDbContext _context = context;
 
         // ============================================================
         // INDEX
@@ -79,7 +72,7 @@ namespace ERPWMS.Web.Controllers
                     Address = viewModel.Address,
                     Phone = viewModel.Phone,
                     Email = viewModel.Email,
-                    CompanyId = viewModel.CompanyId ?? 0          // âœ… FIX
+                    CompanyId = viewModel.CompanyId ?? 0
                 };
 
                 var response = await _mediator.Send(request);
@@ -203,7 +196,7 @@ namespace ERPWMS.Web.Controllers
             {
                 var request = new ChangeBranchProfileRequest
                 {
-                    BranchId = viewModel.BranchId ?? 0,          // âœ… FIX
+                    BranchId = viewModel.BranchId ?? 0,
                     BranchName = viewModel.BranchName,
                     BranchCode = viewModel.BranchCode,
                     Address = viewModel.Address,
@@ -327,7 +320,6 @@ namespace ERPWMS.Web.Controllers
 
                 var response = await _mediator.Send(query);
 
-                // âœ… FIX: BranchSummaryResponse â†’ BranchViewModel mapping
                 viewModel.Branches = response.Branches?
                     .Select(b => new BranchViewModel
                     {
@@ -577,7 +569,7 @@ namespace ERPWMS.Web.Controllers
                     Address = viewModel.Address,
                     Phone = viewModel.Phone,
                     Email = viewModel.Email,
-                    CompanyId = viewModel.CompanyId ?? 0          // âœ… FIX
+                    CompanyId = viewModel.CompanyId ?? 0
                 };
 
                 var response = await _mediator.Send(request);
@@ -666,7 +658,7 @@ namespace ERPWMS.Web.Controllers
             {
                 var request = new ChangeBranchProfileRequest
                 {
-                    BranchId = viewModel.BranchId ?? 0,          // âœ… FIX
+                    BranchId = viewModel.BranchId ?? 0,
                     BranchName = viewModel.BranchName,
                     BranchCode = viewModel.BranchCode,
                     Address = viewModel.Address,
@@ -769,12 +761,6 @@ namespace ERPWMS.Web.Controllers
                 var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                 if (int.TryParse(uidClaim, out int uid))
                     branch.DeletedBy = uid.ToString();
-
-                var userName = User.Identity?.Name ?? "Unknown";
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-                branch.DeletedByName = string.IsNullOrEmpty(userRole)
-                    ? userName
-                    : $"{userName} ({userRole})";
 
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Branch soft-deleted: {branch.BranchName} (ID: {id})");

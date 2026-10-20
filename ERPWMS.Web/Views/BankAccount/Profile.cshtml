@@ -1,4 +1,4 @@
-@model ERPWMS.Database.Models.BankAccount
+﻿@model ERPWMS.Database.Models.BankAccount
 @{
     ViewData["Title"] = "Bank Account Details";
     Layout = "_Layout";
@@ -105,10 +105,11 @@
     <div class="card shadow-sm mb-3" style="border:1px solid #edf0f4;"><div class="card-body">
         <h6 class="fw-bold mb-3" style="color:#0A1628;"><i class="bi bi-people" style="color:#F5A623;"></i> Audit Information</h6>
         <div class="row" style="font-size:12px;">
-            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedByName ?? "N/A")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Created By:</span> <strong>@(ViewBag.CreatedBy ?? "N/A")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Created Date:</span> <strong>@(Model.CreatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
-            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedByName ?? "-")</strong></div>
+            <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated By:</span> <strong>@(ViewBag.UpdatedBy ?? "-")</strong></div>
             <div class="col-md-4 mb-2"><span style="color:#64748B;">Updated Date:</span> <strong>@(Model.UpdatedDate?.ToString("dd MMM yyyy HH:mm") ?? "-")</strong></div>
         </div>
     </div></div>
 </div>
+

@@ -563,18 +563,18 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.BinCode).HasMaxLength(20);
             entity.Property(e => e.BinName).HasMaxLength(100);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.IsOccupied).HasDefaultValue(false);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Rack).WithMany(p => p.Bins)
@@ -603,19 +603,19 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.BranchCode).HasMaxLength(20);
             entity.Property(e => e.BranchName).HasMaxLength(200);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Company).WithMany(p => p.Branches)
@@ -635,12 +635,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.BrandCode).HasMaxLength(50);
             entity.Property(e => e.BrandName).HasMaxLength(200);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
@@ -648,7 +648,7 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(500)
                 .HasColumnName("LogoURL");
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
 
@@ -663,18 +663,18 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CategoryCode).HasMaxLength(50);
             entity.Property(e => e.CategoryName).HasMaxLength(200);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
 
@@ -726,12 +726,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.CompanyName).HasMaxLength(200);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -740,7 +740,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.RegistrationNo).HasMaxLength(50);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
 
@@ -795,7 +795,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ContactPerson).HasMaxLength(200);
             entity.Property(e => e.Country).HasMaxLength(100);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -806,7 +806,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CustomerCode).HasMaxLength(50);
             entity.Property(e => e.CustomerName).HasMaxLength(300);
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -821,7 +821,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.TaxId).HasMaxLength(50);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
             entity.Property(e => e.Website).HasMaxLength(200);
         });
@@ -1145,19 +1145,19 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.DepartmentName, "UX_Departments_DepartmentName").IsUnique();
 
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.DepartmentCode).HasMaxLength(20);
             entity.Property(e => e.DepartmentName).HasMaxLength(200);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Branch).WithMany(p => p.Departments)
@@ -1180,18 +1180,18 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.DesignationName, "UX_Designations_DesignationName").IsUnique();
 
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.DesignationName).HasMaxLength(200);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Department).WithMany(p => p.Designations)
@@ -1318,12 +1318,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.BaseSalary).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Cnic).HasMaxLength(15);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.DOB).HasColumnName("DOB");
             entity.Property(e => e.EmployeeCode).HasMaxLength(50);
@@ -1337,7 +1337,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.LastName).HasMaxLength(100);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Branch).WithMany(p => p.Employees)
@@ -2344,12 +2344,12 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Barcode).HasMaxLength(100);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Height).HasColumnType("decimal(18, 4)");
@@ -2369,7 +2369,7 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("SKU");
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
             entity.Property(e => e.Weight).HasColumnType("decimal(18, 4)");
             entity.Property(e => e.Width).HasColumnType("decimal(18, 4)");
@@ -2685,19 +2685,19 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.RackCode, "UQ__Racks__BAFE22FEC7250078").IsUnique();
 
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.RackCode).HasMaxLength(20);
             entity.Property(e => e.RackName).HasMaxLength(100);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Zone).WithMany(p => p.Racks)
@@ -3103,19 +3103,19 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.ShiftId).HasName("PK__Shifts__C0A838E162D06154");
 
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.GracePeriodMinutes).HasDefaultValue(15);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.ShiftName).HasMaxLength(100);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
         });
 
@@ -3374,12 +3374,12 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.SubCategoryCode, "UQ__SubCateg__E7EB0784FC45A639").IsUnique();
 
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -3387,7 +3387,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SubCategoryCode).HasMaxLength(50);
             entity.Property(e => e.SubCategoryName).HasMaxLength(200);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Category).WithMany(p => p.SubCategories)
@@ -3430,7 +3430,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ContactPerson).HasMaxLength(200);
             entity.Property(e => e.Country).HasMaxLength(100);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -3438,7 +3438,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -3455,7 +3455,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SupplierName).HasMaxLength(300);
             entity.Property(e => e.TaxId).HasMaxLength(50);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
             entity.Property(e => e.Website).HasMaxLength(200);
         });
@@ -3590,12 +3590,12 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValue(1.0m)
                 .HasColumnType("decimal(18, 4)");
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsBaseUnit).HasDefaultValue(true);
@@ -3603,7 +3603,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.UnitCode).HasMaxLength(10);
             entity.Property(e => e.UnitName).HasMaxLength(50);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.BaseUnit).WithMany(p => p.InverseBaseUnit)
@@ -3629,12 +3629,12 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.AccessFailedCount).HasDefaultValue(0);
             entity.Property(e => e.ConcurrencyStamp).HasMaxLength(200);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(256);
             entity.Property(e => e.EmailConfirmed).HasDefaultValue(false);
@@ -3653,7 +3653,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PhoneNumberConfirmed).HasDefaultValue(false);
             entity.Property(e => e.SecurityStamp).HasMaxLength(200);
             entity.Property(e => e.TwoFactorEnabled).HasDefaultValue(false);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UserName).HasMaxLength(256);
 
             entity.HasOne(d => d.Warehouse).WithMany(p => p.Users)
@@ -3719,19 +3719,19 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Address).HasMaxLength(500);
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
             entity.Property(e => e.WarehouseCode).HasMaxLength(20);
             entity.Property(e => e.WarehouseName).HasMaxLength(200);
@@ -4100,17 +4100,17 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.ZoneCode, "UQ__Zones__005DD0BC712843BA").IsUnique();
 
             entity.Property(e => e.CreatedBy).HasMaxLength(100);
-            entity.Property(e => e.CreatedByName).HasMaxLength(150);
+
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DeletedBy).HasMaxLength(100);
-            entity.Property(e => e.DeletedByName).HasMaxLength(150);
+
             entity.Property(e => e.DeletedDate).HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsDeleted).HasDefaultValue(false);
             entity.Property(e => e.UpdatedBy).HasMaxLength(100);
-            entity.Property(e => e.UpdatedByName).HasMaxLength(150);
+
             entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
             entity.Property(e => e.ZoneCode).HasMaxLength(20);
             entity.Property(e => e.ZoneName).HasMaxLength(100);
@@ -4126,6 +4126,7 @@ public partial class AppDbContext : DbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
+
 
 
 

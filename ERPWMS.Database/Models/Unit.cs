@@ -33,11 +33,8 @@ public partial class Unit
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual Unit? BaseUnit { get; set; }
 
@@ -45,3 +42,4 @@ public partial class Unit
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }
+

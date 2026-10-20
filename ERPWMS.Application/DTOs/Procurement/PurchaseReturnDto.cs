@@ -22,7 +22,7 @@ namespace ERPWMS.Application.DTOs.Procurement
         public string? ApprovedByName { get; set; }
         public DateTime? ApprovedDate { get; set; }
         public string CreatedBy { get; set; }
-        public string? CreatedByName { get; set; }
+
         public DateTime? CreatedDate { get; set; }
         public string? UpdatedBy{ get; set; }
         public DateTime? UpdatedDate { get; set; }
@@ -30,4 +30,5 @@ namespace ERPWMS.Application.DTOs.Procurement
         public List<PurchaseReturnDetailDto>? PurchaseReturnDetails { get; set; }
     }
 }
+
 

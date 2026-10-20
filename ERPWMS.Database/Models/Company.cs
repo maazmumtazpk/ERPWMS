@@ -35,11 +35,8 @@ public partial class Company
 
     public DateTime? UpdatedDate { get; set; }
 
-    public string? DeletedByName { get; set; }
 
-    public string? CreatedByName { get; set; }
 
-    public string? UpdatedByName { get; set; }
 
     public virtual ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
 
@@ -51,3 +48,4 @@ public partial class Company
 
     public virtual ICollection<TaxSetting> TaxSettings { get; set; } = new List<TaxSetting>();
 }
+
