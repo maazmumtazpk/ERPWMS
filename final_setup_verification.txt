@@ -1,0 +1,22 @@
+﻿
+==============================================================
+ FINAL SETUP VERIFICATION REPORT
+==============================================================
+
+### [1] MAILKIT PACKAGE ###
+  [OK] MailKit installed.
+
+### [2] APPSETTINGS.JSON ###
+  [OK] Mode is Live.
+  [OK] SenderEmail is set: erpwms129@gmail.com
+  [OK] Password is set.
+
+### [3] ACCOUNT CONTROLLER ###
+  [OK] SendEmailAsync code is present.
+  [OK] TestOtp is hidden in Live Mode.
+
+### [4] VERIFYOTP.CSHTML VIEW ###
+  [OK] Test OTP box is removed from View.
+
+### [5] BUILD CHECK ###
+  [OK] Build Passed (0 Errors).

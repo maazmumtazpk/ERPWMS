@@ -33,5 +33,12 @@ namespace ERPWMS.Domain.Services
 
         // Permissions (via ModulePermission)
         Task<bool> HasPermissionAsync(int userId, string moduleCode, string permissionType); // e.g., "View", "Create"
-    }
-}
+    
+
+        // ============================================================
+        // PASSWORD RESET METHODS
+        // ============================================================
+        Task<(string Token, string Email)> GeneratePasswordResetTokenAsync(string emailOrUsername);
+        Task<int?> ValidatePasswordResetTokenAsync(string token);
+        Task<bool> ResetPasswordAsync(int userId, string newPassword);
+    }}

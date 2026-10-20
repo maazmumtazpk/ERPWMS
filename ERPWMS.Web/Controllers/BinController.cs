@@ -24,7 +24,7 @@ namespace ERPWMS.Web.Controllers
             return i;
         }
 
-        [HttpGet] public IActionResult Index() => View();
+        [HttpGet] public IActionResult Index() => View("~/Views/Warehouse/RegisterBin.cshtml");
 
         // --- STATISTICS ---
         [HttpGet]
@@ -204,4 +204,5 @@ namespace ERPWMS.Web.Controllers
         }
     }
 }
+
 

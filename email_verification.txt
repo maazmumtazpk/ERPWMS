@@ -1,0 +1,23 @@
+﻿
+==============================================================
+ EMAIL SETUP VERIFICATION
+==============================================================
+
+### [1] MAILKIT PACKAGE CHECK ###
+  [OK] MailKit package installed hai.
+
+### [2] APPSETTINGS.JSON (Main) ###
+  Mode         : Live
+  SenderEmail  : erpwms129@gmail.com
+  Password     : [OK] Password dala hua hai (Length: 19)
+  Status       : [OK] Mode Live hai.
+
+### [3] APPSETTINGS.DEVELOPMENT.JSON (Override Check) ###
+  [OK] Is file mein EmailSettings nahi hai (koi masla nahi).
+
+### [4] EMAILSERVICE.CS CODE CHECK ###
+  [ERROR] MailKit namespaces missing hain.
+  [ERROR] SmtpClient code missing hai.
+
+### [5] PROGRAM.CS REGISTRATION ###
+  [OK] IEmailService DI mein register hai.

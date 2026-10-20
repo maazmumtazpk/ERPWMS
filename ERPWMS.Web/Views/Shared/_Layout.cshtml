@@ -246,8 +246,8 @@
                         var highlight = parts.Length > 0 ? parts[0] : pageTitle;
                         var rest = parts.Length > 1 ? parts[1] : "";
                     }
-                    <h1 class="wms-topbar-title">
-                        <span class="accent">@highlight</span> @rest
+                    <h1 class="wms-topbar-title" style="color: #F5A623 !important; font-size: 20px !important; font-weight: 700 !important; margin: 0 !important;">
+                        <span style="color: #F5A623 !important;">@highlight @rest</span>
                     </h1>
                     <div class="wms-crumb">
                         <a href="/Dashboard">Home</a>
@@ -258,20 +258,7 @@
 
             </div>
 
-            <div class="wms-topbar-actions">
-
-                <div class="wms-search">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="wmsGlobalSearch" placeholder="Search..." autocomplete="off" />
-                    <span class="wms-kbd">Ctrl K</span>
-                </div>
-
-                <button type="button" class="wms-notif-btn" onclick="window.location.href='/Notification'" aria-label="Notifications">
-                    <i class="bi bi-bell"></i>
-                    <span class="wms-notif-badge">3</span>
-                </button>
-
-            </div>
+            <div class="wms-topbar-actions"></div>
 
         </header>
 
@@ -379,6 +366,7 @@ function loadCompaniesOnce(sel){
 </script>
 </body>
 </html>
+
 
 
 

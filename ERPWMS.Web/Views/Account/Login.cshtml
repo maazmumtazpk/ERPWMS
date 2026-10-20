@@ -1,4 +1,4 @@
-@model ERPWMS.Application.DTOs.Identity.LoginRequest
+﻿@model ERPWMS.Application.DTOs.Identity.LoginRequest
 @{
     ViewData["Title"] = "Login";
     Layout = null;
@@ -81,7 +81,7 @@
                     <input type="checkbox" name="RememberMe" value="true" @(Model?.RememberMe == true ? "checked" : "") />
                     <span>Keep me signed in</span>
                 </label>
-                <button type="submit" class="btn-login">
+                <div class="text-end mb-2"><a href="/Account/ForgotPassword" style="font-size:13px;color:#F5A623;text-decoration:none;font-weight:600;">Forgot Password?</a></div><button type="submit" class="btn-login">
                     <i class="bi bi-box-arrow-in-right"></i>
                     <span>Sign In</span>
                 </button>
@@ -89,8 +89,9 @@
         </div>
 
         <div class="footer-text">
-            &copy; @DateTime.Now.Year <strong>EnterpriseWMS</strong> � All Rights Reserved
+            &copy; @DateTime.Now.Year <strong>EnterpriseWMS</strong> — All Rights Reserved
         </div>
     </div>
 </body>
 </html>
+

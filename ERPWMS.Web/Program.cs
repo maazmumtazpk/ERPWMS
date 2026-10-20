@@ -64,7 +64,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         {
             if (context.Principal?.Identity?.IsAuthenticated == true)
             {
-                var lastActivity = context.Properties?.Items["LastActivity"];
+                string lastActivityStr = null;
+                context.Properties?.Items.TryGetValue("LastActivity", out lastActivityStr);
+                var lastActivity = lastActivityStr;
                 if (!string.IsNullOrEmpty(lastActivity))
                 {
                     if (DateTime.TryParse(lastActivity, out var last))
@@ -155,6 +157,7 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(ERPWMS.Application.Common.ICur
 // 8. COMMON SERVICES
 // ============================================================
 builder.Services.AddScoped<ERPWMS.Application.Common.ICurrentUserService, CurrentUserService>();
+    builder.Services.AddScoped<ERPWMS.Application.Common.IEmailService, EmailService>();
 builder.Services.AddScoped<ERPWMS.Domain.Services.ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IDateTimeProvider, DateTimeProvider>();
 builder.Services.AddScoped<ERPWMS.Application.Common.ILoggingService, LoggingService>();
@@ -306,5 +309,7 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
+
+
 
 

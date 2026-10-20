@@ -1,0 +1,102 @@
+﻿
+==============================================================
+ ERPWMS - TOTAL MODULES REPORT (Viva Prep)
+==============================================================
+
+TOTAL MODULES FOUND: 70
+--------------------------------------------------------------
+
+### Admin MODULE (2 Sub-Modules) ###
+  - Backup
+  - UserProfile
+
+### Finance MODULE (7 Sub-Modules) ###
+  - BankAccount
+  - BankReconciliation
+  - ChartOfAccount
+  - JournalVoucher
+  - PaymentVoucher
+  - ReceiptVoucher
+  - TaxSetting
+
+### HRMaster MODULE (8 Sub-Modules) ###
+  - Holiday
+  - LeaveType
+  - PayrollSetting
+  - SalaryComponent
+  - SalaryStructure
+  - Shift
+  - ShiftAssignment
+  - WeeklyOff
+
+### HRTransaction MODULE (17 Sub-Modules) ###
+  - Absence
+  - Attendance
+  - AttendanceCorrection
+  - AttendanceProcessor
+  - Bonus
+  - LatePolicy
+  - Leave
+  - LeaveRequest
+  - Loan
+  - MissingPunch
+  - Overtime
+  - Payroll
+  - PayrollDashboard
+  - PayrollPayment
+  - PayrollReports
+  - PayrollRun
+  - Payslip
+
+### Inventory MODULE (8 Sub-Modules) ###
+  - Adjustment
+  - BatchTracking
+  - CycleCount
+  - SerialNumber
+  - StockAdjustment
+  - StockLedger
+  - StockTransfer
+  - Transfer
+
+### Main / Core MODULE (10 Sub-Modules) ###
+  - Bin
+  - CustomerComplaint
+  - CustomerFeedback
+  - CustomerInquiry
+  - Dashboard
+  - Home
+  - PickingList
+  - Rack
+  - Warehouse
+  - Zone
+
+### Procurement MODULE (3 Sub-Modules) ###
+  - GRN
+  - PurchaseMaster
+  - PurchaseReturn
+
+### Reports MODULE (1 Sub-Modules) ###
+  - Reports
+
+### Sales MODULE (5 Sub-Modules) ###
+  - Dispatch
+  - Invoice
+  - Picking
+  - Sales
+  - SalesReturn
+
+### Workflow MODULE (9 Sub-Modules) ###
+  - WorkflowAssignment
+  - WorkflowCondition
+  - WorkflowDashboard
+  - WorkflowDeadline
+  - WorkflowDefinition
+  - WorkflowInstance
+  - WorkflowInstanceLog
+  - WorkflowStage
+  - WorkflowTransition
+
+==============================================================
+ VIVA TIP: 
+ Examiner ko ye list dikha kar bolein: 'Sir, hamare paas total 70 main modules hain jo ke alag alag functional areas (Admin, Finance, HR, Inventory) mein divided hain.'
+==============================================================

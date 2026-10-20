@@ -25,17 +25,20 @@ namespace ERPWMS.Web.Controllers.Admin
         private readonly IRoleService _roleService;
         private readonly AppDbContext _context;
         private readonly ILogger<AccountController> _logger;
+        private readonly ERPWMS.Application.Common.IEmailService _emailService;
 
         public AccountController(
             IUserService userService,
             IRoleService roleService,
             AppDbContext context,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            ERPWMS.Application.Common.IEmailService emailService)
         {
             _userService = userService;
             _roleService = roleService;
             _context = context;
             _logger = logger;
+            _emailService = emailService;
         }
 
         // =========================================================
@@ -471,6 +474,133 @@ namespace ERPWMS.Web.Controllers.Admin
             _context.UserSessions.Add(session);
             await _context.SaveChangesAsync();
         }
-    }
+    
+
+        // ============================================================
+        // FORGOT PASSWORD FLOW
+        // ============================================================
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ForgotPassword() => View();
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(string emailOrUsername)
+        {
+            if (string.IsNullOrWhiteSpace(emailOrUsername))
+            {
+                ModelState.AddModelError("", "Please enter your email or username.");
+                return View();
+            }
+
+            var result = await _userService.GeneratePasswordResetTokenAsync(emailOrUsername);
+
+            if (string.IsNullOrEmpty(result.Token))
+            {
+                ModelState.AddModelError("", "If this email exists, an OTP has been sent.");
+                return View();
+            }
+
+            // 1. ASAL EMAIL BHEJO
+            var emailSent = await _emailService.SendEmailAsync(result.Email, "ERPWMS Password Reset OTP", result.Token);
+
+            if (!emailSent && !_emailService.IsTestMode)
+            {
+                ModelState.AddModelError("", "Email send failed. Check internet or App Password.");
+                return View();
+            }
+
+            TempData["ResetEmail"] = emailOrUsername;
+            TempData["SuccessMessage"] = $"An OTP has been sent to {result.Email}";
+
+            // 2. SIRF TEST MODE MEIN SCREEN PAR DIKHAO
+            if (_emailService.IsTestMode)
+            {
+                TempData["TestOtp"] = result.Token;
+            }
+
+            return RedirectToAction(nameof(VerifyOtp));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult VerifyOtp()
+        {
+            if (TempData["ResetEmail"] == null) return RedirectToAction(nameof(ForgotPassword));
+            TempData.Keep("ResetEmail");
+            TempData.Keep("TestOtp");
+            TempData.Keep("SuccessMessage");
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyOtp(string otp)
+        {
+            if (string.IsNullOrWhiteSpace(otp))
+            {
+                ModelState.AddModelError("", "Please enter the OTP.");
+                return View();
+            }
+
+            var userId = await _userService.ValidatePasswordResetTokenAsync(otp);
+            if (userId == null)
+            {
+                ModelState.AddModelError("", "Invalid or expired OTP. Please request a new one.");
+                return View();
+            }
+
+            TempData["ResetUserId"] = userId.Value;
+            return RedirectToAction(nameof(ResetPassword));
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword()
+        {
+            if (TempData["ResetUserId"] == null) return RedirectToAction(nameof(ForgotPassword));
+            TempData.Keep("ResetUserId");
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string newPassword, string confirmPassword)
+        {
+            if (TempData["ResetUserId"] == null) return RedirectToAction(nameof(ForgotPassword));
+
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+            {
+                ModelState.AddModelError("", "Password must be at least 6 characters.");
+                TempData.Keep("ResetUserId");
+                return View();
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                ModelState.AddModelError("", "Passwords do not match.");
+                TempData.Keep("ResetUserId");
+                return View();
+            }
+
+            var userId = (int)TempData["ResetUserId"]!;
+            var success = await _userService.ResetPasswordAsync(userId, newPassword);
+
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Password reset successful! Please login with your new password.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            ModelState.AddModelError("", "Password reset failed. Please try again.");
+            return View();
+        }}
 }
+
+
+
 
